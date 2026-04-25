@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep *)",
+      "Bash(php artisan *)",
+      "Bash(php --ini)",
+      "Bash(php -l app/Filament/Resources/BusResource/RelationManagers/StopsRelationManager.php)",
+      "Bash(php -l app/Filament/Resources/BusResource.php)"
+    ]
+  }
+}
