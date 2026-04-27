@@ -68,8 +68,6 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
 
-            // QR
-            implementation(libs.qrcode.kotlin)
 
             // Settings
             implementation(libs.multiplatform.settings)
@@ -80,11 +78,22 @@ kotlin {
             implementation(libs.gitlive.firebase.messaging)
         }
 
+        // Registra explícitamente los directorios generados por Compose Resources
+        // para que el compilador de Kotlin los encuentre en todos los entornos
+        commonMain {
+            kotlin.srcDir("build/generated/compose/resourceGenerator/kotlin/commonResClass")
+            kotlin.srcDir("build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors")
+        }
+
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.koin.android)
+
+            // QR (solo Android — qrcode-kotlin 4.x no tiene artefactos iosArm64)
+            implementation(libs.qrcode.kotlin)
 
             // Ktor engine
             implementation(libs.ktor.client.okhttp)
