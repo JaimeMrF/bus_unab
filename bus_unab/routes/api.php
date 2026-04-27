@@ -29,6 +29,8 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->middleware('throttle:10,1')->group(function () {
         // POST /api/v1/auth/google
         Route::post('google', [AuthController::class, 'googleLogin']);
+        // POST /api/v1/auth/login
+        Route::post('login', [AuthController::class, 'login']);
     });
 
     // ------------------------------------------------------------------

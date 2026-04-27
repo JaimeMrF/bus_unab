@@ -37,6 +37,38 @@ class AuthController extends BaseController
         // 3. Generar token Sanctum propio
         $token = $this->authService->generateToken($user);
 
+        return $this->successResponse($user, $token);
+    }
+
+    /**
+     * Inicia sesión tradicional con email y contraseña.
+     *
+     * @bodyParam email string required. Example: test@example.com
+     * @bodyParam password string required. Example: password
+     */
+    public function login(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email'    => 'required|string|email',
+            'password' => 'required|string',
+        ]);
+
+        $user = $this->authService->attemptLogin($request->email, $request->password);
+
+        if (! $user) {
+            return $this->unauthorized('Credenciales incorrectas');
+        }
+
+        $token = $this->authService->generateToken($user);
+
+        return $this->successResponse($user, $token);
+    }
+
+    /**
+     * Formatea la respuesta exitosa de login.
+     */
+    private function successResponse($user, $token): JsonResponse
+    {
         return $this->success([
             'access_token' => $token,
             'token_type'   => 'Bearer',

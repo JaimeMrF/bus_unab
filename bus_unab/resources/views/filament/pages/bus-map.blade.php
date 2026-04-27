@@ -1,3 +1,4 @@
+<div>
 <x-filament-panels::page>
 <div>
     {{-- ── Leaflet CSS — inline para garantizar que cargue en Filament/Livewire ── --}}
@@ -431,3 +432,4 @@
     </script>
 </div>
 </x-filament-panels::page>
+</div>

@@ -62,7 +62,8 @@ class ProfileScreen : Screen {
 
         LaunchedEffect(authEvent) {
             if (authEvent is AuthEvent.NavigateToLogin) {
-                navigator.replaceAll(LoginScreen())
+                val rootNavigator = navigator.parent ?: navigator
+                rootNavigator.replaceAll(LoginScreen())
                 authViewModel.consumeEvent()
             }
         }

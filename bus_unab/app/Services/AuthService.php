@@ -6,10 +6,25 @@ use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 
 class AuthService
 {
+    /**
+     * Intenta autenticar un usuario con email y contraseña.
+     */
+    public function attemptLogin(string $email, string $password): ?User
+    {
+        $user = User::where('email', $email)->first();
+
+        if (!$user || !Hash::check($password, $user->password)) {
+            return null;
+        }
+
+        return $user;
+    }
+
     /**
      * Valida un Google ID Token contra la API de Google.
      *
