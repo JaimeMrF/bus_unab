@@ -56,7 +56,7 @@ class QRScannerScreen : Screen {
                             Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = AppColors.White)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.DarkHeader),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.PrimaryPurple),
                 )
             },
             containerColor = AppColors.PrimaryBg,
@@ -67,7 +67,7 @@ class QRScannerScreen : Screen {
             ) {
                 Text(
                     text = "Escanea el código del usuario para validar su acceso",
-                    color = AppColors.GrayText,
+                    color = AppColors.TextSecondary,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(16.dp),

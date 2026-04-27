@@ -41,6 +41,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,52 +65,50 @@ class DriverModeScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-        val viewModel = koinViewModel<DriverModeViewModel>()
+        val navigator        = LocalNavigator.currentOrThrow
+        val viewModel        = koinViewModel<DriverModeViewModel>()
         val profileViewModel = koinViewModel<ProfileViewModel>()
-        val profile by profileViewModel.profile.collectAsState()
-        val stopsState by viewModel.stopsState.collectAsState()
-        val snackbarMsg by viewModel.snackbarMessage.collectAsState()
+        val profile          by profileViewModel.profile.collectAsState()
+        val stopsState       by viewModel.stopsState.collectAsState()
+        val snackbarMsg      by viewModel.snackbarMessage.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
         var showStopSelector by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) { viewModel.loadStops(assignedPlate) }
-
         LaunchedEffect(snackbarMsg) {
-            snackbarMsg?.let {
-                snackbarHostState.showSnackbar(it)
-                viewModel.consumeSnackbar()
-            }
+            snackbarMsg?.let { snackbarHostState.showSnackbar(it); viewModel.consumeSnackbar() }
         }
 
+        // Bottom sheet selector de parada
         if (showStopSelector && stopsState is UiState.Success) {
             val stops = (stopsState as UiState.Success<List<StopWithPivotDto>>).data
             ModalBottomSheet(
                 onDismissRequest = { showStopSelector = false },
-                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
-                containerColor = AppColors.DarkHeader,
-                shape = BottomSheetShape,
+                sheetState       = rememberModalBottomSheetState(skipPartiallyExpanded = false),
+                containerColor   = AppColors.White,
+                shape            = BottomSheetShape,
             ) {
                 Text(
                     "Seleccionar parada de llegada",
                     fontWeight = FontWeight.Bold,
-                    color = AppColors.White,
-                    modifier = Modifier.padding(16.dp),
+                    color      = AppColors.TextPrimary,
+                    modifier   = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                 )
                 LazyColumn {
                     items(stops) { stop ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = AppColors.PrimaryBg),
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp)
+                                .shadow(2.dp, RoundedCornerShape(12.dp), ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.07f))
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(AppColors.White)
+                                .padding(16.dp),
                         ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(stop.name, color = AppColors.White, fontWeight = FontWeight.Medium)
-                                    Text(stop.address, color = AppColors.GrayText, fontSize = 12.sp)
+                                    Text(stop.name,    color = AppColors.TextPrimary,   fontWeight = FontWeight.Medium)
+                                    Text(stop.address, color = AppColors.TextSecondary, fontSize = 12.sp)
                                 }
                                 Button(
                                     onClick = {
@@ -116,8 +116,8 @@ class DriverModeScreen : Screen {
                                         viewModel.confirmArrival(assignedPlate, stop.id)
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.GreenSuccess),
-                                    shape = RoundedCornerShape(8.dp),
-                                ) { Text("Confirmar", color = AppColors.White) }
+                                    shape  = RoundedCornerShape(8.dp),
+                                ) { Text("Confirmar", color = AppColors.White, fontWeight = FontWeight.SemiBold) }
                             }
                         }
                     }
@@ -130,66 +130,80 @@ class DriverModeScreen : Screen {
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
-                    title = { Text("Modo Conductor", color = AppColors.White) },
+                    title          = { Text("Modo Conductor", color = AppColors.White, fontWeight = FontWeight.SemiBold) },
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
                             Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = AppColors.White)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.PrimaryBg),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.PrimaryPurple),
                 )
             },
             containerColor = AppColors.PrimaryBg,
         ) { padding ->
             Column(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
+                modifier            = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Spacer(Modifier.height(8.dp))
+
                 Text(
-                    text = "¡Hola, ${profile.name}!",
-                    fontSize = 22.sp,
+                    text       = "¡Hola, ${profile.name}!",
+                    fontSize   = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = AppColors.White,
+                    color      = AppColors.TextPrimary,
                 )
                 Text(
-                    text = "Estás asignado a:",
+                    text     = "Estás asignado a:",
                     fontSize = 14.sp,
-                    color = AppColors.GrayText,
+                    color    = AppColors.TextSecondary,
                     modifier = Modifier.padding(top = 4.dp),
                 )
-                Spacer(Modifier.height(16.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.DarkHeader),
+
+                Spacer(Modifier.height(20.dp))
+
+                // Card de ruta asignada
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(4.dp, RoundedCornerShape(16.dp), ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.12f))
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(AppColors.White)
+                        .padding(20.dp),
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text("Ruta asignada", color = AppColors.GrayText, fontSize = 12.sp)
-                        Text(assignedPlate, color = AppColors.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Column {
+                        Text("Ruta asignada", color = AppColors.TextSecondary, fontSize = 12.sp)
+                        Text(assignedPlate,   color = AppColors.TextPrimary, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                         Spacer(Modifier.height(8.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(10.dp).background(AppColors.GreenActive, CircleShape))
                             Spacer(Modifier.width(6.dp))
-                            Text("En ruta", color = AppColors.GreenActive, fontSize = 13.sp)
+                            Text("En ruta", color = AppColors.GreenActive, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         }
                     }
                 }
-                Spacer(Modifier.height(24.dp))
+
+                Spacer(Modifier.height(28.dp))
+
                 Button(
-                    onClick = { showStopSelector = true },
+                    onClick  = { showStopSelector = true },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = ButtonShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentOrange),
+                    shape    = ButtonShape,
+                    colors   = ButtonDefaults.buttonColors(containerColor = AppColors.AccentOrange),
                 ) {
                     Text("Confirmar llegada a parada", color = AppColors.White, fontWeight = FontWeight.SemiBold)
                 }
-                Spacer(Modifier.height(16.dp))
+
+                Spacer(Modifier.height(12.dp))
+
                 Button(
-                    onClick = { navigator.push(QRScannerScreen()) },
+                    onClick  = { navigator.push(QRScannerScreen()) },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = ButtonShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryPurple),
+                    shape    = ButtonShape,
+                    colors   = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryPurple),
                 ) {
                     Text("Escanear QR de pasajero", color = AppColors.White, fontWeight = FontWeight.SemiBold)
                 }

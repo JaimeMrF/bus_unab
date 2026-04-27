@@ -96,8 +96,8 @@ class HomeScreen : Screen {
             snackbarHost = { SnackbarHost(snackbarHostState) },
             floatingActionButton = {
                 FloatingActionButton(
-                    onClick = { /* center map on user */ },
-                    containerColor = AppColors.PrimaryBg,
+                    onClick        = { /* center map on user */ },
+                    containerColor = AppColors.PrimaryPurple,
                 ) {
                     Icon(Icons.Default.MyLocation, contentDescription = "Mi ubicación", tint = AppColors.White)
                 }
@@ -127,13 +127,13 @@ class HomeScreen : Screen {
                             text = "¿A dónde quieres ir?",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = AppColors.DarkText,
+                            color = AppColors.TextPrimary,
                             modifier = Modifier.padding(top = 8.dp),
                         )
                         Text(
                             text = "Selecciona tu ruta",
                             fontSize = 13.sp,
-                            color = AppColors.GrayText,
+                            color = AppColors.TextSecondary,
                         )
                         PullToRefreshBox(
                             isRefreshing = isRefreshing,

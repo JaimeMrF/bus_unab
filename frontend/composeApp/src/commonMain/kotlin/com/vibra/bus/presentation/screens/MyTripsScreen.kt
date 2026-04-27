@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,48 +49,64 @@ class MyTripsScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
-        val viewModel = koinViewModel<MyTripsViewModel>()
-        val tripsState by viewModel.tripsState.collectAsState()
-        val snackbarMsg by viewModel.snackbarMessage.collectAsState()
-        val snackbarHostState = remember { SnackbarHostState() }
+        val viewModel       = koinViewModel<MyTripsViewModel>()
+        val tripsState      by viewModel.tripsState.collectAsState()
+        val snackbarMsg     by viewModel.snackbarMessage.collectAsState()
+        val snackbarState   = remember { SnackbarHostState() }
 
         LaunchedEffect(snackbarMsg) {
             snackbarMsg?.let {
-                snackbarHostState.showSnackbar(it)
+                snackbarState.showSnackbar(it)
                 viewModel.consumeSnackbar()
             }
         }
 
         Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost   = { SnackbarHost(snackbarState) },
             containerColor = AppColors.PrimaryBg,
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                Text(
-                    text = "Mis Viajes",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.White,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
-                )
+
+                // Sección de título con banda morada
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(AppColors.PrimaryPurple)
+                        .padding(horizontal = 20.dp, vertical = 18.dp),
+                ) {
+                    Column {
+                        Text(
+                            text       = "Mis Viajes",
+                            fontSize   = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color      = AppColors.White,
+                        )
+                        Text(
+                            text     = "Historial de solicitudes",
+                            fontSize = 13.sp,
+                            color    = AppColors.White.copy(alpha = 0.7f),
+                        )
+                    }
+                }
+
                 PullToRefreshBox(
                     isRefreshing = false,
-                    onRefresh = { viewModel.refresh() },
-                    modifier = Modifier.fillMaxSize(),
+                    onRefresh    = { viewModel.refresh() },
+                    modifier     = Modifier.fillMaxSize(),
                 ) {
                     when (val state = tripsState) {
                         is UiState.Loading -> {}
                         is UiState.Success -> {
                             if (state.data.isEmpty()) {
                                 EmptyState(
-                                    message = "Sin viajes activos",
+                                    message  = "Sin viajes activos",
                                     subtitle = "Solicita un bus desde la pantalla de inicio",
                                 )
                             } else {
                                 LazyColumn(contentPadding = PaddingValues(16.dp)) {
                                     items(state.data, key = { it.id }) { trip ->
                                         TripCard(
-                                            trip = trip,
+                                            trip     = trip,
                                             onCancel = { viewModel.cancelTrip(trip.bus.id) },
                                         )
                                     }
@@ -97,7 +114,7 @@ class MyTripsScreen : Screen {
                             }
                         }
                         is UiState.Error -> EmptyState(message = state.message)
-                        else -> {}
+                        else             -> {}
                     }
                 }
             }
@@ -111,20 +128,19 @@ private fun TripCard(trip: RequestInfo, onCancel: () -> Unit) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart && trip.status == "pending") {
-                onCancel()
-                true
+                onCancel(); true
             } else false
         }
     )
 
     SwipeToDismissBox(
-        state = dismissState,
+        state             = dismissState,
         backgroundContent = {
             Box(
-                modifier = Modifier
+                modifier         = Modifier
                     .fillMaxSize()
-                    .background(AppColors.Red, RoundedCornerShape(12.dp))
-                    .padding(end = 16.dp),
+                    .background(AppColors.Red, RoundedCornerShape(14.dp))
+                    .padding(end = 20.dp),
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 Text("Cancelar", color = AppColors.White, fontWeight = FontWeight.SemiBold)
@@ -133,30 +149,36 @@ private fun TripCard(trip: RequestInfo, onCancel: () -> Unit) {
         modifier = Modifier.padding(vertical = 6.dp),
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = AppColors.DarkHeader),
-            border = androidx.compose.foundation.BorderStroke(1.dp, AppColors.CardActive),
+            modifier  = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation    = 3.dp,
+                    shape        = RoundedCornerShape(14.dp),
+                    ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.08f),
+                ),
+            shape     = RoundedCornerShape(14.dp),
+            colors    = CardDefaults.cardColors(containerColor = AppColors.White),
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = trip.bus.name,
+                        text       = trip.bus.name,
                         fontWeight = FontWeight.Bold,
-                        color = AppColors.White,
-                        modifier = Modifier.weight(1f),
+                        color      = AppColors.TextPrimary,
+                        fontSize   = 15.sp,
+                        modifier   = Modifier.weight(1f),
                     )
                     StatusChip(status = trip.status)
                 }
                 Spacer(Modifier.height(6.dp))
-                Text("Parada: ${trip.stop.name}", color = AppColors.GrayText, fontSize = 13.sp)
-                Text(trip.stop.address, color = AppColors.GrayText, fontSize = 12.sp)
+                Text("Parada: ${trip.stop.name}", color = AppColors.TextSecondary, fontSize = 13.sp)
+                Text(trip.stop.address,            color = AppColors.TextSecondary, fontSize = 12.sp)
                 if (trip.status == "pending") {
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "Desliza para cancelar →",
+                        text     = "Desliza para cancelar →",
                         fontSize = 11.sp,
-                        color = AppColors.GrayText.copy(alpha = 0.6f),
+                        color    = AppColors.TextSecondary.copy(alpha = 0.6f),
                     )
                 }
             }
@@ -166,16 +188,18 @@ private fun TripCard(trip: RequestInfo, onCancel: () -> Unit) {
 
 @Composable
 private fun StatusChip(status: String) {
-    val (bg, label) = when (status) {
-        "pending" -> Pair(AppColors.AccentOrange.copy(alpha = 0.2f), "Pendiente")
-        "active" -> Pair(AppColors.GreenActive.copy(alpha = 0.2f), "Activo")
-        "completed" -> Pair(AppColors.GreenSuccess.copy(alpha = 0.2f), "Completado")
-        "cancelled" -> Pair(AppColors.Red.copy(alpha = 0.2f), "Cancelado")
-        else -> Pair(Color.Gray.copy(alpha = 0.2f), status)
+    val (bg, textColor, label) = when (status) {
+        "pending"   -> Triple(AppColors.AccentOrange.copy(alpha = 0.15f),  AppColors.AccentOrange,  "Pendiente")
+        "active"    -> Triple(AppColors.GreenActive.copy(alpha = 0.15f),   AppColors.GreenActive,   "Activo")
+        "completed" -> Triple(AppColors.GreenSuccess.copy(alpha = 0.15f),  AppColors.GreenSuccess,  "Completado")
+        "cancelled" -> Triple(AppColors.Red.copy(alpha = 0.15f),           AppColors.Red,           "Cancelado")
+        else        -> Triple(Color.Gray.copy(alpha = 0.15f),              AppColors.TextSecondary, status)
     }
     Box(
-        modifier = Modifier.background(bg, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
+        modifier = Modifier
+            .background(bg, RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
-        Text(label, color = AppColors.White, fontSize = 12.sp)
+        Text(label, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
     }
 }

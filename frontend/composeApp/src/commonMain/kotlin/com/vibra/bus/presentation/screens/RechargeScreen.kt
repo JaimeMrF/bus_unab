@@ -1,16 +1,18 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +22,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,45 +42,62 @@ class RechargeScreen : Screen {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Recargar saldo", color = AppColors.White) },
+                    title          = { Text("Recargar saldo", color = AppColors.White, fontWeight = FontWeight.SemiBold) },
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
                             Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = AppColors.White)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.PrimaryBg),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.PrimaryPurple),
                 )
             },
             containerColor = AppColors.PrimaryBg,
         ) { padding ->
-            Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
+            ) {
                 Text(
-                    "Opciones de recarga",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.White,
+                    "Elige tu método de recarga",
+                    fontSize   = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = AppColors.TextPrimary,
                 )
-                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Recarga tu saldo de forma fácil y rápida",
+                    fontSize = 13.sp,
+                    color    = AppColors.TextSecondary,
+                    modifier = Modifier.padding(top = 2.dp, bottom = 16.dp),
+                )
+
                 RechargeOption(
-                    title = "Dentro de la universidad",
+                    emoji       = "🏫",
+                    title       = "Dentro de la universidad",
                     description = "Acércate al punto de recarga ubicado en el campus UNAB. Puedes recargar en efectivo o con tarjeta.",
                 )
                 Spacer(Modifier.height(12.dp))
                 RechargeOption(
-                    title = "Con efectivo",
+                    emoji       = "💵",
+                    title       = "Con efectivo",
                     description = "Recarga en cualquier punto autorizado de la red. Presenta tu código de estudiante para identificarte.",
                 )
                 Spacer(Modifier.height(24.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = AppColors.MediumPurple.copy(alpha = 0.3f)),
+
+                // Info card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(AppColors.AccentOrange.copy(alpha = 0.10f))
+                        .padding(16.dp),
                 ) {
                     Text(
-                        text = "ℹ️ Los pagos en línea estarán disponibles próximamente.",
-                        color = AppColors.GrayText,
+                        text     = "ℹ️ Los pagos en línea estarán disponibles próximamente.",
+                        color    = AppColors.AccentOrange,
                         fontSize = 13.sp,
-                        modifier = Modifier.padding(16.dp),
                     )
                 }
             }
@@ -85,16 +106,24 @@ class RechargeScreen : Screen {
 }
 
 @Composable
-private fun RechargeOption(title: String, description: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AppColors.DarkHeader),
+private fun RechargeOption(emoji: String, title: String, description: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.08f))
+            .clip(RoundedCornerShape(14.dp))
+            .background(AppColors.White)
+            .padding(16.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, fontWeight = FontWeight.SemiBold, color = AppColors.White, fontSize = 15.sp)
+        Column {
+            Text(
+                "$emoji  $title",
+                fontWeight = FontWeight.SemiBold,
+                color      = AppColors.TextPrimary,
+                fontSize   = 15.sp,
+            )
             Spacer(Modifier.height(6.dp))
-            Text(description, color = AppColors.GrayText, fontSize = 13.sp)
+            Text(description, color = AppColors.TextSecondary, fontSize = 13.sp)
         }
     }
 }

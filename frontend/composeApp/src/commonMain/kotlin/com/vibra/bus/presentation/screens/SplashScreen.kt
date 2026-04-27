@@ -3,7 +3,9 @@ package com.vibra.bus.presentation.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -30,9 +33,7 @@ class SplashScreen : Screen {
         val viewModel = koinViewModel<AuthViewModel>()
         val event by viewModel.event.collectAsState()
 
-        LaunchedEffect(Unit) {
-            viewModel.checkSession()
-        }
+        LaunchedEffect(Unit) { viewModel.checkSession() }
 
         LaunchedEffect(event) {
             when (event) {
@@ -49,23 +50,42 @@ class SplashScreen : Screen {
         }
 
         Box(
-            modifier = Modifier.fillMaxSize().background(AppColors.PrimaryBg),
-            contentAlignment = Alignment.Center,
+            modifier          = Modifier.fillMaxSize().background(AppColors.White),
+            contentAlignment  = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                // Punto acento dorado
+                Box(
+                    modifier = Modifier
+                        .height(6.dp)
+                        .background(
+                            AppColors.AccentOrange,
+                            androidx.compose.foundation.shape.RoundedCornerShape(50),
+                        ),
+                )
+
+                Spacer(Modifier.height(12.dp))
+
                 Text(
-                    text = "VIBRA +",
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = AppColors.AccentOrange,
+                    text          = "VIBRA+",
+                    fontSize      = 44.sp,
+                    fontWeight    = FontWeight.ExtraBold,
+                    color         = AppColors.PrimaryPurple,
+                    letterSpacing = (-1).sp,
                 )
                 Text(
-                    text = "Bus UNAB",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = AppColors.White,
+                    text          = "Bus UNAB",
+                    fontSize      = 14.sp,
+                    fontWeight    = FontWeight.Normal,
+                    color         = AppColors.TextSecondary,
+                    letterSpacing = 4.sp,
                 )
-                CircularProgressIndicator(color = AppColors.AccentOrange)
+                Spacer(Modifier.height(32.dp))
+                CircularProgressIndicator(
+                    color       = AppColors.PrimaryPurple,
+                    strokeWidth = 2.5.dp,
+                )
             }
         }
     }

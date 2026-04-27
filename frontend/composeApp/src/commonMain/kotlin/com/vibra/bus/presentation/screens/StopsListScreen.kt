@@ -71,7 +71,7 @@ data class StopsListScreen(val plate: String) : Screen {
                             Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = AppColors.White)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.DarkHeader),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.PrimaryPurple),
                 )
             },
             containerColor = AppColors.PrimaryBg,
@@ -103,15 +103,16 @@ data class StopsListScreen(val plate: String) : Screen {
 @Composable
 private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boolean) {
     val dotColor = when {
-        isFirst -> AppColors.PrimaryBg
-        isLast -> AppColors.GreenSuccess
-        else -> AppColors.PrimaryPurple
+        isFirst -> AppColors.PrimaryPurple
+        isLast  -> AppColors.GreenSuccess
+        else    -> AppColors.PrimaryPurple.copy(alpha = 0.55f)
     }
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AppColors.DarkHeader),
+        colors = CardDefaults.cardColors(containerColor = AppColors.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
             Card(
@@ -128,8 +129,8 @@ private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boole
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(stop.name, color = AppColors.White, fontWeight = FontWeight.Medium, fontSize = 14.sp)
-                Text(stop.address, color = AppColors.GrayText, fontSize = 12.sp)
+                Text(stop.name,    color = AppColors.TextPrimary,   fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                Text(stop.address, color = AppColors.TextSecondary, fontSize = 12.sp)
                 Spacer(Modifier.height(4.dp))
                 Text("~${stop.pivot.estimatedMinutes} min", color = AppColors.AccentOrange, fontSize = 12.sp)
             }

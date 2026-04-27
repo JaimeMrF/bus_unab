@@ -1,6 +1,7 @@
 package com.vibra.bus.presentation.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,16 +13,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,95 +55,129 @@ class ProfileScreen : Screen {
 
     @Composable
     override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-        val viewModel = koinViewModel<ProfileViewModel>()
-        val authViewModel = koinViewModel<AuthViewModel>()
-        val profile by viewModel.profile.collectAsState()
-        val authEvent by authViewModel.event.collectAsState()
-        var showLogoutDialog by remember { mutableStateOf(false) }
+        val navigator    = LocalNavigator.currentOrThrow
+        val viewModel    = koinViewModel<ProfileViewModel>()
+        val authViewModel= koinViewModel<AuthViewModel>()
+        val profile      by viewModel.profile.collectAsState()
+        val authEvent    by authViewModel.event.collectAsState()
+        var showLogout   by remember { mutableStateOf(false) }
 
         LaunchedEffect(authEvent) {
             if (authEvent is AuthEvent.NavigateToLogin) {
-                val rootNavigator = navigator.parent ?: navigator
-                rootNavigator.replaceAll(LoginScreen())
+                (navigator.parent ?: navigator).replaceAll(LoginScreen())
                 authViewModel.consumeEvent()
             }
         }
 
-        if (showLogoutDialog) {
+        if (showLogout) {
             AlertDialog(
-                onDismissRequest = { showLogoutDialog = false },
-                title = { Text("Cerrar sesión") },
-                text = { Text("¿Estás seguro de que deseas cerrar sesión?") },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showLogoutDialog = false
-                        authViewModel.logout()
-                    }) { Text("Sí, cerrar sesión", color = AppColors.Red) }
+                onDismissRequest = { showLogout = false },
+                title            = { Text("Cerrar sesión", color = AppColors.TextPrimary) },
+                text             = { Text("¿Estás seguro de que deseas cerrar sesión?", color = AppColors.TextSecondary) },
+                confirmButton    = {
+                    TextButton(onClick = { showLogout = false; authViewModel.logout() }) {
+                        Text("Sí, cerrar sesión", color = AppColors.Red)
+                    }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showLogoutDialog = false }) { Text("Cancelar") }
+                    TextButton(onClick = { showLogout = false }) {
+                        Text("Cancelar", color = AppColors.PrimaryPurple)
+                    }
                 },
+                containerColor = AppColors.White,
             )
         }
 
         Scaffold(containerColor = AppColors.PrimaryBg) { padding ->
             Column(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp),
+                modifier            = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(Modifier.height(24.dp))
-                if (profile.avatar.isNotEmpty()) {
-                    AsyncImage(
-                        model = profile.avatar,
-                        contentDescription = "Avatar",
-                        modifier = Modifier.size(88.dp).clip(CircleShape),
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier.size(88.dp).background(AppColors.MediumPurple, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = profile.name.firstOrNull()?.uppercase() ?: "U",
-                            fontSize = 36.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.White,
-                        )
+                // Header morado
+                Box(
+                    modifier         = Modifier
+                        .fillMaxWidth()
+                        .background(AppColors.PrimaryPurple)
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Avatar
+                        if (profile.avatar.isNotEmpty()) {
+                            AsyncImage(
+                                model           = profile.avatar,
+                                contentDescription = "Avatar",
+                                modifier        = Modifier
+                                    .size(88.dp)
+                                    .clip(CircleShape)
+                                    .border(3.dp, AppColors.AccentOrange, CircleShape),
+                            )
+                        } else {
+                            Box(
+                                modifier         = Modifier
+                                    .size(88.dp)
+                                    .clip(CircleShape)
+                                    .background(AppColors.AccentOrange.copy(alpha = 0.20f))
+                                    .border(3.dp, AppColors.AccentOrange, CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text       = profile.name.firstOrNull()?.uppercase() ?: "U",
+                                    fontSize   = 36.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color      = AppColors.White,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Text(profile.name,  fontSize = 20.sp, fontWeight = FontWeight.Bold,  color = AppColors.White)
+                        Text(profile.email, fontSize = 13.sp, color = AppColors.White.copy(alpha = 0.75f))
+                        Spacer(Modifier.height(8.dp))
+                        // Badge dorado de rol
+                        Box(
+                            modifier = Modifier
+                                .background(AppColors.AccentOrange.copy(alpha = 0.20f), RoundedCornerShape(8.dp))
+                                .border(1.dp, AppColors.AccentOrange, RoundedCornerShape(8.dp))
+                                .padding(horizontal = 14.dp, vertical = 4.dp),
+                        ) {
+                            Text(
+                                text       = if (profile.role == "driver") "Conductor" else "Estudiante",
+                                color      = AppColors.AccentOrange,
+                                fontSize   = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
                     }
                 }
-                Spacer(Modifier.height(12.dp))
-                Text(profile.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = AppColors.White)
-                Text(profile.email, fontSize = 13.sp, color = AppColors.GrayText)
-                Spacer(Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier.background(AppColors.MediumPurple, RoundedCornerShape(8.dp))
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = if (profile.role == "driver") "Conductor" else "Estudiante",
-                        color = AppColors.White,
-                        fontSize = 12.sp,
-                    )
-                }
-                Spacer(Modifier.height(32.dp))
 
-                if (viewModel.isDriver()) {
-                    ProfileOption(label = "Modo Conductor") { navigator.push(DriverModeScreen()) }
-                }
-                ProfileOption(label = "Recargar saldo") { navigator.push(RechargeScreen()) }
-                ProfileOption(label = "Notificaciones") { navigator.push(NotificationsScreen()) }
-
-                Spacer(Modifier.height(32.dp))
-                Button(
-                    onClick = { showLogoutDialog = true },
-                    modifier = Modifier.fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.Red),
+                // Opciones
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 24.dp),
                 ) {
-                    Icon(Icons.AutoMirrored.Default.ExitToApp, contentDescription = null, tint = AppColors.White)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Cerrar sesión", color = AppColors.White, fontWeight = FontWeight.SemiBold)
+                    if (viewModel.isDriver()) {
+                        ProfileOption(label = "Modo Conductor")   { navigator.push(DriverModeScreen()) }
+                    }
+                    ProfileOption(label = "Recargar saldo")       { navigator.push(RechargeScreen()) }
+                    ProfileOption(label = "Notificaciones")       { navigator.push(NotificationsScreen()) }
+
+                    Spacer(Modifier.height(32.dp))
+
+                    // Botón cerrar sesión
+                    Button(
+                        onClick  = { showLogout = true },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        shape    = RoundedCornerShape(12.dp),
+                        colors   = ButtonDefaults.buttonColors(containerColor = AppColors.Red),
+                    ) {
+                        Icon(Icons.AutoMirrored.Default.ExitToApp, contentDescription = null, tint = AppColors.White)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Cerrar sesión", color = AppColors.White, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }
@@ -150,21 +186,23 @@ class ProfileScreen : Screen {
 
 @Composable
 private fun ProfileOption(label: String, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = AppColors.DarkHeader),
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .shadow(2.dp, RoundedCornerShape(12.dp), ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.08f))
+            .clip(RoundedCornerShape(12.dp))
+            .background(AppColors.White)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(label, color = AppColors.White, modifier = Modifier.weight(1f), fontSize = 15.sp)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, color = AppColors.TextPrimary, modifier = Modifier.weight(1f), fontSize = 15.sp)
             Icon(
                 Icons.AutoMirrored.Default.ArrowForwardIos,
                 contentDescription = null,
-                tint = AppColors.GrayText,
-                modifier = Modifier.size(16.dp),
+                tint     = AppColors.PrimaryPurple,
+                modifier = Modifier.size(14.dp),
             )
         }
     }

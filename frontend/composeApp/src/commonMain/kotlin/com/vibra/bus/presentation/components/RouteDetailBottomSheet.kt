@@ -27,7 +27,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,67 +48,80 @@ fun RouteDetailBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Color.White,
-        shape = BottomSheetShape,
+        sheetState       = sheetState,
+        containerColor   = AppColors.White,
+        shape            = BottomSheetShape,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+
+            // Header
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier             = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment    = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = bus.name,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = AppColors.DarkText,
-                )
+                Column {
+                    Text(
+                        text       = bus.name,
+                        fontSize   = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color      = AppColors.TextPrimary,
+                    )
+                    Text(
+                        text     = "Placa: ${bus.plate}",
+                        fontSize = 13.sp,
+                        color    = AppColors.TextSecondary,
+                    )
+                }
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = AppColors.GrayText)
+                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = AppColors.TextSecondary)
                 }
             }
-            Text(
-                text = "Placa: ${bus.plate}",
-                fontSize = 14.sp,
-                color = AppColors.GrayText,
-            )
+
             if (stops.isNotEmpty()) {
                 val totalMinutes = stops.maxOfOrNull { it.pivot.estimatedMinutes } ?: 0
                 Text(
-                    text = "Duración total: $totalMinutes min",
-                    fontSize = 14.sp,
-                    color = AppColors.MediumPurple,
-                    modifier = Modifier.padding(top = 4.dp),
+                    text     = "Duración total: $totalMinutes min",
+                    fontSize = 13.sp,
+                    color    = AppColors.PrimaryPurple,
+                    modifier = Modifier.padding(top = 2.dp),
                 )
             }
+
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "Paradas",
-                fontSize = 16.sp,
+                text       = "Paradas",
+                fontSize   = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = AppColors.DarkText,
+                color      = AppColors.TextPrimary,
             )
             Spacer(Modifier.height(8.dp))
+
             if (isLoadingStops) {
                 repeat(3) { ShimmerBox(height = 56.dp) }
             } else {
                 LazyColumn(modifier = Modifier.height(220.dp)) {
-                    itemsIndexed(stops) { index, stop ->
+                    itemsIndexed(stops) { _, stop ->
                         StopRow(order = stop.pivot.order, stop = stop)
                     }
                 }
             }
+
             Spacer(Modifier.height(16.dp))
+
             Button(
-                onClick = onRequestBus,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBg),
+                onClick  = onRequestBus,
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape    = RoundedCornerShape(12.dp),
+                colors   = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryPurple),
             ) {
-                Text("Solicitar bus en esta ruta", color = AppColors.White)
+                Text(
+                    "Solicitar bus en esta ruta",
+                    color      = AppColors.White,
+                    fontWeight = FontWeight.SemiBold,
+                )
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
@@ -117,32 +129,32 @@ fun RouteDetailBottomSheet(
 @Composable
 private fun StopRow(order: Int, stop: StopWithPivotDto) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier          = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = AppColors.PrimaryPurple,
+            shape    = RoundedCornerShape(8.dp),
+            color    = AppColors.PrimaryPurple,
             modifier = Modifier.size(28.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
-                    text = "$order",
-                    fontSize = 12.sp,
+                    text       = "$order",
+                    fontSize   = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color = AppColors.White,
+                    color      = AppColors.White,
                 )
             }
         }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = stop.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = AppColors.DarkText)
-            Text(text = stop.address, fontSize = 12.sp, color = AppColors.GrayText)
+            Text(text = stop.name,    fontSize = 14.sp, fontWeight = FontWeight.Medium, color = AppColors.TextPrimary)
+            Text(text = stop.address, fontSize = 12.sp, color = AppColors.TextSecondary)
         }
         Text(
-            text = "~${stop.pivot.estimatedMinutes} min",
+            text     = "~${stop.pivot.estimatedMinutes} min",
             fontSize = 12.sp,
-            color = AppColors.MediumPurple,
+            color    = AppColors.PrimaryPurple,
         )
     }
 }
