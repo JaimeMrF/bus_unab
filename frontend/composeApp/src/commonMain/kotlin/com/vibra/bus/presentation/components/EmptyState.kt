@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.vibra.bus.presentation.theme.AppColors
 
 @Composable
 fun EmptyState(
@@ -37,7 +36,7 @@ fun EmptyState(
         Text(
             text       = message,
             style      = MaterialTheme.typography.titleMedium,
-            color      = AppColors.TextPrimary,
+            color      = MaterialTheme.colorScheme.onSurface,
             textAlign  = TextAlign.Center,
         )
         if (subtitle.isNotEmpty()) {
@@ -45,7 +44,7 @@ fun EmptyState(
             Text(
                 text      = subtitle,
                 style     = MaterialTheme.typography.bodyMedium,
-                color     = AppColors.TextSecondary,
+                color     = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }
@@ -53,9 +52,9 @@ fun EmptyState(
             Spacer(Modifier.height(24.dp))
             Button(
                 onClick = onCtaClick,
-                colors  = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryPurple),
+                colors  = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
-                Text(ctaLabel, color = AppColors.White)
+                Text(ctaLabel, color = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }

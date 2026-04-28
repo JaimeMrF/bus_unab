@@ -1,26 +1,35 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -32,6 +41,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,14 +55,10 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
-import com.vibra.bus.presentation.components.BusCard
-import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.components.RouteDetailBottomSheet
-import com.vibra.bus.presentation.components.ShimmerBusCard
-import com.vibra.bus.presentation.components.StopDetailBottomSheet
-import com.vibra.bus.presentation.theme.AppColors
-import com.vibra.bus.presentation.theme.BottomSheetShape
+import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.vibraBusColors
 import com.vibra.bus.presentation.viewmodel.HomeViewModel
+import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -59,7 +69,12 @@ class HomeScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel = koinViewModel<HomeViewModel>()
+        val profileViewModel = koinViewModel<ProfileViewModel>()
+        val profile by profileViewModel.profile.collectAsState()
+        
         val busesState by viewModel.busesState.collectAsState()
+        val stopsState by viewModel.stopsState.collectAsState()
+        
         val occupancyMap by viewModel.occupancyMap.collectAsState()
         val busStops by viewModel.busStops.collectAsState()
         val busStopsLoading by viewModel.busStopsLoading.collectAsState()
@@ -69,10 +84,18 @@ class HomeScreen : Screen {
 
         var selectedBus by remember { mutableStateOf<BusSummaryDto?>(null) }
         var selectedStop by remember { mutableStateOf<StopDto?>(null) }
-        var isRefreshing by remember { mutableStateOf(false) }
+        var showStops by remember { mutableStateOf(true) }
+        var isSheetVisible by remember { mutableStateOf(false) }
+
+        val fabScale by animateFloatAsState(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 300),
+            label = "fab_scale"
+        )
 
         LaunchedEffect(Unit) {
             viewModel.startPolling()
+            isSheetVisible = true
         }
 
         LaunchedEffect(selectedBus) {
@@ -81,9 +104,7 @@ class HomeScreen : Screen {
             else viewModel.clearBusStops()
         }
 
-        DisposableEffect(Unit) {
-            onDispose { viewModel.stopPolling() }
-        }
+        DisposableEffect(Unit) { onDispose { viewModel.stopPolling() } }
 
         LaunchedEffect(snackbarMsg) {
             snackbarMsg?.let {
@@ -92,118 +113,162 @@ class HomeScreen : Screen {
             }
         }
 
+        val activeBusCount = if (busesState is UiState.Success)
+            (busesState as UiState.Success).data.size else 0
+            
+        val busList = (busesState as? UiState.Success)?.data ?: emptyList()
+        val stopList = (stopsState as? UiState.Success)?.data ?: emptyList()
+
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = MaterialTheme.colorScheme.background,
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick        = { /* center map on user */ },
-                    containerColor = AppColors.PrimaryPurple,
+                AnimatedVisibility(
+                    visible = true,
+                    enter = slideInVertically(
+                        initialOffsetY = { it * 2 },
+                        animationSpec = tween(durationMillis = 400)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 400))
                 ) {
-                    Icon(Icons.Default.MyLocation, contentDescription = "Mi ubicación", tint = AppColors.White)
+                    FloatingActionButton(
+                        onClick = { /* centrar mapa en usuario */ },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        elevation = FloatingActionButtonDefaults.elevation(
+                            defaultElevation = 8.dp,
+                            pressedElevation = 12.dp
+                        ),
+                        shape = VibraBusShapes.FloatingActionButton,
+                        modifier = Modifier.scale(fabScale)
+                    ) {
+                        Icon(
+                            Icons.Default.MyLocation,
+                            contentDescription = "Mi ubicación",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    }
                 }
-            },
+            }
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                MapViewComposable(modifier = Modifier.fillMaxSize(), userLocation = userLocation)
 
-                // Bottom persistent sheet
-                ModalBottomSheet(
-                    onDismissRequest = {},
-                    sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                    containerColor = Color.White,
-                    shape = BottomSheetShape,
-                    dragHandle = {
+                MapViewComposable(
+                    modifier = Modifier.fillMaxSize(),
+                    userLocation = userLocation,
+                    showStops = showStops,
+                    selectedStop = selectedStop,
+                    onStopSelected = { selectedStop = it },
+                    stops = stopList,
+                    buses = busList
+                )
+
+                AnimatedVisibility(
+                    visible = isSheetVisible,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(durationMillis = 600)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 600)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                ) {
+                    ModalBottomSheet(
+                        onDismissRequest = {},
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                        containerColor = Color.Transparent,
+                        shape = VibraBusShapes.BottomSheet,
+                        dragHandle = {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 10.dp, bottom = 4.dp)
+                                    .size(width = 40.dp, height = 4.dp)
+                                    .clip(VibraBusShapes.RouteIndicator)
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(
+                                                MaterialTheme.colorScheme.secondary,
+                                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
+                                            )
+                                        )
+                                    )
+                            )
+                        }
+                    ) {
                         Box(
                             modifier = Modifier
-                                .padding(top = 8.dp)
-                                .fillMaxWidth(0.12f)
-                                .height(4.dp)
-                                .padding(bottom = 4.dp),
-                        )
-                    },
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        Text(
-                            text = "¿A dónde quieres ir?",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AppColors.TextPrimary,
-                            modifier = Modifier.padding(top = 8.dp),
-                        )
-                        Text(
-                            text = "Selecciona tu ruta",
-                            fontSize = 13.sp,
-                            color = AppColors.TextSecondary,
-                        )
-                        PullToRefreshBox(
-                            isRefreshing = isRefreshing,
-                            onRefresh = {
-                                isRefreshing = true
-                                viewModel.refresh()
-                                isRefreshing = false
-                            },
-                            modifier = Modifier.fillMaxWidth().height(300.dp),
-                        ) {
-                            when (val state = busesState) {
-                                is UiState.Loading -> {
-                                    LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
-                                        items(3) { ShimmerBusCard() }
-                                    }
-                                }
-                                is UiState.Success -> {
-                                    if (state.data.isEmpty()) {
-                                        EmptyState(
-                                            message = "No hay buses activos",
-                                            subtitle = "Intenta más tarde",
+                                .fillMaxWidth()
+                                .blur(1.dp)
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.vibraBusColors.glassSurface,
+                                            MaterialTheme.vibraBusColors.glassBorder
                                         )
-                                    } else {
-                                        LazyColumn(contentPadding = PaddingValues(vertical = 8.dp)) {
-                                            items(state.data) { bus ->
-                                                BusCard(
-                                                    bus = bus,
-                                                    occupancy = occupancyMap[bus.plate],
-                                                    onClick = { selectedBus = bus },
-                                                )
-                                            }
+                                    )
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            MaterialTheme.vibraBusColors.glassHighlight,
+                                            MaterialTheme.vibraBusColors.glassBorder
+                                        )
+                                    ),
+                                    shape = VibraBusShapes.BottomSheet
+                                )
+                                .shadow(
+                                    elevation = 12.dp,
+                                    shape = VibraBusShapes.BottomSheet,
+                                    spotColor = Color.Black.copy(alpha = 0.15f)
+                                )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 20.dp
+                                )
+                            ) {
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = slideInVertically(
+                                        initialOffsetY = { -it / 2 },
+                                        animationSpec = tween(durationMillis = 800, delayMillis = 200)
+                                    ) + fadeIn(
+                                        animationSpec = tween(durationMillis = 800, delayMillis = 200)
+                                    )
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = "¡Hola, ${
+                                                    profile.name.split(" ").firstOrNull() ?: ""
+                                                }! 🦉",
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onPrimary,
+                                                letterSpacing = 0.5.sp
+                                            )
+                                            Spacer(Modifier.height(4.dp))
+                                            Text(
+                                                text = if (activeBusCount > 0)
+                                                    "$activeBusCount buses activos cerca"
+                                                else
+                                                    "Selecciona tu ruta",
+                                                fontSize = 14.sp,
+                                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                                                fontWeight = FontWeight.Medium
+                                            )
                                         }
                                     }
                                 }
-                                is UiState.Error -> {
-                                    EmptyState(
-                                        message = "Error cargando buses",
-                                        ctaLabel = "Reintentar",
-                                        onCtaClick = { viewModel.refresh() },
-                                    )
-                                }
-                                else -> {}
                             }
                         }
                     }
                 }
             }
-        }
-
-        // Route detail bottom sheet
-        selectedBus?.let { bus ->
-            RouteDetailBottomSheet(
-                bus = bus,
-                stops = busStops,
-                isLoadingStops = busStopsLoading,
-                onDismiss = { selectedBus = null },
-                onRequestBus = {
-                    selectedBus = null
-                    navigator.push(StopSelectionScreen(bus.plate))
-                },
-            )
-        }
-
-        // Stop detail bottom sheet
-        selectedStop?.let { stop ->
-            StopDetailBottomSheet(
-                stop = stop,
-                onDismiss = { selectedStop = null },
-                onOpenMaps = { /* open maps intent */ },
-            )
         }
     }
 }

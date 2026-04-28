@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +33,6 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import com.vibra.bus.data.model.NotificationItem
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.theme.AppColors
 import com.vibra.bus.presentation.viewmodel.NotificationsViewModel
 import com.vibra.bus.util.toRelativeTime
 import org.koin.compose.viewmodel.koinViewModel
@@ -44,21 +44,21 @@ class NotificationsScreen : Screen {
         val viewModel     = koinViewModel<NotificationsViewModel>()
         val notifications by viewModel.notifications.collectAsState()
 
-        Scaffold(containerColor = AppColors.PrimaryBg) { padding ->
+        Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 
                 // Header morado
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(AppColors.PrimaryPurple)
+                        .background(MaterialTheme.colorScheme.primary)
                         .padding(horizontal = 20.dp, vertical = 18.dp),
                 ) {
                     Text(
                         text       = "Notificaciones",
                         fontSize   = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color      = AppColors.White,
+                        color      = MaterialTheme.colorScheme.onPrimary,
                     )
                 }
 
@@ -82,22 +82,22 @@ class NotificationsScreen : Screen {
 @Composable
 private fun NotificationCard(notif: NotificationItem) {
     val (icon, color) = when (notif.type) {
-        "bus_arrival"    -> Pair("🚌", AppColors.GreenActive)
-        "bus_approaching"-> Pair("⏰", AppColors.AccentOrange)
+        "bus_arrival"    -> Pair("🚌", MaterialTheme.colorScheme.primary)
+        "bus_approaching"-> Pair("⏰", MaterialTheme.colorScheme.secondary)
         "bus_almost_full"-> Pair("⚠️", Color(0xFFF97316))
-        else             -> Pair("🔔", AppColors.PrimaryPurple)
+        else             -> Pair("🔔", MaterialTheme.colorScheme.primary)
     }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 5.dp)
-            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.07f))
+            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f))
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape    = RoundedCornerShape(14.dp),
-            colors   = CardDefaults.cardColors(containerColor = AppColors.White),
+            colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         ) {
             Row(
                 modifier          = Modifier.padding(16.dp),
@@ -113,10 +113,10 @@ private fun NotificationCard(notif: NotificationItem) {
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(notif.title, fontWeight = FontWeight.SemiBold, color = AppColors.TextPrimary, fontSize = 14.sp)
-                    Text(notif.body,  color = AppColors.TextSecondary, fontSize = 13.sp)
+                    Text(notif.title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+                    Text(notif.body,  color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                 }
-                Text(notif.timestamp.toRelativeTime(), color = AppColors.TextSecondary, fontSize = 11.sp)
+                Text(notif.timestamp.toRelativeTime(), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
             }
         }
     }

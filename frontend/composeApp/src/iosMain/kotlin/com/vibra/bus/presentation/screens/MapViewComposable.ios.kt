@@ -1,26 +1,34 @@
 package com.vibra.bus.presentation.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.interop.UIKitView
 import com.vibra.bus.util.LatLng
+import com.vibra.bus.data.model.StopDto
+import com.vibra.bus.data.model.BusSummaryDto
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.MapKit.MKMapView
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
-actual fun MapViewComposable(modifier: Modifier, userLocation: LatLng?) {
+actual fun MapViewComposable(
+    modifier: Modifier,
+    userLocation: LatLng?,
+    showStops: Boolean,
+    selectedStop: StopDto?,
+    onStopSelected: (StopDto) -> Unit,
+    stops: List<StopDto>,
+    buses: List<BusSummaryDto>
+) {
     UIKitView(
         factory = {
             val mapView = MKMapView()
+            // Here you would configure the MKMapView with stops and buses
             mapView
         },
         modifier = modifier,
+        update = { mapView ->
+            // Update the map view when state changes
+        }
     )
 }

@@ -20,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,8 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopWithPivotDto
-import com.vibra.bus.presentation.theme.AppColors
-import com.vibra.bus.presentation.theme.BottomSheetShape
+import com.vibra.bus.presentation.theme.VibraBusShapes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,8 +49,8 @@ fun RouteDetailBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
-        containerColor   = AppColors.White,
-        shape            = BottomSheetShape,
+        containerColor   = MaterialTheme.colorScheme.surface,
+        shape            = VibraBusShapes.BottomSheet,
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
 
@@ -65,16 +65,16 @@ fun RouteDetailBottomSheet(
                         text       = bus.name,
                         fontSize   = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color      = AppColors.TextPrimary,
+                        color      = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text     = "Placa: ${bus.plate}",
                         fontSize = 13.sp,
-                        color    = AppColors.TextSecondary,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = AppColors.TextSecondary)
+                    Icon(Icons.Default.Close, contentDescription = "Cerrar", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -83,7 +83,7 @@ fun RouteDetailBottomSheet(
                 Text(
                     text     = "Duración total: $totalMinutes min",
                     fontSize = 13.sp,
-                    color    = AppColors.PrimaryPurple,
+                    color    = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(top = 2.dp),
                 )
             }
@@ -93,7 +93,7 @@ fun RouteDetailBottomSheet(
                 text       = "Paradas",
                 fontSize   = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color      = AppColors.TextPrimary,
+                color      = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.height(8.dp))
 
@@ -113,11 +113,11 @@ fun RouteDetailBottomSheet(
                 onClick  = onRequestBus,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape    = RoundedCornerShape(12.dp),
-                colors   = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryPurple),
+                colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
                 Text(
                     "Solicitar bus en esta ruta",
-                    color      = AppColors.White,
+                    color      = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.SemiBold,
                 )
             }
@@ -134,7 +134,7 @@ private fun StopRow(order: Int, stop: StopWithPivotDto) {
     ) {
         Surface(
             shape    = RoundedCornerShape(8.dp),
-            color    = AppColors.PrimaryPurple,
+            color    = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(28.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -142,19 +142,19 @@ private fun StopRow(order: Int, stop: StopWithPivotDto) {
                     text       = "$order",
                     fontSize   = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    color      = AppColors.White,
+                    color      = MaterialTheme.colorScheme.onPrimary,
                 )
             }
         }
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = stop.name,    fontSize = 14.sp, fontWeight = FontWeight.Medium, color = AppColors.TextPrimary)
-            Text(text = stop.address, fontSize = 12.sp, color = AppColors.TextSecondary)
+            Text(text = stop.name,    fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface)
+            Text(text = stop.address, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(
             text     = "~${stop.pivot.estimatedMinutes} min",
             fontSize = 12.sp,
-            color    = AppColors.PrimaryPurple,
+            color    = MaterialTheme.colorScheme.primary,
         )
     }
 }

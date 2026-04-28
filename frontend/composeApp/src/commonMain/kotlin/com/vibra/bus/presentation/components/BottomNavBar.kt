@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -18,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vibra.bus.presentation.theme.AppColors
 
 data class NavItem(
     val label: String,
@@ -33,8 +33,8 @@ fun BottomNavBar(
     onTabSelected: (NavItem) -> Unit,
 ) {
     NavigationBar(
-        containerColor = AppColors.White,
-        contentColor   = AppColors.PrimaryPurple,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor   = MaterialTheme.colorScheme.primary,
         tonalElevation = 0.dp,
     ) {
         items.forEach { item ->
@@ -56,11 +56,11 @@ fun BottomNavBar(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor   = AppColors.PrimaryPurple,
-                    selectedTextColor   = AppColors.PrimaryPurple,
-                    unselectedIconColor = AppColors.TextSecondary,
-                    unselectedTextColor = AppColors.TextSecondary,
-                    indicatorColor      = AppColors.PrimaryPurple.copy(alpha = 0.10f),
+                    selectedIconColor   = MaterialTheme.colorScheme.primary,
+                    selectedTextColor   = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor      = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
                 ),
             )
         }

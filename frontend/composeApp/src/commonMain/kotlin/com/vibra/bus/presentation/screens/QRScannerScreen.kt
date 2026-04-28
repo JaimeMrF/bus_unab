@@ -18,6 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -36,7 +37,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.QRPayload
-import com.vibra.bus.presentation.theme.AppColors
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 
@@ -50,16 +50,16 @@ class QRScannerScreen : Screen {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Escanear QR", color = AppColors.White) },
+                    title = { Text("Escanear QR", color = MaterialTheme.colorScheme.onPrimary) },
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
-                            Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = AppColors.White)
+                            Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = MaterialTheme.colorScheme.onPrimary)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.PrimaryPurple),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
                 )
             },
-            containerColor = AppColors.PrimaryBg,
+            containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
             Column(
                 modifier = Modifier.fillMaxSize().padding(padding),
@@ -67,7 +67,7 @@ class QRScannerScreen : Screen {
             ) {
                 Text(
                     text = "Escanea el código del usuario para validar su acceso",
-                    color = AppColors.TextSecondary,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(16.dp),

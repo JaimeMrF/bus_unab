@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -30,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.vibra.bus.presentation.theme.AppColors
 
 class RechargeScreen : Screen {
 
@@ -42,16 +42,16 @@ class RechargeScreen : Screen {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title          = { Text("Recargar saldo", color = AppColors.White, fontWeight = FontWeight.SemiBold) },
+                    title          = { Text("Recargar saldo", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.SemiBold) },
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
-                            Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = AppColors.White)
+                            Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = MaterialTheme.colorScheme.onPrimary)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = AppColors.PrimaryPurple),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
                 )
             },
-            containerColor = AppColors.PrimaryBg,
+            containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
             Column(
                 modifier = Modifier
@@ -64,12 +64,12 @@ class RechargeScreen : Screen {
                     "Elige tu método de recarga",
                     fontSize   = 17.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color      = AppColors.TextPrimary,
+                    color      = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     "Recarga tu saldo de forma fácil y rápida",
                     fontSize = 13.sp,
-                    color    = AppColors.TextSecondary,
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 2.dp, bottom = 16.dp),
                 )
 
@@ -91,12 +91,12 @@ class RechargeScreen : Screen {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(AppColors.AccentOrange.copy(alpha = 0.10f))
+                        .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.10f))
                         .padding(16.dp),
                 ) {
                     Text(
                         text     = "ℹ️ Los pagos en línea estarán disponibles próximamente.",
-                        color    = AppColors.AccentOrange,
+                        color    = MaterialTheme.colorScheme.secondary,
                         fontSize = 13.sp,
                     )
                 }
@@ -110,20 +110,20 @@ private fun RechargeOption(emoji: String, title: String, description: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.08f))
+            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
             .clip(RoundedCornerShape(14.dp))
-            .background(AppColors.White)
+            .background(MaterialTheme.colorScheme.onPrimary)
             .padding(16.dp),
     ) {
         Column {
             Text(
                 "$emoji  $title",
                 fontWeight = FontWeight.SemiBold,
-                color      = AppColors.TextPrimary,
+                color      = MaterialTheme.colorScheme.onSurface,
                 fontSize   = 15.sp,
             )
             Spacer(Modifier.height(6.dp))
-            Text(description, color = AppColors.TextSecondary, fontSize = 13.sp)
+            Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         }
     }
 }

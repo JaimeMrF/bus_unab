@@ -1,6 +1,12 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -28,18 +35,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import com.vibra.bus.data.model.RequestInfo
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.theme.AppColors
+import com.vibra.bus.presentation.components.ShimmerBox
+import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.MyTripsViewModel
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
@@ -49,10 +60,17 @@ class MyTripsScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
-        val viewModel       = koinViewModel<MyTripsViewModel>()
-        val tripsState      by viewModel.tripsState.collectAsState()
-        val snackbarMsg     by viewModel.snackbarMessage.collectAsState()
-        val snackbarState   = remember { SnackbarHostState() }
+        val viewModel = koinViewModel<MyTripsViewModel>()
+        val tripsState by viewModel.tripsState.collectAsState()
+        val snackbarMsg by viewModel.snackbarMessage.collectAsState()
+        val snackbarState = remember { SnackbarHostState() }
+        var isVisible by remember { mutableStateOf(false) }
+
+        val headerScale by animateFloatAsState(
+            targetValue = if (isVisible) 1f else 0.9f,
+            animationSpec = tween(durationMillis = 600),
+            label = "header_scale"
+        )
 
         LaunchedEffect(snackbarMsg) {
             snackbarMsg?.let {
@@ -61,145 +79,213 @@ class MyTripsScreen : Screen {
             }
         }
 
+        LaunchedEffect(Unit) { isVisible = true }
+
         Scaffold(
-            snackbarHost   = { SnackbarHost(snackbarState) },
-            containerColor = AppColors.PrimaryBg,
+            snackbarHost = { SnackbarHost(snackbarState) },
+            containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 
-                // Sección de título con banda morada
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(AppColors.PrimaryPurple)
-                        .padding(horizontal = 20.dp, vertical = 18.dp),
+                // ── Header ───────────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = slideInVertically(
+                        initialOffsetY = { -it },
+                        animationSpec = tween(durationMillis = 600)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 600))
                 ) {
-                    Column {
-                        Text(
-                            text       = "Mis Viajes",
-                            fontSize   = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color      = AppColors.White,
-                        )
-                        Text(
-                            text     = "Historial de solicitudes",
-                            fontSize = 13.sp,
-                            color    = AppColors.White.copy(alpha = 0.7f),
-                        )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.primary)
+                            .padding(horizontal = 20.dp, vertical = 18.dp)
+                            .scale(headerScale),
+                    ) {
+                        Column {
+                            Text(
+                                text = "Mis Viajes",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                style = MaterialTheme.typography.headlineMedium
+                            )
+                            Text(
+                                text = "Historial de solicitudes",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
                 }
 
-                PullToRefreshBox(
-                    isRefreshing = false,
-                    onRefresh    = { viewModel.refresh() },
-                    modifier     = Modifier.fillMaxSize(),
+                // ── Contenido ─────────────────────────────────────────────────
+                // Movemos AnimatedVisibility para que envuelva al PullToRefreshBox
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 300))
                 ) {
-                    when (val state = tripsState) {
-                        is UiState.Loading -> {}
-                        is UiState.Success -> {
-                            if (state.data.isEmpty()) {
-                                EmptyState(
-                                    message  = "Sin viajes activos",
-                                    subtitle = "Solicita un bus desde la pantalla de inicio",
-                                )
-                            } else {
-                                LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                                    items(state.data, key = { it.id }) { trip ->
-                                        TripCard(
-                                            trip     = trip,
-                                            onCancel = { viewModel.cancelTrip(trip.bus.id) },
-                                        )
+                    PullToRefreshBox(
+                        isRefreshing = false,
+                        onRefresh = { viewModel.refresh() },
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            when (val state = tripsState) {
+                                is UiState.Loading -> {
+                                    LazyColumn(
+                                        contentPadding = PaddingValues(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        items(5) {
+                                            ShimmerBox(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(120.dp)
+                                                    .clip(VibraBusShapes.Card)
+                                            )
+                                        }
                                     }
                                 }
+                                is UiState.Success -> {
+                                    if (state.data.isEmpty()) {
+                                        EmptyState(
+                                            message = "Sin viajes activos",
+                                            subtitle = "Solicita un bus desde la pantalla de inicio",
+                                        )
+                                    } else {
+                                        LazyColumn(contentPadding = PaddingValues(16.dp)) {
+                                            items(state.data, key = { it.id }) { trip ->
+                                                TripCard(
+                                                    trip = trip,
+                                                    onCancel = { viewModel.cancelTrip(trip.bus.id) },
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                is UiState.Error -> EmptyState(message = state.message)
+                                else -> {}
                             }
                         }
-                        is UiState.Error -> EmptyState(message = state.message)
-                        else             -> {}
                     }
                 }
             }
         }
     }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TripCard(trip: RequestInfo, onCancel: () -> Unit) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart && trip.status == "pending") {
-                onCancel(); true
-            } else false
-        }
-    )
-
-    SwipeToDismissBox(
-        state             = dismissState,
-        backgroundContent = {
-            Box(
-                modifier         = Modifier
-                    .fillMaxSize()
-                    .background(AppColors.Red, RoundedCornerShape(14.dp))
-                    .padding(end = 20.dp),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Text("Cancelar", color = AppColors.White, fontWeight = FontWeight.SemiBold)
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun TripCard(trip: RequestInfo, onCancel: () -> Unit) {
+        val dismissState = rememberSwipeToDismissBoxState(
+            confirmValueChange = { value ->
+                if (value == SwipeToDismissBoxValue.EndToStart && trip.status == "pending") {
+                    onCancel(); true
+                } else false
             }
-        },
-        modifier = Modifier.padding(vertical = 6.dp),
-    ) {
-        Card(
-            modifier  = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation    = 3.dp,
-                    shape        = RoundedCornerShape(14.dp),
-                    ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.08f),
-                ),
-            shape     = RoundedCornerShape(14.dp),
-            colors    = CardDefaults.cardColors(containerColor = AppColors.White),
+        )
+
+        SwipeToDismissBox(
+            state = dismissState,
+            backgroundContent = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            MaterialTheme.colorScheme.errorContainer,
+                            RoundedCornerShape(14.dp)
+                        )
+                        .padding(end = 20.dp),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    Text(
+                        "Cancelar",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            modifier = Modifier.padding(vertical = 6.dp),
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(
+                        elevation = 3.dp,
+                        shape = RoundedCornerShape(14.dp),
+                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                    ),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = trip.bus.name,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 15.sp,
+                            modifier = Modifier.weight(1f),
+                        )
+                        StatusChip(status = trip.status)
+                    }
+                    Spacer(Modifier.height(6.dp))
                     Text(
-                        text       = trip.bus.name,
-                        fontWeight = FontWeight.Bold,
-                        color      = AppColors.TextPrimary,
-                        fontSize   = 15.sp,
-                        modifier   = Modifier.weight(1f),
+                        "Parada: ${trip.stop.name}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 13.sp
                     )
-                    StatusChip(status = trip.status)
-                }
-                Spacer(Modifier.height(6.dp))
-                Text("Parada: ${trip.stop.name}", color = AppColors.TextSecondary, fontSize = 13.sp)
-                Text(trip.stop.address,            color = AppColors.TextSecondary, fontSize = 12.sp)
-                if (trip.status == "pending") {
-                    Spacer(Modifier.height(4.dp))
                     Text(
-                        text     = "Desliza para cancelar →",
-                        fontSize = 11.sp,
-                        color    = AppColors.TextSecondary.copy(alpha = 0.6f),
+                        trip.stop.address,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp
                     )
+                    if (trip.status == "pending") {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Desliza para cancelar →",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                        )
+                    }
                 }
             }
         }
     }
-}
 
-@Composable
-private fun StatusChip(status: String) {
-    val (bg, textColor, label) = when (status) {
-        "pending"   -> Triple(AppColors.AccentOrange.copy(alpha = 0.15f),  AppColors.AccentOrange,  "Pendiente")
-        "active"    -> Triple(AppColors.GreenActive.copy(alpha = 0.15f),   AppColors.GreenActive,   "Activo")
-        "completed" -> Triple(AppColors.GreenSuccess.copy(alpha = 0.15f),  AppColors.GreenSuccess,  "Completado")
-        "cancelled" -> Triple(AppColors.Red.copy(alpha = 0.15f),           AppColors.Red,           "Cancelado")
-        else        -> Triple(Color.Gray.copy(alpha = 0.15f),              AppColors.TextSecondary, status)
-    }
-    Box(
-        modifier = Modifier
-            .background(bg, RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp),
-    ) {
-        Text(label, color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+    @Composable
+    private fun StatusChip(status: String) {
+        val (bg, textColor, label) = when (status) {
+            "pending" -> Triple(
+                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.15f),
+                MaterialTheme.colorScheme.onSecondaryContainer,
+                "Pendiente"
+            )
+            "active" -> Triple(
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                MaterialTheme.colorScheme.primary,
+                "Activo"
+            )
+            else -> Triple(
+                MaterialTheme.colorScheme.surfaceVariant,
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                "Completado"
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(bg)
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = label,
+                color = textColor,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
 }

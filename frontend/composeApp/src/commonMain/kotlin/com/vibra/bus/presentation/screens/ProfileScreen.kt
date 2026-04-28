@@ -24,6 +24,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,7 +46,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
-import com.vibra.bus.presentation.theme.AppColors
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
@@ -72,23 +72,23 @@ class ProfileScreen : Screen {
         if (showLogout) {
             AlertDialog(
                 onDismissRequest = { showLogout = false },
-                title            = { Text("Cerrar sesión", color = AppColors.TextPrimary) },
-                text             = { Text("¿Estás seguro de que deseas cerrar sesión?", color = AppColors.TextSecondary) },
+                title            = { Text("Cerrar sesión", color = MaterialTheme.colorScheme.onSurface) },
+                text             = { Text("¿Estás seguro de que deseas cerrar sesión?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 confirmButton    = {
                     TextButton(onClick = { showLogout = false; authViewModel.logout() }) {
-                        Text("Sí, cerrar sesión", color = AppColors.Red)
+                        Text("Sí, cerrar sesión", color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showLogout = false }) {
-                        Text("Cancelar", color = AppColors.PrimaryPurple)
+                        Text("Cancelar", color = MaterialTheme.colorScheme.primary)
                     }
                 },
-                containerColor = AppColors.White,
+                containerColor = MaterialTheme.colorScheme.surface,
             )
         }
 
-        Scaffold(containerColor = AppColors.PrimaryBg) { padding ->
+        Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
             Column(
                 modifier            = Modifier
                     .fillMaxSize()
@@ -100,7 +100,7 @@ class ProfileScreen : Screen {
                 Box(
                     modifier         = Modifier
                         .fillMaxWidth()
-                        .background(AppColors.PrimaryPurple)
+                        .background(MaterialTheme.colorScheme.primary)
                         .padding(vertical = 32.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -113,39 +113,39 @@ class ProfileScreen : Screen {
                                 modifier        = Modifier
                                     .size(88.dp)
                                     .clip(CircleShape)
-                                    .border(3.dp, AppColors.AccentOrange, CircleShape),
+                                    .border(3.dp, MaterialTheme.colorScheme.secondary, CircleShape),
                             )
                         } else {
                             Box(
                                 modifier         = Modifier
                                     .size(88.dp)
                                     .clip(CircleShape)
-                                    .background(AppColors.AccentOrange.copy(alpha = 0.20f))
-                                    .border(3.dp, AppColors.AccentOrange, CircleShape),
+                                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f))
+                                    .border(3.dp, MaterialTheme.colorScheme.secondary, CircleShape),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     text       = profile.name.firstOrNull()?.uppercase() ?: "U",
                                     fontSize   = 36.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color      = AppColors.White,
+                                    color      = MaterialTheme.colorScheme.surface,
                                 )
                             }
                         }
                         Spacer(Modifier.height(12.dp))
-                        Text(profile.name,  fontSize = 20.sp, fontWeight = FontWeight.Bold,  color = AppColors.White)
-                        Text(profile.email, fontSize = 13.sp, color = AppColors.White.copy(alpha = 0.75f))
+                        Text(profile.name,  fontSize = 20.sp, fontWeight = FontWeight.Bold,  color = MaterialTheme.colorScheme.surface)
+                        Text(profile.email, fontSize = 13.sp, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
                         Spacer(Modifier.height(8.dp))
                         // Badge dorado de rol
                         Box(
                             modifier = Modifier
-                                .background(AppColors.AccentOrange.copy(alpha = 0.20f), RoundedCornerShape(8.dp))
-                                .border(1.dp, AppColors.AccentOrange, RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f), RoundedCornerShape(8.dp))
+                                .border(1.dp, MaterialTheme.colorScheme.secondary, RoundedCornerShape(8.dp))
                                 .padding(horizontal = 14.dp, vertical = 4.dp),
                         ) {
                             Text(
                                 text       = if (profile.role == "driver") "Conductor" else "Estudiante",
-                                color      = AppColors.AccentOrange,
+                                color      = MaterialTheme.colorScheme.secondary,
                                 fontSize   = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -172,11 +172,11 @@ class ProfileScreen : Screen {
                         onClick  = { showLogout = true },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         shape    = RoundedCornerShape(12.dp),
-                        colors   = ButtonDefaults.buttonColors(containerColor = AppColors.Red),
+                        colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     ) {
-                        Icon(Icons.AutoMirrored.Default.ExitToApp, contentDescription = null, tint = AppColors.White)
+                        Icon(Icons.AutoMirrored.Default.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.surface)
                         Spacer(Modifier.width(8.dp))
-                        Text("Cerrar sesión", color = AppColors.White, fontWeight = FontWeight.SemiBold)
+                        Text("Cerrar sesión", color = MaterialTheme.colorScheme.surface, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -190,18 +190,18 @@ private fun ProfileOption(label: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp)
-            .shadow(2.dp, RoundedCornerShape(12.dp), ambientColor = AppColors.PrimaryPurple.copy(alpha = 0.08f))
+            .shadow(2.dp, RoundedCornerShape(12.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
             .clip(RoundedCornerShape(12.dp))
-            .background(AppColors.White)
+            .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(label, color = AppColors.TextPrimary, modifier = Modifier.weight(1f), fontSize = 15.sp)
+            Text(label, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f), fontSize = 15.sp)
             Icon(
                 Icons.AutoMirrored.Default.ArrowForwardIos,
                 contentDescription = null,
-                tint     = AppColors.PrimaryPurple,
+                tint     = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(14.dp),
             )
         }

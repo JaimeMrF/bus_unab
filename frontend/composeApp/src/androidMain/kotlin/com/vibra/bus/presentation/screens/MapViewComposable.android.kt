@@ -10,11 +10,18 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.vibra.bus.util.LatLng
+import com.vibra.bus.data.model.StopDto
+import com.vibra.bus.data.model.BusSummaryDto
 
 @Composable
 actual fun MapViewComposable(
     modifier: Modifier,
     userLocation: LatLng?,
+    showStops: Boolean,
+    selectedStop: StopDto?,
+    onStopSelected: (StopDto) -> Unit,
+    stops: List<StopDto>,
+    buses: List<BusSummaryDto>
 ) {
     val defaultPosition = GmsLatLng(-7.1690, -78.5003)
     val cameraPositionState = rememberCameraPositionState {

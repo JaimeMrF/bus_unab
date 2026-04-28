@@ -1,7 +1,15 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -14,21 +22,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,37 +43,59 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.vibra.bus.presentation.theme.AppColors
+import com.vibra.bus.presentation.components.LoginInputField
+import com.vibra.bus.presentation.components.PrimaryGlassButton
+import com.vibra.bus.presentation.components.SecondaryGlassButton
+import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.rubikGlitchFamily
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.util.UiState
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.buhosaludologin
+import vibrabus.composeapp.generated.resources.logo_unab_blanco_transparente
 
 class LoginScreen : Screen {
 
     @Composable
     override fun Content() {
-        val navigator     = LocalNavigator.currentOrThrow
-        val viewModel     = koinViewModel<AuthViewModel>()
-        val uiState       by viewModel.uiState.collectAsState()
-        val event         by viewModel.event.collectAsState()
+        val navigator = LocalNavigator.currentOrThrow
+        val viewModel = koinViewModel<AuthViewModel>()
+        val uiState by viewModel.uiState.collectAsState()
+        val event by viewModel.event.collectAsState()
         val snackbarState = remember { SnackbarHostState() }
 
-        var email    by remember { mutableStateOf("") }
+        var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        var isFormVisible by remember { mutableStateOf(false) }
 
         val isLoading = uiState is UiState.Loading
+
+        val logoScale by animateFloatAsState(
+            targetValue = if (isFormVisible) 1f else 0.8f,
+            animationSpec = tween(durationMillis = 800),
+            label = "logo_scale"
+        )
+
+        val formAlpha by animateFloatAsState(
+            targetValue = if (isFormVisible) 1f else 0f,
+            animationSpec = tween(durationMillis = 1000, delayMillis = 300),
+            label = "form_alpha"
+        )
 
         LaunchedEffect(event) {
             when (val e = event) {
@@ -84,286 +111,258 @@ class LoginScreen : Screen {
             }
         }
 
+        LaunchedEffect(Unit) {
+            isFormVisible = true
+        }
+
         Scaffold(
-            snackbarHost   = { SnackbarHost(snackbarState) },
-            containerColor = AppColors.White,
+            snackbarHost = { SnackbarHost(snackbarState) },
+            containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer, // Morado oscuro
+                                MaterialTheme.colorScheme.primary           // Morado UNAB
+                            )
+                        )
+                    )
                     .padding(padding)
                     .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
             ) {
 
-                // ── Banda superior con acento dorado ─────────────────────
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .background(AppColors.AccentOrange)
-                )
+                Spacer(Modifier.height(40.dp))
 
-                Spacer(Modifier.height(52.dp))
-
-                // ── Sección de marca (izquierda) ──────────────────────────
-                Column(
-                    modifier = Modifier.padding(horizontal = 32.dp),
+                // ── Mascota Búho ──────────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isFormVisible,
+                    enter = slideInVertically(
+                        initialOffsetY = { -it },
+                        animationSpec = tween(durationMillis = 800)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 800)),
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = tween(durationMillis = 300)
+                    ) + fadeOut(animationSpec = tween(durationMillis = 300))
                 ) {
-
-                    // Etiqueta pequeña morada
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .width(20.dp)
-                                .height(2.dp)
-                                .background(AppColors.AccentOrange)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text       = "BUS UNAB",
-                            fontSize   = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color      = AppColors.AccentOrange,
-                            letterSpacing = 3.sp,
+                    Box(
+                        modifier = Modifier
+                            .size(160.dp)
+                            .scale(logoScale),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(Res.drawable.buhosaludologin),
+                            contentDescription = "Búho Saludando",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
                         )
                     }
+                }
 
-                    Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
 
-                    // Logo principal
-                    Text(
-                        text          = "VIBRA+",
-                        fontSize      = 52.sp,
-                        fontWeight    = FontWeight.ExtraBold,
-                        color         = AppColors.PrimaryPurple,
-                        letterSpacing = (-1).sp,
-                        lineHeight    = 52.sp,
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    Text(
-                        text       = "Inicia sesión para\ncontinuar",
-                        fontSize   = 22.sp,
-                        fontWeight = FontWeight.Light,
-                        color      = AppColors.TextPrimary,
-                        lineHeight = 30.sp,
-                    )
+                // ── Título ────────────────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isFormVisible,
+                    enter = slideInVertically(
+                        initialOffsetY = { it / 2 },
+                        animationSpec = tween(durationMillis = 1000, delayMillis = 200)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 1000, delayMillis = 200)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Image(
+                                painter = painterResource(Res.drawable.logo_unab_blanco_transparente),
+                                contentDescription = "Logo UNAB",
+                                modifier = Modifier.size(40.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "Bus UNAB",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                        
+                        Text(
+                            text = "VIBRA+",
+                            fontSize = 42.sp,
+                            fontFamily = rubikGlitchFamily(),
+                            color = MaterialTheme.colorScheme.secondary,
+                            letterSpacing = 2.sp,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(48.dp))
 
-                // ── Formulario con campos subrayados ──────────────────────
-                Column(
-                    modifier = Modifier.padding(horizontal = 32.dp),
+                // ── Formulario ────────────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isFormVisible,
+                    enter = slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(durationMillis = 1200, delayMillis = 400)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 1200, delayMillis = 400)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 300))
                 ) {
-
-                    // Campo correo — underline style
-                    TextField(
-                        value           = email,
-                        onValueChange   = { email = it },
-                        label           = {
-                            Text(
-                                "Correo institucional",
-                                fontSize = 13.sp,
-                            )
-                        },
-                        modifier        = Modifier.fillMaxWidth(),
-                        singleLine      = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        colors          = underlineFieldColors(),
-                    )
-
-                    Spacer(Modifier.height(20.dp))
-
-                    // Campo contraseña — underline style
-                    TextField(
-                        value                = password,
-                        onValueChange        = { password = it },
-                        label                = {
-                            Text(
-                                "Contraseña",
-                                fontSize = 13.sp,
-                            )
-                        },
-                        modifier             = Modifier.fillMaxWidth(),
-                        singleLine           = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions      = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        colors               = underlineFieldColors(),
-                    )
-
-                    // Enlace olvidé contraseña
-                    Box(
-                        modifier         = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.CenterEnd,
-                    ) {
-                        TextButton(
-                            onClick        = {},
-                            contentPadding = PaddingValues(vertical = 6.dp),
-                        ) {
-                            Text(
-                                text       = "¿Olvidaste tu contraseña?",
-                                color      = AppColors.AccentOrange,
-                                fontSize   = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.height(32.dp))
-
-                    // ── Botón principal morado ────────────────────────────
-                    Button(
-                        onClick  = { viewModel.login(email, password) },
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(54.dp),
-                        shape  = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor         = AppColors.PrimaryPurple,
-                            disabledContainerColor = AppColors.PrimaryPurple.copy(alpha = 0.40f),
-                        ),
-                        enabled = !isLoading,
+                            .padding(horizontal = 32.dp)
+                            .alpha(formAlpha),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier    = Modifier.size(22.dp),
-                                color       = AppColors.White,
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Text(
-                                text          = "Iniciar Sesión",
-                                fontSize      = 16.sp,
-                                fontWeight    = FontWeight.SemiBold,
-                                color         = AppColors.White,
-                                letterSpacing = 0.5.sp,
-                            )
-                        }
-                    }
-                }
+                        LoginInputField(
+                            value = email,
+                            onValueChange = { email = it },
+                            placeholder = "Correo electrónico",
+                            icon = Icons.Default.Email,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        )
 
-                Spacer(Modifier.height(36.dp))
+                        LoginInputField(
+                            value = password,
+                            onValueChange = { password = it },
+                            placeholder = "Contraseña",
+                            icon = Icons.Default.Lock,
+                            isPassword = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        )
 
-                // ── Divisor ───────────────────────────────────────────────
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier          = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                ) {
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color    = AppColors.TextSecondary.copy(alpha = 0.20f),
-                    )
-                    Text(
-                        text     = "   o   ",
-                        color    = AppColors.TextSecondary,
-                        fontSize = 13.sp,
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.weight(1f),
-                        color    = AppColors.TextSecondary.copy(alpha = 0.20f),
-                    )
-                }
-
-                Spacer(Modifier.height(24.dp))
-
-                // ── Botón Google ──────────────────────────────────────────
-                Column(
-                    modifier = Modifier.padding(horizontal = 32.dp),
-                ) {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(
-                            onClick  = { viewModel.loginWithGoogle() },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(54.dp),
-                            shape  = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor         = AppColors.White,
-                                contentColor           = AppColors.TextPrimary,
-                                disabledContainerColor = AppColors.White,
-                            ),
-                            border  = androidx.compose.foundation.BorderStroke(
-                                width = 1.5.dp,
-                                color = AppColors.PrimaryPurple.copy(alpha = 0.30f),
-                            ),
-                            enabled = !isLoading,
+                        // Olvidé contraseña
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.CenterEnd
                         ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier    = Modifier.size(22.dp),
-                                    color       = AppColors.PrimaryPurple,
-                                    strokeWidth = 2.dp,
-                                )
-                            } else {
+                            TextButton(
+                                onClick = {},
+                                contentPadding = PaddingValues(vertical = 4.dp)
+                            ) {
                                 Text(
-                                    text       = "Ingresar con Google",
-                                    fontSize   = 15.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color      = AppColors.TextPrimary,
+                                    text = "¿Olvidaste tu contraseña?",
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         }
 
-                        // Badge "Recomendado"
+                        Spacer(Modifier.height(8.dp))
+
+                        PrimaryGlassButton(
+                            text = "Iniciar Sesión",
+                            onClick = { viewModel.login(email, password) },
+                            loading = isLoading,
+                            enabled = email.isNotBlank() && password.isNotBlank()
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(32.dp))
+
+                // ── Divisor ───────────────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isFormVisible,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 600))
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp)
+                    ) {
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        )
                         Box(
                             modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(end = 12.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(AppColors.AccentOrange.copy(alpha = 0.10f))
-                                .border(
-                                    width = 1.dp,
-                                    color = AppColors.AccentOrange,
-                                    shape = RoundedCornerShape(4.dp),
-                                )
-                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                                .padding(horizontal = 12.dp)
+                                .size(8.dp)
+                                .clip(VibraBusShapes.RouteIndicator)
+                                .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f))
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // ── Botón Google ──────────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isFormVisible,
+                    enter = slideInVertically(
+                        initialOffsetY = { it / 2 },
+                        animationSpec = tween(durationMillis = 1000, delayMillis = 800)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 1000, delayMillis = 800))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SecondaryGlassButton(
+                            text = "Ingresa con Google",
+                            onClick = { viewModel.loginWithGoogle() },
+                            showRecommendedBadge = true,
+                            loading = false,
+                            enabled = true
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // ── Enlace Registrarse ────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isFormVisible,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 1200, delayMillis = 1000))
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    ) {
+                        Text(
+                            text = "¿No tienes cuenta?",
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        TextButton(
+                            onClick = { /* Navigate to register */ },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text       = "Recomendado",
-                                fontSize   = 10.sp,
-                                color      = AppColors.AccentOrange,
-                                fontWeight = FontWeight.SemiBold,
+                                text = "Regístrate",
+                                color = MaterialTheme.colorScheme.secondary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
-
-                    Spacer(Modifier.height(32.dp))
-
-                    TextButton(
-                        onClick  = {},
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                    ) {
-                        Text(
-                            text      = "¿No tienes cuenta? Contacta Soporte",
-                            color     = AppColors.TextSecondary,
-                            fontSize  = 13.sp,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-
-                    Spacer(Modifier.height(32.dp))
                 }
+
+                Spacer(Modifier.height(40.dp))
             }
         }
     }
 }
-
-/** Campos estilo subrayado — sin caja, solo línea inferior morada. */
-@Composable
-private fun underlineFieldColors() = TextFieldDefaults.colors(
-    focusedContainerColor      = Color.Transparent,
-    unfocusedContainerColor    = Color.Transparent,
-    disabledContainerColor     = Color.Transparent,
-    focusedIndicatorColor      = AppColors.PrimaryPurple,
-    unfocusedIndicatorColor    = AppColors.TextSecondary.copy(alpha = 0.30f),
-    focusedLabelColor          = AppColors.PrimaryPurple,
-    unfocusedLabelColor        = AppColors.TextSecondary,
-    focusedTextColor           = AppColors.TextPrimary,
-    unfocusedTextColor         = AppColors.TextPrimary,
-    cursorColor                = AppColors.PrimaryPurple,
-)

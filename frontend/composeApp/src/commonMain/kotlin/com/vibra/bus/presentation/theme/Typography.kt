@@ -8,6 +8,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
 import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.doctor_glitch
 import vibrabus.composeapp.generated.resources.poppins_bold
 import vibrabus.composeapp.generated.resources.poppins_extrabold
 import vibrabus.composeapp.generated.resources.poppins_light
@@ -24,6 +25,15 @@ fun poppinsFamily(): FontFamily = FontFamily(
     Font(Res.font.poppins_bold,      FontWeight.Bold),
     Font(Res.font.poppins_extrabold, FontWeight.ExtraBold),
 )
+
+@Composable
+fun glitchFamily(): FontFamily = FontFamily(
+    Font(Res.font.doctor_glitch, FontWeight.Normal)
+)
+
+// Alias for compatibility if needed, but we'll update the screens
+@Composable
+fun rubikGlitchFamily(): FontFamily = glitchFamily()
 
 @Composable
 fun appTypography(): Typography {
@@ -92,5 +102,4 @@ fun appTypography(): Typography {
     )
 }
 
-// Fallback sin @Composable (para compatibilidad estática)
 val AppTypography = Typography()

@@ -1,7 +1,13 @@
 package com.vibra.bus.presentation.components
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,118 +19,200 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.OccupancyDto
-import com.vibra.bus.presentation.theme.AppColors
-import com.vibra.bus.presentation.theme.CardShape
+import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.VibraBusThemeUtils
+import com.vibra.bus.presentation.theme.vibraBusColors
 
 @Composable
 fun BusCard(
     bus: BusSummaryDto,
     occupancy: OccupancyDto?,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    expanded: Boolean = false
 ) {
     val isFull = occupancy?.level == "full"
     val isAvailable = occupancy != null
-    val borderColor = when {
-        isFull -> AppColors.Red
-        isAvailable -> AppColors.CardActive
-        else -> AppColors.CardBorder
-    }
-    val occupancyColor = when (occupancy?.level) {
-        "low" -> AppColors.GreenActive
-        "medium" -> AppColors.AccentOrange
-        "high" -> Color(0xFFF97316)
-        "full" -> Color(0xFFEF4444)
-        else -> AppColors.GrayText
+    val interactionSource = remember { MutableInteractionSource() }
+    
+    // Animation states
+    val pressedScale by animateFloatAsState(
+        targetValue = if (interactionSource.collectIsPressedAsState().value) 0.98f else 1f,
+        animationSpec = tween(durationMillis = 150),
+        label = "bus_card_scale"
+    )
+
+    // Use Material 3 theme utilities for colors
+    val statusColor = VibraBusThemeUtils.busStatusColor(isAvailable, isFull)
+    val occupancyColor = occupancy?.level?.let { VibraBusThemeUtils.occupancyColor(it) }
+        ?: MaterialTheme.colorScheme.outline
+    
+    val statusLabel = when {
+        isFull -> "Lleno"
+        isAvailable -> "Disponible"
+        else -> "Próximo"
     }
 
-    Card(
-        modifier = Modifier
+    Box(
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clickable(onClick = onClick),
-        shape = CardShape,
-        border = BorderStroke(1.dp, borderColor),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (isAvailable) {
-                        Surface(
-                            shape = CircleShape,
-                            color = AppColors.GreenActive,
-                            modifier = Modifier.size(8.dp),
-                        ) {}
-                        Spacer(Modifier.width(6.dp))
-                    }
-                    Text(
-                        text = bus.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        color = AppColors.DarkText,
+            .padding(horizontal = 14.dp, vertical = 5.dp)
+            .scale(pressedScale)
+            .animateContentSize(
+                animationSpec = tween(durationMillis = 300)
+            )
+            .shadow(
+                elevation = 6.dp,
+                shape = VibraBusShapes.Card,
+                spotColor = Color.Black.copy(alpha = 0.12f)
+            )
+            .clip(VibraBusShapes.Card)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.vibraBusColors.glassSurface,
+                        MaterialTheme.vibraBusColors.glassBorder
                     )
-                }
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "Placa: ${bus.plate}",
-                    fontSize = 12.sp,
-                    color = AppColors.GrayText,
                 )
-                if (isFull) {
-                    Spacer(Modifier.height(4.dp))
+            )
+            .border(
+                width = 1.dp,
+                brush = Brush.horizontalGradient(
+                    colors = listOf(
+                        MaterialTheme.vibraBusColors.glassHighlight,
+                        MaterialTheme.vibraBusColors.glassBorder
+                    )
+                ),
+                shape = VibraBusShapes.Card
+            )
+            .clickable(
+                onClick = onClick,
+                interactionSource = interactionSource,
+                indication = ripple(
+                    color = MaterialTheme.colorScheme.primary,
+                    radius = 24.dp
+                )
+            )
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+
+            // Bus icon box premium con Material 3
+            Box(
+                modifier = Modifier
+                    .size(46.dp)
+                    .clip(VibraBusShapes.BusMarker)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "🚌",
+                    fontSize = 22.sp,
+                    color = MaterialTheme.colorScheme.onSecondary
+                )
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            // Info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text       = bus.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 14.sp,
+                    color      = MaterialTheme.colorScheme.onSurface,
+                    letterSpacing = 0.2.sp
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text     = bus.plate,
+                    fontSize = 11.sp,
+                    color    = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                )
+                Spacer(Modifier.height(5.dp))
+                // Status row
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .background(statusColor, CircleShape),
+                    )
+                    Spacer(Modifier.width(5.dp))
                     Text(
-                        text = "Bus lleno",
-                        fontSize = 12.sp,
-                        color = AppColors.Red,
-                        fontWeight = FontWeight.Medium,
+                        text       = statusLabel,
+                        fontSize   = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color      = statusColor,
                     )
                 }
             }
+
+            // Occupancy badge
             occupancy?.let {
-                Column(horizontalAlignment = Alignment.End) {
-                    OccupancyBadge(level = it.level, percentage = it.percentage, color = occupancyColor)
-                }
+                OccupancyBadge(
+                    level      = it.level,
+                    percentage = it.percentage,
+                    color      = occupancyColor,
+                )
+                Spacer(Modifier.width(8.dp))
             }
+
+            // Chevron
+            Text(
+                text  = "›",
+                fontSize   = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color      = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }
 
 @Composable
 fun OccupancyBadge(level: String, percentage: Float, color: Color) {
-    Surface(
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-        color = color.copy(alpha = 0.15f),
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(9.dp))
+            .background(color.copy(alpha = 0.10f))
+            .padding(horizontal = 10.dp, vertical = 6.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "${percentage.toInt()}%",
-                fontSize = 14.sp,
+                text       = "${percentage.toInt()}%",
+                fontSize   = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = color,
+                color      = color,
             )
             Text(
-                text = level.replaceFirstChar { it.uppercase() },
+                text     = level.replaceFirstChar { it.uppercase() },
                 fontSize = 10.sp,
-                color = color,
+                color    = color,
             )
         }
     }

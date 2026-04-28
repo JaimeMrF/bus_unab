@@ -1,35 +1,55 @@
 package com.vibra.bus.presentation.theme
 
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-object AppColors {
-    // ── Primarios ──────────────────────────────────────────────────────────
-    val PrimaryPurple   = Color(0xFF8600DD)   // #8600dd — 30 %
-    val AccentOrange    = Color(0xFFE9A427)   // #e9a427 — 10 %
+// Brand Colors
+val UnabPurple = Color(0xFF1D1B31)      // Deep Dark Purple
+val UnabPurpleLight = Color(0xFF5B2C8C) // Standard UNAB Purple
+val UnabOrange = Color(0xFFE9A427)      // UNAB Orange
 
-    // ── Fondos (tema claro) ───────────────────────────────────────────────
-    val PrimaryBg       = Color(0xFFF5F5F8)   // Blanco roto suave — 60 %
-    val White           = Color(0xFFFFFFFF)
-    val SurfaceCard     = Color(0xFFFFFFFF)   // Card blanca pura
-    val DarkHeader      = Color(0xFF8600DD)   // Header morado (alias)
+val LightColorScheme = lightColorScheme(
+    primary = UnabPurpleLight,
+    onPrimary = Color.White,
+    primaryContainer = UnabPurple,
+    onPrimaryContainer = Color.White,
+    secondary = UnabOrange,
+    onSecondary = UnabPurple,
+    background = UnabPurple,
+    onBackground = Color.White,
+    surface = UnabPurple,
+    onSurface = Color.White,
+    error = Color(0xFFE5484D),
+    onError = Color.White,
+)
 
-    // ── Texto ─────────────────────────────────────────────────────────────
-    val TextPrimary     = Color(0xFF1A0035)   // Texto oscuro principal
-    val TextSecondary   = Color(0xFF6B6880)   // Texto secundario / hint
-    val DarkText        = Color(0xFF09090B)
+val DarkColorScheme = darkColorScheme(
+    primary = UnabPurpleLight,
+    onPrimary = Color.White,
+    secondary = UnabOrange,
+    background = UnabPurple,
+    surface = UnabPurple,
+)
 
-    // ── Otros ─────────────────────────────────────────────────────────────
-    val MediumPurple    = Color(0xFF5200A3)
-    val GrayText        = Color(0xFF9D9DB0)
-    val ActiveNav       = Color(0xFF8600DD)
-    val CardBorder      = Color(0xFFE9A427)
-    val CardActive      = Color(0xFFE9A427)
-    val GreenSuccess    = Color(0xFF56A444)
-    val GreenActive     = Color(0xFF36C416)
-    val Red             = Color(0xFFEF4444)
-    val Orange          = Color(0xFFF97316)
+object GlassColors {
+    val Surface = Color(0x1AFFFFFF)
+    val Border = Color(0x33FFFFFF)
+    val Highlight = Color(0x4DFFFFFF)
+    val SurfaceDark = Color(0x1A000000)
+    val BorderDark = Color(0x33000000)
+    val HighlightDark = Color(0x4D000000)
+}
 
-    // ── Legacy ────────────────────────────────────────────────────────────
-    val GlassSurface    = Color(0x14FFFFFF)
-    val GlassBorder     = Color(0x33FFFFFF)
+object TransportColors {
+    val Success = Color(0xFF2EBE6C)
+    val Warning = Color(0xFFFFB020)
+    val BusAvailable = Color(0xFF2EBE6C)
+    val BusFull = Color(0xFFE5484D)
+    val BusApproaching = Color(0xFFE9A427)
+    val RouteActive = Color(0xFFE9A427)
+    val RouteInactive = Color(0xFF94A3B8)
+    val OccupancyLow = Color(0xFF2EBE6C)
+    val OccupancyMedium = Color(0xFFE9A427)
+    val OccupancyHigh = Color(0xFFF59E0B)
 }

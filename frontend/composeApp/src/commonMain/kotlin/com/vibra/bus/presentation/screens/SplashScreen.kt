@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,7 +21,6 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.vibra.bus.presentation.theme.AppColors
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -50,7 +50,7 @@ class SplashScreen : Screen {
         }
 
         Box(
-            modifier          = Modifier.fillMaxSize().background(AppColors.White),
+            modifier          = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface),
             contentAlignment  = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -60,7 +60,7 @@ class SplashScreen : Screen {
                     modifier = Modifier
                         .height(6.dp)
                         .background(
-                            AppColors.AccentOrange,
+                            MaterialTheme.colorScheme.secondary,
                             androidx.compose.foundation.shape.RoundedCornerShape(50),
                         ),
                 )
@@ -71,19 +71,19 @@ class SplashScreen : Screen {
                     text          = "VIBRA+",
                     fontSize      = 44.sp,
                     fontWeight    = FontWeight.ExtraBold,
-                    color         = AppColors.PrimaryPurple,
+                    color         = MaterialTheme.colorScheme.primary,
                     letterSpacing = (-1).sp,
                 )
                 Text(
                     text          = "Bus UNAB",
                     fontSize      = 14.sp,
                     fontWeight    = FontWeight.Normal,
-                    color         = AppColors.TextSecondary,
+                    color         = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 4.sp,
                 )
                 Spacer(Modifier.height(32.dp))
                 CircularProgressIndicator(
-                    color       = AppColors.PrimaryPurple,
+                    color       = MaterialTheme.colorScheme.primary,
                     strokeWidth = 2.5.dp,
                 )
             }
