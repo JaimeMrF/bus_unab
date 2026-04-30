@@ -36,8 +36,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -91,6 +95,7 @@ class DriverModeScreen : Screen {
         val profileViewModel = koinViewModel<ProfileViewModel>()
         val profile by profileViewModel.profile.collectAsState()
         val stopsState by viewModel.stopsState.collectAsState()
+        val isFull by viewModel.isFull.collectAsState()
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
         var showStopSelector by remember { mutableStateOf(false) }
@@ -374,6 +379,77 @@ class DriverModeScreen : Screen {
                                 text = "📷  Escanear QR de pasajero",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp,
+                            )
+                        }
+                    }
+                }
+
+                // ── Card de Estado del Bus (Ocupación) ────────────────────────
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isFull) 
+                                                MaterialTheme.colorScheme.errorContainer 
+                                            else 
+                                                MaterialTheme.colorScheme.primaryContainer
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = if (isFull) Icons.Default.Groups else Icons.Default.Group,
+                                        contentDescription = null,
+                                        tint = if (isFull) 
+                                            MaterialTheme.colorScheme.error 
+                                        else 
+                                            MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "Estado del Bus",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = if (isFull) "Bus LLENO (Sin cupos)" else "Hay asientos disponibles",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isFull) 
+                                            MaterialTheme.colorScheme.error 
+                                        else 
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            
+                            Switch(
+                                checked = isFull,
+                                onCheckedChange = { viewModel.toggleOccupancy(assignedPlate) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.error,
+                                    checkedTrackColor = MaterialTheme.colorScheme.errorContainer,
+                                )
                             )
                         }
                     }

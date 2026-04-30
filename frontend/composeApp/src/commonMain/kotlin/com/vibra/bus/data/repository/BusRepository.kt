@@ -14,4 +14,5 @@ class BusRepository(private val api: BusApi) {
     suspend fun getBusStops(plate: String): ApiResult<BusStopsResponse> = api.getBusStops(plate)
     suspend fun getBusOccupancy(plate: String): ApiResult<OccupancyResponse> = api.getBusOccupancy(plate)
     suspend fun confirmArrival(plate: String, stopId: Int): ApiResult<ArrivedResponse> = api.confirmArrival(plate, stopId)
+    suspend fun updateBusOccupancy(plate: String, isFull: Boolean): ApiResult<OccupancyResponse> = api.updateBusOccupancy(plate, isFull)
 }

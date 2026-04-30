@@ -115,7 +115,9 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     if (state.data.isFull) showFullDialog = true
                     else {
                         viewModel.consumeRequestState()
-                        navigator.push(MyQRScreen())
+                        selectedStop?.let { stop ->
+                            navigator.push(WaitingBusScreen(plate, stop.toStopDto()))
+                        }
                     }
                 }
                 else -> {}
@@ -372,6 +374,8 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             }
                         }
                     },
+                    selectedBus     = null,
+                    onBusSelected   = {},
                     stops = stopDtos,
                     buses = emptyList()
                 )

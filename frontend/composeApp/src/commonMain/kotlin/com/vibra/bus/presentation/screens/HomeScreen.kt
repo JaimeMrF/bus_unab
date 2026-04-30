@@ -157,27 +157,59 @@ class HomeScreen : Screen {
                     showStops = showStops,
                     selectedStop = selectedStop,
                     onStopSelected = { selectedStop = it },
+                    selectedBus = selectedBus,
+                    onBusSelected = { selectedBus = it },
                     stops = stopList,
                     buses = busList
                 )
 
                 AnimatedVisibility(
                     visible = isSheetVisible,
+                    modifier = Modifier.align(Alignment.BottomCenter),
                     enter = slideInVertically(
                         initialOffsetY = { it },
                         animationSpec = tween(durationMillis = 600)
                     ) + fadeIn(animationSpec = tween(durationMillis = 600)),
                     exit = fadeOut(animationSpec = tween(durationMillis = 300))
                 ) {
-                    ModalBottomSheet(
-                        onDismissRequest = {},
-                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                        containerColor = Color.Transparent,
-                        shape = VibraBusShapes.BottomSheet,
-                        dragHandle = {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(VibraBusShapes.BottomSheet)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.vibraBusColors.glassSurface,
+                                        MaterialTheme.vibraBusColors.glassBorder
+                                    )
+                                )
+                            )
+                            .border(
+                                width = 1.dp,
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        MaterialTheme.vibraBusColors.glassHighlight,
+                                        MaterialTheme.vibraBusColors.glassBorder
+                                    )
+                                ),
+                                shape = VibraBusShapes.BottomSheet
+                            )
+                            .shadow(
+                                elevation = 12.dp,
+                                shape = VibraBusShapes.BottomSheet,
+                                spotColor = Color.Black.copy(alpha = 0.15f)
+                            )
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 20.dp)
+                        ) {
+                            // Drag Handle Indicator
                             Box(
                                 modifier = Modifier
-                                    .padding(top = 10.dp, bottom = 4.dp)
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(bottom = 16.dp)
                                     .size(width = 40.dp, height = 4.dp)
                                     .clip(VibraBusShapes.RouteIndicator)
                                     .background(
@@ -189,81 +221,67 @@ class HomeScreen : Screen {
                                         )
                                     )
                             )
-                        }
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .blur(1.dp)
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            MaterialTheme.vibraBusColors.glassSurface,
-                                            MaterialTheme.vibraBusColors.glassBorder
-                                        )
-                                    )
-                                )
-                                .border(
-                                    width = 1.dp,
-                                    brush = Brush.horizontalGradient(
-                                        colors = listOf(
-                                            MaterialTheme.vibraBusColors.glassHighlight,
-                                            MaterialTheme.vibraBusColors.glassBorder
-                                        )
-                                    ),
-                                    shape = VibraBusShapes.BottomSheet
-                                )
-                                .shadow(
-                                    elevation = 12.dp,
-                                    shape = VibraBusShapes.BottomSheet,
-                                    spotColor = Color.Black.copy(alpha = 0.15f)
-                                )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(
-                                    horizontal = 16.dp,
-                                    vertical = 20.dp
+
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = slideInVertically(
+                                    initialOffsetY = { -it / 2 },
+                                    animationSpec = tween(durationMillis = 800, delayMillis = 200)
+                                ) + fadeIn(
+                                    animationSpec = tween(durationMillis = 800, delayMillis = 200)
                                 )
                             ) {
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = slideInVertically(
-                                        initialOffsetY = { -it / 2 },
-                                        animationSpec = tween(durationMillis = 800, delayMillis = 200)
-                                    ) + fadeIn(
-                                        animationSpec = tween(durationMillis = 800, delayMillis = 200)
-                                    )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 16.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = "¡Hola, ${
-                                                    profile.name.split(" ").firstOrNull() ?: ""
-                                                }! 🦉",
-                                                fontSize = 20.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.onPrimary,
-                                                letterSpacing = 0.5.sp
-                                            )
-                                            Spacer(Modifier.height(4.dp))
-                                            Text(
-                                                text = if (activeBusCount > 0)
-                                                    "$activeBusCount buses activos cerca"
-                                                else
-                                                    "Selecciona tu ruta",
-                                                fontSize = 14.sp,
-                                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
-                                                fontWeight = FontWeight.Medium
-                                            )
-                                        }
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "¡Hola, ${
+                                                profile.name.split(" ").firstOrNull() ?: ""
+                                            }! 🦉",
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            letterSpacing = 0.5.sp
+                                        )
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(
+                                            text = if (selectedBus != null) 
+                                                "${selectedBus?.name ?: "Bus UNAB"}" 
+                                            else if (activeBusCount > 0)
+                                                "$activeBusCount buses activos cerca"
+                                            else
+                                                "Selecciona tu ruta",
+                                            fontSize = 14.sp,
+                                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                                            fontWeight = FontWeight.Medium
+                                        )
                                     }
                                 }
+                            }
+                            
+                            // Espacio para la lista de rutas o botón
+                            if (profile.role == "driver") {
+                                com.vibra.bus.presentation.components.PrimaryGlassButton(
+                                    text = "Entrar a Modo Conductor",
+                                    onClick = { navigator.push(DriverModeScreen()) },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            } else {
+                                com.vibra.bus.presentation.components.PrimaryGlassButton(
+                                    text = if (selectedBus != null) "Ver ruta ${selectedBus?.plate}" else "Selecciona un bus",
+                                    onClick = { 
+                                        selectedBus?.let { 
+                                            navigator.push(StopSelectionScreen(it.plate)) 
+                                        }
+                                    },
+                                    enabled = selectedBus != null,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
                         }
                     }

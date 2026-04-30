@@ -58,4 +58,5 @@ val commonModule = module {
     viewModel { NotificationsViewModel(get()) }
     viewModel { ProfileViewModel(get()) }
     viewModel { DriverModeViewModel(get(), get()) }
+    viewModel { com.vibra.bus.presentation.viewmodel.WaitingBusViewModel(get()) }
 }

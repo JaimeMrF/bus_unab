@@ -47,8 +47,11 @@ expect fun MapViewComposable(
     showStops: Boolean,
     selectedStop: StopDto?,
     onStopSelected: (StopDto) -> Unit,
-    stops: List<StopDto>,
-    buses: List<BusSummaryDto>
+    selectedBus: com.vibra.bus.data.model.BusSummaryDto?,
+    onBusSelected: (com.vibra.bus.data.model.BusSummaryDto) -> Unit,
+    stops: List<com.vibra.bus.data.model.StopDto>,
+    buses: List<com.vibra.bus.data.model.BusSummaryDto>,
+    path: List<LatLng>? = null
 )
 
 /**

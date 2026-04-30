@@ -43,8 +43,10 @@ actual class GoogleSignInManager(private val context: Context) {
 
             GoogleIdTokenCredential.createFrom(result.credential.data).idToken
         } catch (e: GetCredentialException) {
+            println("GoogleSignIn Error: ${e.message}")
             null
         } catch (e: Exception) {
+            println("GoogleSignIn Unknown Error: ${e.message}")
             null
         }
     }

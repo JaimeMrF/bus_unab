@@ -71,3 +71,8 @@ data class ArrivedResponse(
     val success: Boolean,
     val data: ArrivedResponseData,
 )
+
+@Serializable
+data class OccupancyRequest(
+    @SerialName("is_full") val isFull: Boolean,
+)

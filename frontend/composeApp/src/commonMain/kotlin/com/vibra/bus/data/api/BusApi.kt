@@ -43,4 +43,11 @@ class BusApi(private val client: HttpClient) {
             setBody(ArrivedRequest(stopId))
         }.body()
     }
+
+    suspend fun updateBusOccupancy(plate: String, isFull: Boolean): ApiResult<OccupancyResponse> = safeCall {
+        client.post("$BASE_URL/buses/$plate/occupancy") {
+            contentType(ContentType.Application.Json)
+            setBody(com.vibra.bus.data.model.OccupancyRequest(isFull))
+        }.body()
+    }
 }
