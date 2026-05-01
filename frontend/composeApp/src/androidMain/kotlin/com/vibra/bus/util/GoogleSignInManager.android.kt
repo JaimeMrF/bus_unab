@@ -1,10 +1,13 @@
 package com.vibra.bus.util
 
 import android.content.Context
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.vibra.bus.BuildConfig
@@ -42,12 +45,17 @@ actual class GoogleSignInManager(private val context: Context) {
             )
 
             GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+        } catch (e: GetCredentialCancellationException) {
+            null
+        } catch (e: NoCredentialException) {
+            Log.e("GoogleSignIn", "NoCredentialException: ${e.message}")
+            throw Exception("No hay ninguna cuenta de Google en el dispositivo. Ve a Ajustes → Cuentas y agrega una.")
         } catch (e: GetCredentialException) {
-            println("GoogleSignIn Error: ${e.message}")
-            null
+            Log.e("GoogleSignIn", "GetCredentialException [${e.type}]: ${e.message}")
+            throw Exception("Error al iniciar con Google: ${e.message}")
         } catch (e: Exception) {
-            println("GoogleSignIn Unknown Error: ${e.message}")
-            null
+            Log.e("GoogleSignIn", "Unknown error: ${e.message}")
+            throw e
         }
     }
 

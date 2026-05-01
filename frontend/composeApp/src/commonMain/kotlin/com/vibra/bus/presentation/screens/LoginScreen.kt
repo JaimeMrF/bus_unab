@@ -322,8 +322,8 @@ class LoginScreen : Screen {
                             text = "Ingresa con Google",
                             onClick = { viewModel.loginWithGoogle() },
                             showRecommendedBadge = true,
-                            loading = false,
-                            enabled = true
+                            loading = isLoading,
+                            enabled = !isLoading
                         )
                     }
                 }

@@ -11,6 +11,8 @@ import com.vibra.bus.util.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 sealed class AuthEvent {
     data object NavigateToHome : AuthEvent()
@@ -93,9 +95,19 @@ class AuthViewModel(
             try {
                 val idToken = googleSignInManager.signIn()
                 if (idToken == null) {
-                    _uiState.value = UiState.Error("Google Sign-In cancelado")
+                    _uiState.value = UiState.Idle
                     return@launch
                 }
+
+                val email = extractEmailFromJwt(idToken)
+                if (email == null || !email.lowercase().endsWith("@unab.edu.co")) {
+                    googleSignInManager.signOut()
+                    val errorMsg = "Solo puedes ingresar con una cuenta @unab.edu.co"
+                    _uiState.value = UiState.Error(errorMsg)
+                    _event.value = AuthEvent.ShowError(errorMsg)
+                    return@launch
+                }
+
                 when (val result = authRepository.loginWithGoogle(idToken)) {
                     is ApiResult.Success -> {
                         val response = result.data
@@ -119,7 +131,9 @@ class AuthViewModel(
                     }
                 }
             } catch (e: Exception) {
-                _uiState.value = UiState.Error(e.message ?: "Error desconocido")
+                val errorMsg = e.message ?: "Error desconocido con Google"
+                _uiState.value = UiState.Error(errorMsg)
+                _event.value = AuthEvent.ShowError(errorMsg)
             }
         }
     }
@@ -138,5 +152,18 @@ class AuthViewModel(
 
     fun consumeEvent() {
         _event.value = null
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
+    private fun extractEmailFromJwt(token: String): String? {
+        return try {
+            val payload = token.split(".").getOrNull(1) ?: return null
+            // JWT uses base64url without padding — add it back before decoding
+            val padded = payload + "=".repeat((4 - payload.length % 4) % 4)
+            val json = Base64.UrlSafe.decode(padded).decodeToString()
+            """"email"\s*:\s*"([^"]+)"""".toRegex().find(json)?.groupValues?.get(1)
+        } catch (e: Exception) {
+            null
+        }
     }
 }

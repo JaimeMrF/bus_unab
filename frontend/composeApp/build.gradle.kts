@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -142,8 +143,15 @@ android {
 
         buildConfigField("String", "BASE_URL_ANDROID", "\"http://10.0.2.2:8000/api/v1\"")
         buildConfigField("String", "BASE_URL_IOS", "\"http://localhost:8000/api/v1\"")
-        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"887389827022-oj7di7remsi2k1avdgqp8asf65rlu2h3.apps.googleusercontent.com\"")
-
+        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"847159864109-cqoun14cl82gu66fe2oq9pmig1p2brt0.apps.googleusercontent.com\"")
+        
+        val properties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+        val mapsApiKey = properties.getProperty("MAPS_API_KEY") ?: ""
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildFeatures {
