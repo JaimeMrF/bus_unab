@@ -127,7 +127,7 @@ fun LoginInputField(
                     errorTextColor = MaterialTheme.colorScheme.error,
                     focusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    cursorColor = MaterialTheme.colorScheme.primary
+                    cursorColor = Color.White
                 ),
                 textStyle = TextStyle(
                     color = MaterialTheme.colorScheme.onSurface,

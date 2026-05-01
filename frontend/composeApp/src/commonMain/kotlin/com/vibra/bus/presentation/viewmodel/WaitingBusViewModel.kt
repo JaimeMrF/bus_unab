@@ -39,7 +39,7 @@ class WaitingBusViewModel(
                 // In a real app, we might get user location here too
                 // For now, let's just get the bus position
                 updateBusInfo(plate, stop)
-                delay(3000) // Poll every 3 seconds
+                delay(10000) // Poll every 10 seconds to save battery and costs
             }
         }
     }

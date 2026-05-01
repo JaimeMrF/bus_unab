@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -47,6 +49,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -126,8 +129,8 @@ class LoginScreen : Screen {
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer, // Morado oscuro
-                                MaterialTheme.colorScheme.primary           // Morado UNAB
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.primary
                             )
                         )
                     )
@@ -137,7 +140,7 @@ class LoginScreen : Screen {
                 verticalArrangement = Arrangement.Top
             ) {
 
-                Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(24.dp)) // ← era 40dp
 
                 // ── Mascota Búho ──────────────────────────────────────────────────
                 AnimatedVisibility(
@@ -151,24 +154,19 @@ class LoginScreen : Screen {
                         animationSpec = tween(durationMillis = 300)
                     ) + fadeOut(animationSpec = tween(durationMillis = 300))
                 ) {
-                    Box(
+                    Image(
+                        painter = painterResource(Res.drawable.buhosaludologin),
+                        contentDescription = "Búho Saludando",
                         modifier = Modifier
-                            .size(160.dp)
+                            .size(220.dp) // ← ligeramente más pequeño para que quepa todo
                             .scale(logoScale),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(Res.drawable.buhosaludologin),
-                            contentDescription = "Búho Saludando",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
+                        contentScale = ContentScale.Fit
+                    )
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(4.dp)) // ← era 8dp
 
-                // ── Título ────────────────────────────────────────────────────────
+                // ── Logo + Bus UNAB + VIBRA+ ──────────────────────────────────────
                 AnimatedVisibility(
                     visible = isFormVisible,
                     enter = slideInVertically(
@@ -177,39 +175,46 @@ class LoginScreen : Screen {
                     ) + fadeIn(animationSpec = tween(durationMillis = 1000, delayMillis = 200)),
                     exit = fadeOut(animationSpec = tween(durationMillis = 300))
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Image(
+                            painter = painterResource(Res.drawable.logo_unab_blanco_transparente),
+                            contentDescription = "Logo UNAB",
+                            modifier = Modifier.size(80.dp),
+                            contentScale = ContentScale.Fit
+                        )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Column(
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.Start
                         ) {
-                            Image(
-                                painter = painterResource(Res.drawable.logo_unab_blanco_transparente),
-                                contentDescription = "Logo UNAB",
-                                modifier = Modifier.size(40.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                            Spacer(Modifier.width(8.dp))
                             Text(
                                 text = "Bus UNAB",
-                                fontSize = 24.sp,
+                                fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 letterSpacing = 1.sp
                             )
+                            Text(
+                                text = "VIBRA+",
+                                fontSize = 48.sp,
+                                fontFamily = rubikGlitchFamily(),
+                                color = MaterialTheme.colorScheme.secondary,
+                                letterSpacing = 2.sp,
+                                lineHeight = 50.sp
+                            )
                         }
-                        
-                        Text(
-                            text = "VIBRA+",
-                            fontSize = 42.sp,
-                            fontFamily = rubikGlitchFamily(),
-                            color = MaterialTheme.colorScheme.secondary,
-                            letterSpacing = 2.sp,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
                     }
                 }
 
-                Spacer(Modifier.height(48.dp))
+                Spacer(Modifier.height(24.dp)) // ← era 48dp
 
                 // ── Formulario ────────────────────────────────────────────────────
                 AnimatedVisibility(
@@ -225,7 +230,7 @@ class LoginScreen : Screen {
                             .padding(horizontal = 32.dp)
                             .alpha(formAlpha),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                        verticalArrangement = Arrangement.spacedBy(12.dp) // ← era 20dp
                     ) {
                         LoginInputField(
                             value = email,
@@ -244,7 +249,6 @@ class LoginScreen : Screen {
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
                         )
 
-                        // Olvidé contraseña
                         Box(
                             modifier = Modifier.fillMaxWidth(),
                             contentAlignment = Alignment.CenterEnd
@@ -262,8 +266,6 @@ class LoginScreen : Screen {
                             }
                         }
 
-                        Spacer(Modifier.height(8.dp))
-
                         PrimaryGlassButton(
                             text = "Iniciar Sesión",
                             onClick = { viewModel.login(email, password) },
@@ -273,7 +275,7 @@ class LoginScreen : Screen {
                     }
                 }
 
-                Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(16.dp)) // ← era 32dp
 
                 // ── Divisor ───────────────────────────────────────────────────────
                 AnimatedVisibility(
@@ -290,12 +292,12 @@ class LoginScreen : Screen {
                             modifier = Modifier.weight(1f),
                             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                         )
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp)
-                                .size(8.dp)
-                                .clip(VibraBusShapes.RouteIndicator)
-                                .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.3f))
+                        Text(
+                            text = "O",
+                            modifier = Modifier.padding(horizontal = 12.dp),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
                         )
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
@@ -304,9 +306,9 @@ class LoginScreen : Screen {
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(16.dp)) // ← era 24dp
 
-                // ── Botón Google ──────────────────────────────────────────────────
+                // ── Botón Google con recuadro "Recomendado" ───────────────────────
                 AnimatedVisibility(
                     visible = isFormVisible,
                     enter = slideInVertically(
@@ -314,21 +316,57 @@ class LoginScreen : Screen {
                         animationSpec = tween(durationMillis = 1000, delayMillis = 800)
                     ) + fadeIn(animationSpec = tween(durationMillis = 1000, delayMillis = 800))
                 ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp)    // mismo padding lateral que "Iniciar Sesión"
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFFF5A623).copy(alpha = 0.18f),
+                                        Color(0xFFF5A623).copy(alpha = 0.08f)
+                                    )
+                                )
+                            )
+                            .border(
+                                width = 1.5.dp,
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(
+                                        Color(0xFFF5A623).copy(alpha = 0.8f),
+                                        Color(0xFFF5A623).copy(alpha = 0.4f)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                            .padding(horizontal = 16.dp, vertical = 14.dp) // ← aire interno para que no toque
                     ) {
-                        SecondaryGlassButton(
-                            text = "Ingresa con Google",
-                            onClick = { viewModel.loginWithGoogle() },
-                            showRecommendedBadge = true,
-                            loading = isLoading,
-                            enabled = !isLoading
-                        )
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(
+                                text = "⭐  RECOMENDADO",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFFF5A623),
+                                letterSpacing = 2.sp
+                            )
+                            // fillMaxWidth hace que el botón ocupe todo el ancho disponible
+                            // igual que PrimaryGlassButton arriba
+                            SecondaryGlassButton(
+                                text = "Ingresa con Google",
+                                onClick = { viewModel.loginWithGoogle() },
+                                showRecommendedBadge = false,
+                                loading = isLoading,
+                                enabled = !isLoading
+                            )
+                        }
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(16.dp)) // ← era 24dp
 
                 // ── Enlace Registrarse ────────────────────────────────────────────
                 AnimatedVisibility(
@@ -352,7 +390,7 @@ class LoginScreen : Screen {
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "Regístrate",
+                                text = "Contacta Soporte",
                                 color = MaterialTheme.colorScheme.secondary,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -361,7 +399,7 @@ class LoginScreen : Screen {
                     }
                 }
 
-                Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(24.dp)) // ← era 40dp
             }
         }
     }

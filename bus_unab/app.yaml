@@ -1,0 +1,28 @@
+runtime: php82
+instance_class: F1
+
+# Configuración de escalado automático para controlar costos
+automatic_scaling:
+  min_instances: 0
+  max_instances: 1 # Mantiene el costo bajo limitando a 1 instancia
+  target_cpu_utilization: 0.8
+
+env_variables:
+  APP_ENV: production
+  APP_KEY: base64:RXfOmEyoxadFOQKEc0hfGLfZqD7QNPppacwbUMbsqso= # Reemplazar con una nueva en producción
+  APP_DEBUG: false
+  
+  # Base de Datos (Cloud SQL)
+  DB_CONNECTION: mysql
+  DB_SOCKET: /cloudsql/TU_PROYECTO:REGION:INSTANCIA
+  DB_DATABASE: bus_unab_prod
+  DB_USERNAME: root
+  DB_PASSWORD: TU_PASSWORD
+  
+  # Cache y Sesiones
+  CACHE_STORE: database
+  SESSION_DRIVER: database
+  
+  # GPS Service
+  GPS_MOBILE_BASE_URL: https://gps.api.ejemplo.com
+  GPS_MOBILE_USER_INC: 123
