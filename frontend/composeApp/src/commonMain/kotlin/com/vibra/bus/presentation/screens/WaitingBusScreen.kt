@@ -3,6 +3,7 @@ package com.vibra.bus.presentation.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -124,10 +125,15 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                             .background(
                                 brush = Brush.verticalGradient(
                                     listOf(
-                                        MaterialTheme.colorScheme.surface,
-                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
+                                        Color(0xB31D1B31), // Dark Glass
+                                        Color(0xE61D1B31)
                                     )
                                 )
+                            )
+                            .border(
+                                width = 1.dp,
+                                brush = Brush.horizontalGradient(listOf(Color(0x33FFFFFF), Color(0x1AFFFFFF))),
+                                shape = VibraBusShapes.BottomSheet
                             )
                             .padding(20.dp)
                     ) {
@@ -141,12 +147,13 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 Text(
                                     text = bus?.name ?: "Buscando bus...",
                                     fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
                                 Text(
                                     text = "Placa: $plate",
                                     fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = Color.White.copy(alpha = 0.7f)
                                 )
                             }
                             
@@ -155,7 +162,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 modifier = Modifier
                                     .size(60.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                    .background(MaterialTheme.colorScheme.secondary),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -163,12 +170,12 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                         text = eta?.toString() ?: "--",
                                         fontSize = 20.sp,
                                         fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.onSecondary
                                     )
                                     Text(
                                         text = "min",
                                         fontSize = 10.sp,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
                                     )
                                 }
                             }
@@ -192,7 +199,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                         Text(
                             text = if (isArriving) "¡Prepara tu QR para abordar!" else "Aproximadamente a ${(distance ?: 0) / 100} cuadras",
                             fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
 

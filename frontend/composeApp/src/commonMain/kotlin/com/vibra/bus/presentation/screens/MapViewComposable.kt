@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,22 +24,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.vibra.bus.data.model.StopDto
-import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.theme.VibraBusThemeUtils
 import com.vibra.bus.util.LatLng
+import org.jetbrains.compose.resources.painterResource
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.ic_bus_top
 
 @Composable
 expect fun MapViewComposable(
@@ -61,6 +62,7 @@ expect fun MapViewComposable(
 fun BusMarker(
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
+    heading: Float = 0f,
     onClick: () -> Unit = {}
 ) {
     val scale by animateFloatAsState(
@@ -68,31 +70,24 @@ fun BusMarker(
         animationSpec = tween(durationMillis = 200),
         label = "bus_marker_scale"
     )
-    
-    val busColor = VibraBusThemeUtils.busStatusColor(true, false)
+
+    val rotation by animateFloatAsState(
+        targetValue = heading,
+        animationSpec = tween(durationMillis = 500),
+        label = "bus_rotation"
+    )
     
     Box(
         modifier = modifier
-            .size(40.dp)
+            .size(48.dp)
             .scale(scale)
-            .clip(VibraBusShapes.BusMarker)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        busColor,
-                        busColor.copy(alpha = 0.8f)
-                    ),
-                    center = Offset(20f, 20f),
-                    radius = 20f
-                )
-            ),
+            .rotate(rotation),
         contentAlignment = Alignment.Center
     ) {
-        // Bus icon placeholder
-        androidx.compose.material3.Text(
-            text = "🚌",
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onPrimary
+        Image(
+            painter = painterResource(Res.drawable.ic_bus_top),
+            contentDescription = "Bus",
+            modifier = Modifier.fillMaxSize()
         )
     }
 }

@@ -7,7 +7,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -154,6 +157,22 @@ data class StopSelectionScreen(val plate: String) : Screen {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clip(VibraBusShapes.BottomSheet)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xB31D1B31), // Dark Glass
+                                    Color(0xE61D1B31)
+                                )
+                            )
+                        )
+                        .border(
+                            width = 1.dp,
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(Color(0x33FFFFFF), Color(0x1AFFFFFF))
+                            ),
+                            shape = VibraBusShapes.BottomSheet
+                        )
                         .padding(16.dp)
                         .scale(sheetScale)
                 ) {
@@ -166,12 +185,12 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             Text(
                                 text  = "Selecciona tu parada",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = Color.White
                             )
                             Text(
                                 text  = "Bus: $plate",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = Color.White.copy(alpha = 0.7f)
                             )
                         }
                         Box(
@@ -348,8 +367,8 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         .background(MaterialTheme.colorScheme.outline)
                 )
             },
-            sheetContainerColor  = MaterialTheme.colorScheme.surfaceContainer,
-            sheetTonalElevation  = 8.dp,
+            sheetContainerColor  = Color.Transparent, // Transparent to use our custom glass background
+            sheetTonalElevation  = 0.dp,
             containerColor       = MaterialTheme.colorScheme.background
         ) { padding ->
             Box(
@@ -464,8 +483,8 @@ private fun StopSelectionRow(
             )
             .clip(RoundedCornerShape(12.dp))
             .background(
-                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.07f)
-                else            MaterialTheme.colorScheme.surface
+                if (isSelected) Color.White.copy(alpha = 0.15f)
+                else            Color.White.copy(alpha = 0.05f)
             )
             .clickable(onClick = onClick)
             .padding(12.dp),
@@ -475,7 +494,8 @@ private fun StopSelectionRow(
                 selected = isSelected,
                 onClick  = onClick,
                 colors   = RadioButtonDefaults.colors(
-                    selectedColor = MaterialTheme.colorScheme.primary
+                    selectedColor = MaterialTheme.colorScheme.secondary,
+                    unselectedColor = Color.White.copy(alpha = 0.6f)
                 ),
             )
             Column(
@@ -485,18 +505,18 @@ private fun StopSelectionRow(
             ) {
                 Text(
                     stop.name,
-                    color      = MaterialTheme.colorScheme.onSurface,
+                    color      = Color.White,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
                     stop.address,
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color    = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp
                 )
             }
             Text(
                 "~${stop.pivot.estimatedMinutes} min",
-                color      = MaterialTheme.colorScheme.primary,
+                color      = MaterialTheme.colorScheme.secondary,
                 fontSize   = 12.sp,
                 fontWeight = FontWeight.Medium,
             )

@@ -30,7 +30,7 @@ actual fun MapViewComposable(
     buses: List<BusSummaryDto>,
     path: List<LatLng>?
 ) {
-    val defaultPosition = GmsLatLng(7.1193, -73.1222)
+    val defaultPosition = GmsLatLng(7.1166, -73.1056) // UNAB Jardín, Bucaramanga
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             userLocation?.let { GmsLatLng(it.latitude, it.longitude) } ?: defaultPosition,
@@ -40,9 +40,13 @@ actual fun MapViewComposable(
 
     LaunchedEffect(userLocation) {
         userLocation?.let {
-            cameraPositionState.animate(
-                CameraUpdateFactory.newLatLngZoom(GmsLatLng(it.latitude, it.longitude), 15f),
-            )
+            // Solo centramos automáticamente si la ubicación es "válida" para Bucaramanga
+            // Evitamos saltos a USA (lat ~37) si el usuario está en Colombia (lat ~7)
+            if (it.latitude < 15.0) { 
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(GmsLatLng(it.latitude, it.longitude), 15f),
+                )
+            }
         }
     }
 
@@ -61,7 +65,7 @@ actual fun MapViewComposable(
         path?.let { p ->
             com.google.maps.android.compose.Polyline(
                 points = p.map { GmsLatLng(it.latitude, it.longitude) },
-                color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.secondary,
                 width = 12f,
                 jointType = com.google.android.gms.maps.model.JointType.ROUND,
                 pattern = listOf(com.google.android.gms.maps.model.Dot())
@@ -103,7 +107,10 @@ actual fun MapViewComposable(
                     true
                 }
             ) {
-                BusMarker(isSelected = isSelected)
+                BusMarker(
+                    isSelected = isSelected,
+                    heading = bus.heading.toFloat()
+                )
             }
         }
     }

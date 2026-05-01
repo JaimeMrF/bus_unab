@@ -18,6 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,12 +28,10 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -41,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
@@ -56,7 +56,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.theme.VibraBusShapes
-import com.vibra.bus.presentation.theme.vibraBusColors
 import com.vibra.bus.presentation.viewmodel.HomeViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.UiState
@@ -75,9 +74,6 @@ class HomeScreen : Screen {
         val busesState by viewModel.busesState.collectAsState()
         val stopsState by viewModel.stopsState.collectAsState()
         
-        val occupancyMap by viewModel.occupancyMap.collectAsState()
-        val busStops by viewModel.busStops.collectAsState()
-        val busStopsLoading by viewModel.busStopsLoading.collectAsState()
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
         val userLocation by viewModel.userLocation.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
@@ -165,7 +161,9 @@ class HomeScreen : Screen {
 
                 AnimatedVisibility(
                     visible = isSheetVisible,
-                    modifier = Modifier.align(Alignment.BottomCenter),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp, start = 16.dp, end = 16.dp),
                     enter = slideInVertically(
                         initialOffsetY = { it },
                         animationSpec = tween(durationMillis = 600)
@@ -174,113 +172,78 @@ class HomeScreen : Screen {
                 ) {
                     Box(
                         modifier = Modifier
+                            .widthIn(max = 500.dp)
                             .fillMaxWidth()
-                            .clip(VibraBusShapes.BottomSheet)
+                            .clip(RoundedCornerShape(28.dp))
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        MaterialTheme.vibraBusColors.glassSurface,
-                                        MaterialTheme.vibraBusColors.glassBorder
+                                        Color(0xB31D1B31),
+                                        Color(0xE61D1B31)
                                     )
                                 )
                             )
                             .border(
                                 width = 1.dp,
                                 brush = Brush.horizontalGradient(
-                                    colors = listOf(
-                                        MaterialTheme.vibraBusColors.glassHighlight,
-                                        MaterialTheme.vibraBusColors.glassBorder
-                                    )
+                                    colors = listOf(Color(0x33FFFFFF), Color(0x1AFFFFFF))
                                 ),
-                                shape = VibraBusShapes.BottomSheet
+                                shape = RoundedCornerShape(28.dp)
                             )
                             .shadow(
-                                elevation = 12.dp,
-                                shape = VibraBusShapes.BottomSheet,
-                                spotColor = Color.Black.copy(alpha = 0.15f)
+                                elevation = 16.dp,
+                                shape = RoundedCornerShape(28.dp),
+                                spotColor = Color.Black.copy(alpha = 0.4f)
                             )
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 20.dp)
+                                .padding(horizontal = 20.dp, vertical = 18.dp)
                         ) {
-                            // Drag Handle Indicator
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.CenterHorizontally)
-                                    .padding(bottom = 16.dp)
-                                    .size(width = 40.dp, height = 4.dp)
-                                    .clip(VibraBusShapes.RouteIndicator)
-                                    .background(
-                                        brush = Brush.horizontalGradient(
-                                            colors = listOf(
-                                                MaterialTheme.colorScheme.secondary,
-                                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
-                                            )
-                                        )
-                                    )
-                            )
-
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = slideInVertically(
-                                    initialOffsetY = { -it / 2 },
-                                    animationSpec = tween(durationMillis = 800, delayMillis = 200)
-                                ) + fadeIn(
-                                    animationSpec = tween(durationMillis = 800, delayMillis = 200)
-                                )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "¡Hola, ${
-                                                profile.name.split(" ").firstOrNull() ?: ""
-                                            }! 🦉",
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onPrimary,
-                                            letterSpacing = 0.5.sp
-                                        )
-                                        Spacer(Modifier.height(4.dp))
-                                        Text(
-                                            text = if (selectedBus != null) 
-                                                "${selectedBus?.name ?: "Bus UNAB"}" 
-                                            else if (activeBusCount > 0)
-                                                "$activeBusCount buses activos cerca"
-                                            else
-                                                "Selecciona tu ruta",
-                                            fontSize = 14.sp,
-                                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "¡Hola, ${profile.name.split(" ").firstOrNull() ?: ""}! 🦉",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = if (selectedBus != null) 
+                                            "Bus: ${selectedBus?.plate}" 
+                                        else if (activeBusCount > 0)
+                                            "$activeBusCount buses cerca"
+                                        else
+                                            "Selecciona una parada",
+                                        fontSize = 13.sp,
+                                        color = Color.White.copy(alpha = 0.6f)
+                                    )
                                 }
                             }
+
+                            Spacer(Modifier.height(16.dp))
                             
-                            // Espacio para la lista de rutas o botón
                             if (profile.role == "driver") {
                                 com.vibra.bus.presentation.components.PrimaryGlassButton(
                                     text = "Entrar a Modo Conductor",
                                     onClick = { navigator.push(DriverModeScreen()) },
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth().height(48.dp)
                                 )
                             } else {
                                 com.vibra.bus.presentation.components.PrimaryGlassButton(
-                                    text = if (selectedBus != null) "Ver ruta ${selectedBus?.plate}" else "Selecciona un bus",
+                                    text = if (selectedBus != null) "Seguir Bus" else "Buscar Rutas",
                                     onClick = { 
                                         selectedBus?.let { 
                                             navigator.push(StopSelectionScreen(it.plate)) 
                                         }
                                     },
                                     enabled = selectedBus != null,
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.fillMaxWidth().height(48.dp)
                                 )
                             }
                         }

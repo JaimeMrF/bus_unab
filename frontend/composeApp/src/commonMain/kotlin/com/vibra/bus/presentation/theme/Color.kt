@@ -36,9 +36,9 @@ object GlassColors {
     val Surface = Color(0x1AFFFFFF)
     val Border = Color(0x33FFFFFF)
     val Highlight = Color(0x4DFFFFFF)
-    val SurfaceDark = Color(0x1A000000)
-    val BorderDark = Color(0x33000000)
-    val HighlightDark = Color(0x4D000000)
+    val SurfaceDark = Color(0xB31D1B31)   // 70% UNAB Purple (Dark Glass)
+    val BorderDark = Color(0x33FFFFFF)    // 20% White Border
+    val HighlightDark = Color(0x1AFFFFFF) // 10% White Highlight
 }
 
 object TransportColors {

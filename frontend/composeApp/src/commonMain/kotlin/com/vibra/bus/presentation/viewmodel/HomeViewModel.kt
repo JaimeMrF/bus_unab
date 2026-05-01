@@ -52,7 +52,8 @@ class HomeViewModel(
     val snackbarMessage: StateFlow<String?> = _snackbarMessage
 
     private var pollingJob: Job? = null
-    private var currentLocation = LatLng(-7.1690, -78.5003) // UNAB default
+    // ✅ Coordenadas ajustadas a UNAB Bucaramanga
+    private var currentLocation = LatLng(7.1166, -73.1051) 
 
     init {
         loadStops()

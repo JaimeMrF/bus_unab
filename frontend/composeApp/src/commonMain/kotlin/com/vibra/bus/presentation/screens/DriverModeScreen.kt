@@ -330,8 +330,16 @@ class DriverModeScreen : Screen {
                             .padding(bottom = 14.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        DriverStatCard(value = "12", label = "Pasajeros", modifier = Modifier.weight(1f))
-                        DriverStatCard(value = "5",  label = "Paradas",   modifier = Modifier.weight(1f))
+                        DriverStatCard(
+                            value = "12", 
+                            label = "Pasajeros", 
+                            modifier = Modifier.weight(1f)
+                        )
+                        DriverStatCard(
+                            value = "5",  
+                            label = "Paradas",   
+                            modifier = Modifier.weight(1f)
+                        )
                         DriverStatCard(
                             value = "7:00",
                             label = "Próx. salida",
@@ -562,15 +570,30 @@ private fun DriverStatCard(
 ) {
     Box(
         modifier = modifier
-            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f))
+            .shadow(4.dp, RoundedCornerShape(14.dp), ambientColor = Color.Black.copy(alpha = 0.1f))
             .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.White.copy(alpha = 0.08f)) // Glass effect
+            .border(
+                width = 1.dp,
+                brush = Brush.horizontalGradient(listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.05f))),
+                shape = RoundedCornerShape(14.dp)
+            )
             .padding(vertical = 12.dp, horizontal = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = valueColor)
-            Text(text = label, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 2.dp))
+            Text(
+                text = value, 
+                fontSize = 20.sp, 
+                fontWeight = FontWeight.ExtraBold, 
+                color = if (valueColor == MaterialTheme.colorScheme.primary) Color.White else valueColor
+            )
+            Text(
+                text = label, 
+                fontSize = 10.sp, 
+                color = Color.White.copy(alpha = 0.7f), 
+                modifier = Modifier.padding(top = 2.dp)
+            )
         }
     }
 }
