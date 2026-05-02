@@ -52,7 +52,7 @@ val commonModule = module {
 
     // ViewModels
     viewModel { AuthViewModel(get(), get(), get()) }
-    viewModel { HomeViewModel(get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { StopSelectionViewModel(get(), get()) }
     viewModel { MyQRViewModel(get()) }
     viewModel { MyTripsViewModel(get(), get()) }

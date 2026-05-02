@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class BusController extends BaseController
 {
@@ -94,63 +95,54 @@ class BusController extends BaseController
             return $this->notFound("La ruta '{$plate}' no existe o no está activa");
         }
 
-        $detail = $this->gpsService->getBusDetail($bus->external_vehicle_id);
-
-        if ($detail === null) {
-            return $this->serviceUnavailable("No se pudo obtener la ubicación actual de {$bus->name}");
-        }
-
-        $originLat = (float) $detail['Lt'];
-        $originLng = (float) $detail['Lg'];
-
         $stops = $bus->stops;
 
         if ($stops->isEmpty()) {
             return $this->error('Esta ruta no tiene paradas asignadas', 400);
         }
 
-        $lastStop = $stops->last();
+        $firstStop  = $stops->first();
+        $lastStop   = $stops->last();
+
+        $originLat      = $firstStop->latitude;
+        $originLng      = $firstStop->longitude;
         $destinationLat = $lastStop->latitude;
         $destinationLng = $lastStop->longitude;
 
-        $waypointsList = [];
-        $intermediateStops = $stops->slice(0, -1);
-        
-        foreach ($intermediateStops as $stop) {
-            $waypointsList[] = "{$stop->latitude},{$stop->longitude}";
-        }
+        // Combina paradas + waypoints personalizados ordenados para trazar la ruta completa
+        $stopCoords = $stops->map(fn ($s) => [
+            'order'  => $s->pivot->order * 100,
+            'coords' => [$s->longitude, $s->latitude],
+        ]);
+
+        $waypointCoords = $bus->routeWaypoints->map(fn ($w) => [
+            'order'  => $w->order,
+            'coords' => [$w->longitude, $w->latitude],
+        ]);
+
+        $coordinatePath = $stopCoords->concat($waypointCoords)
+            ->sortBy('order')
+            ->map(fn ($p) => "{$p['coords'][0]},{$p['coords'][1]}")
+            ->implode(';');
 
         $cacheKey = "bus_route_polyline_{$plate}";
 
-        $polyline = Cache::remember($cacheKey, 60, function () use ($originLat, $originLng, $destinationLat, $destinationLng, $waypointsList) {
-            $apiKey = config('services.maps.key');
-            
-            if (empty($apiKey)) {
-                return null;
-            }
-
-            $params = [
-                'origin' => "{$originLat},{$originLng}",
-                'destination' => "{$destinationLat},{$destinationLng}",
-                'mode' => 'driving',
-                'key' => $apiKey,
-            ];
-
-            if (!empty($waypointsList)) {
-                $params['waypoints'] = 'optimize:false|' . implode('|', $waypointsList);
-            }
-
+        $polyline = Cache::remember($cacheKey, 86400, function () use ($coordinatePath, $plate) {
             try {
-                $response = Http::timeout(5)->get('https://maps.googleapis.com/maps/api/directions/json', $params);
+                $response = Http::timeout(15)->get(
+                    "https://router.project-osrm.org/route/v1/driving/{$coordinatePath}",
+                    ['overview' => 'full', 'geometries' => 'polyline']
+                );
 
                 if ($response->successful()) {
                     $data = $response->json();
-                    if (($data['status'] ?? '') === 'OK' && isset($data['routes'][0]['overview_polyline']['points'])) {
-                        return $data['routes'][0]['overview_polyline']['points'];
+                    if (($data['code'] ?? '') === 'Ok' && isset($data['routes'][0]['geometry'])) {
+                        return $data['routes'][0]['geometry'];
                     }
+                    Log::warning('BusController::route - OSRM code: ' . ($data['code'] ?? 'unknown'), ['plate' => $plate]);
                 }
             } catch (\Exception $e) {
-                // Ignore Http errors and just return null to trigger error response
+                Log::error('BusController::route - OSRM error: ' . $e->getMessage(), ['plate' => $plate]);
             }
 
             return null;
@@ -158,20 +150,16 @@ class BusController extends BaseController
 
         if (!$polyline) {
             return response()->json([
-                'status' => 'REQUEST_DENIED',
-                'error_message' => 'No se pudo calcular la ruta. Verifica la configuración de la API.'
+                'status'        => 'ERROR',
+                'error_message' => 'No se pudo calcular la ruta.',
             ], 502);
         }
 
         return response()->json([
-            'routes' => [
-                [
-                    'overview_polyline' => [
-                        'points' => $polyline
-                    ]
-                ]
-            ],
-            'status' => 'OK'
+            'routes' => [[
+                'overview_polyline' => ['points' => $polyline],
+            ]],
+            'status' => 'OK',
         ]);
     }
 

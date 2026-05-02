@@ -39,7 +39,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,10 +75,20 @@ class HomeScreen : Screen {
         
         val busesState by viewModel.busesState.collectAsState()
         val stopsState by viewModel.stopsState.collectAsState()
+        val busStops by viewModel.busStops.collectAsState()
+        val busStopsLoading by viewModel.busStopsLoading.collectAsState()
         
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
         val userLocation by viewModel.userLocation.collectAsState()
+        val sessionExpired by viewModel.sessionExpired.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
+        val scope = rememberCoroutineScope()
+
+        LaunchedEffect(sessionExpired) {
+            if (sessionExpired) {
+                navigator.replaceAll(LoginScreen())
+            }
+        }
 
         var selectedBus by remember { mutableStateOf<BusSummaryDto?>(null) }
         var selectedStop by remember { mutableStateOf<StopDto?>(null) }
@@ -111,9 +123,13 @@ class HomeScreen : Screen {
 
         val activeBusCount = if (busesState is UiState.Success)
             (busesState as UiState.Success).data.size else 0
-            
+
         val busList = (busesState as? UiState.Success)?.data ?: emptyList()
-        val stopList = (stopsState as? UiState.Success)?.data ?: emptyList()
+        val allStops = (stopsState as? UiState.Success)?.data ?: emptyList()
+        val routeStops = busStops.map { s ->
+            StopDto(s.id, s.name, s.address, s.latitude, s.longitude, s.radiusMeters)
+        }
+        val stopList = if (selectedBus != null) routeStops else allStops
 
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -214,12 +230,13 @@ class HomeScreen : Screen {
                                         color = Color.White
                                     )
                                     Text(
-                                        text = if (selectedBus != null) 
-                                            "Bus: ${selectedBus?.plate}" 
-                                        else if (activeBusCount > 0)
-                                            "$activeBusCount buses cerca"
-                                        else
-                                            "Selecciona una parada",
+                                        text = when {
+                                            selectedBus != null && busStopsLoading -> "Cargando paradas..."
+                                            selectedBus != null && routeStops.isNotEmpty() -> "${routeStops.size} paradas en ruta"
+                                            selectedBus != null -> "Sin paradas asignadas"
+                                            activeBusCount > 0 -> "$activeBusCount buses cerca"
+                                            else -> "Selecciona una parada"
+                                        },
                                         fontSize = 13.sp,
                                         color = Color.White.copy(alpha = 0.6f)
                                     )
@@ -235,16 +252,33 @@ class HomeScreen : Screen {
                                     modifier = Modifier.fillMaxWidth().height(48.dp)
                                 )
                             } else {
-                                com.vibra.bus.presentation.components.PrimaryGlassButton(
-                                    text = if (selectedBus != null) "Seguir Bus" else "Buscar Rutas",
-                                    onClick = { 
-                                        selectedBus?.let { 
-                                            navigator.push(StopSelectionScreen(it.plate)) 
-                                        }
-                                    },
-                                    enabled = selectedBus != null,
-                                    modifier = Modifier.fillMaxWidth().height(48.dp)
-                                )
+                                if (selectedBus != null) {
+                                    androidx.compose.foundation.layout.Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        com.vibra.bus.presentation.components.PrimaryGlassButton(
+                                            text = "Ver Ruta",
+                                            onClick = { navigator.push(BusRouteScreen(selectedBus!!.plate)) },
+                                            modifier = Modifier.weight(1f).height(48.dp)
+                                        )
+                                        com.vibra.bus.presentation.components.PrimaryGlassButton(
+                                            text = "Seguir Bus",
+                                            onClick = { navigator.push(StopSelectionScreen(selectedBus!!.plate)) },
+                                            modifier = Modifier.weight(1f).height(48.dp)
+                                        )
+                                    }
+                                } else {
+                                    com.vibra.bus.presentation.components.PrimaryGlassButton(
+                                        text = "Buscar Rutas",
+                                        onClick = {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar("Toca un bus en el mapa para seleccionarlo")
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                                    )
+                                }
                             }
                         }
                     }
