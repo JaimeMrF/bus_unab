@@ -1,6 +1,7 @@
 package com.vibra.bus.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -32,7 +33,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,9 +85,18 @@ fun BusMarker(
         label = "bus_marker_scale"
     )
 
+    // Accumulated rotation: always takes the shortest arc (avoids 340° spin when crossing 0°/360°)
+    var targetRotation by remember { mutableFloatStateOf(heading) }
+    LaunchedEffect(heading) {
+        var diff = (heading - targetRotation) % 360f
+        if (diff > 180f) diff -= 360f
+        if (diff < -180f) diff += 360f
+        targetRotation += diff
+    }
+
     val rotation by animateFloatAsState(
-        targetValue = heading,
-        animationSpec = tween(durationMillis = 800),
+        targetValue = targetRotation,
+        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
         label = "bus_rotation"
     )
     

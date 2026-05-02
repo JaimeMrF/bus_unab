@@ -71,11 +71,23 @@ class WaitingBusViewModel(
                 val foundBus = result.data.data.find { it.plate == plate }
                 if (foundBus != null) {
                     val oldBus = _bus.value
-                    _bus.value = foundBus
+                    val distance = if (oldBus != null)
+                        calculateDistance(oldBus.latitude, oldBus.longitude, foundBus.latitude, foundBus.longitude)
+                    else 0.0
+
+                    // Prefer backend heading; fall back to client-side bearing when bus has moved >5m
+                    val resolvedHeading = when {
+                        foundBus.heading != 0 -> foundBus.heading
+                        oldBus != null && distance > 5.0 ->
+                            calculateBearing(oldBus.latitude, oldBus.longitude, foundBus.latitude, foundBus.longitude)
+                        else -> _bus.value?.heading ?: 0
+                    }
+                    _bus.value = foundBus.copy(heading = resolvedHeading)
+
                     calculateMetrics(foundBus, stop)
-                    
+
                     // Solo recalculamos la ruta si el bus se ha movido significativamente o es la primera vez
-                    if (oldBus == null || calculateDistance(oldBus.latitude, oldBus.longitude, foundBus.latitude, foundBus.longitude) > 50) {
+                    if (oldBus == null || distance > 50) {
                         fetchRealRoute(plate, foundBus.latitude, foundBus.longitude, stop)
                     }
                 }
@@ -94,6 +106,15 @@ class WaitingBusViewModel(
         if (distance < 200 && !_isArriving.value) {
             _isArriving.value = true
         }
+    }
+
+    private fun calculateBearing(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Int {
+        val dLon = Math.toRadians(lon2 - lon1)
+        val lat1Rad = Math.toRadians(lat1)
+        val lat2Rad = Math.toRadians(lat2)
+        val y = sin(dLon) * cos(lat2Rad)
+        val x = cos(lat1Rad) * sin(lat2Rad) - sin(lat1Rad) * cos(lat2Rad) * cos(dLon)
+        return ((Math.toDegrees(atan2(y, x)) + 360) % 360).toInt()
     }
 
     private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
