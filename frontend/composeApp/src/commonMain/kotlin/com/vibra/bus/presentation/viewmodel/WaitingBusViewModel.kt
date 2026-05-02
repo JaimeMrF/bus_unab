@@ -30,28 +30,54 @@ class WaitingBusViewModel(
     private val _isArriving = MutableStateFlow(false)
     val isArriving: StateFlow<Boolean> = _isArriving
 
+    private val _routePath = MutableStateFlow<List<LatLng>>(emptyList())
+    val routePath: StateFlow<List<LatLng>> = _routePath
+
     private var pollingJob: Job? = null
 
     fun startTracking(plate: String, stop: StopDto) {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
             while (true) {
-                // In a real app, we might get user location here too
-                // For now, let's just get the bus position
                 updateBusInfo(plate, stop)
-                delay(10000) // Poll every 10 seconds to save battery and costs
+                delay(10000)
+            }
+        }
+    }
+
+    private fun fetchRealRoute(plate: String, busLat: Double, busLng: Double, stop: StopDto) {
+        viewModelScope.launch {
+            when (val result = busRepository.getBusRoute(plate)) {
+                is ApiResult.Success -> {
+                    val points = result.data.routes.firstOrNull()?.overviewPolyline?.points
+                    if (points != null) {
+                        _routePath.value = com.vibra.bus.util.decodePolyline(points)
+                    }
+                }
+                else -> {
+                    // Fallback a línea recta si falla la API
+                    _routePath.value = listOf(
+                        LatLng(busLat, busLng),
+                        LatLng(stop.latitude, stop.longitude)
+                    )
+                }
             }
         }
     }
 
     private suspend fun updateBusInfo(plate: String, stop: StopDto) {
-        // We use a dummy center since we just want the bus by plate
         when (val result = busRepository.getBuses(stop.latitude, stop.longitude)) {
             is ApiResult.Success -> {
                 val foundBus = result.data.data.find { it.plate == plate }
                 if (foundBus != null) {
+                    val oldBus = _bus.value
                     _bus.value = foundBus
                     calculateMetrics(foundBus, stop)
+                    
+                    // Solo recalculamos la ruta si el bus se ha movido significativamente o es la primera vez
+                    if (oldBus == null || calculateDistance(oldBus.latitude, oldBus.longitude, foundBus.latitude, foundBus.longitude) > 50) {
+                        fetchRealRoute(plate, foundBus.latitude, foundBus.longitude, stop)
+                    }
                 }
             }
             else -> {}
@@ -62,18 +88,16 @@ class WaitingBusViewModel(
         val distance = calculateDistance(bus.latitude, bus.longitude, stop.latitude, stop.longitude)
         _distanceMeters.value = distance.toInt()
         
-        // Simple ETA calculation: assuming 30km/h average in city (8.3 m/s)
         val estimatedMinutes = (distance / (8.3 * 60)).roundToInt()
         _etaMinutes.value = max(1, estimatedMinutes)
         
-        // If less than 200 meters, it's arriving
         if (distance < 200 && !_isArriving.value) {
             _isArriving.value = true
         }
     }
 
     private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val r = 6371e3 // Earth radius in meters
+        val r = 6371e3
         val p1 = lat1 * PI / 180
         val p2 = lat2 * PI / 180
         val dp = (lat2 - lat1) * PI / 180

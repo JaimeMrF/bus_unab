@@ -41,6 +41,7 @@ val commonModule = module {
     single { StopApi(get()) }
     single { RequestApi(get()) }
     single { PoiApi(get()) }
+    single { com.vibra.bus.data.api.GoogleMapsApi(get()) }
 
     // Repositories
     single { AuthRepository(get(), get()) }

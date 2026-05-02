@@ -30,22 +30,51 @@ class StopSelectionViewModel(
     private val _requestState = MutableStateFlow<UiState<CreateRequestData>>(UiState.Idle)
     val requestState: StateFlow<UiState<CreateRequestData>> = _requestState
 
+    private val _routePath = MutableStateFlow<List<com.vibra.bus.util.LatLng>>(emptyList())
+    val routePath: StateFlow<List<com.vibra.bus.util.LatLng>> = _routePath
+
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage
 
     fun loadStops(plate: String) {
         viewModelScope.launch {
             _stopsState.value = UiState.Loading
+            loadRoutePath(plate)
             when (val result = busRepository.getBusStops(plate)) {
                 is ApiResult.Success -> {
                     val stops = result.data.data.sortedBy { it.order }
                     _stopsState.value = UiState.Success(stops)
-                    if (stops.isNotEmpty()) _selectedStop.value = stops.first()
+                    if (stops.isNotEmpty() && _selectedStop.value == null) {
+                        _selectedStop.value = stops.first()
+                    }
                 }
                 is ApiResult.HttpError -> _stopsState.value = UiState.Error(result.message)
                 is ApiResult.NetworkError -> {
                     _snackbarMessage.value = result.message
                     _stopsState.value = UiState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    private fun loadRoutePath(plate: String) {
+        viewModelScope.launch {
+            when (val result = busRepository.getBusRoute(plate)) {
+                is ApiResult.Success -> {
+                    val points = result.data.routes.firstOrNull()?.overviewPolyline?.points
+                    if (points != null) {
+                        _routePath.value = com.vibra.bus.util.decodePolyline(points)
+                    }
+                }
+                else -> {
+                    when (val stopsResult = busRepository.getBusStops(plate)) {
+                        is ApiResult.Success -> {
+                            _routePath.value = stopsResult.data.data
+                                .sortedBy { it.order }
+                                .map { com.vibra.bus.util.LatLng(it.latitude, it.longitude) }
+                        }
+                        else -> {}
+                    }
                 }
             }
         }

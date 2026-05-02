@@ -6,6 +6,8 @@ use App\Models\Bus;
 use App\Services\GpsMobileService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class BusController extends BaseController
 {
@@ -70,6 +72,107 @@ class BusController extends BaseController
         }
 
         return $this->success($this->formatBusDetail($detail, $bus));
+    }
+
+    /**
+     * Retorna la polilínea de la ruta actual del bus hacia su destino.
+     * Proxy a Google Directions API.
+     *
+     * @urlParam plate string required  Placa del bus. Example: RUTA1
+     */
+    public function route(string $plate): JsonResponse
+    {
+        $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
+
+        if (empty($plate) || strlen($plate) > 20) {
+            return $this->error('Identificador de ruta inválido', 422);
+        }
+
+        $bus = Bus::active()->where('plate', $plate)->first();
+
+        if (! $bus) {
+            return $this->notFound("La ruta '{$plate}' no existe o no está activa");
+        }
+
+        $detail = $this->gpsService->getBusDetail($bus->external_vehicle_id);
+
+        if ($detail === null) {
+            return $this->serviceUnavailable("No se pudo obtener la ubicación actual de {$bus->name}");
+        }
+
+        $originLat = (float) $detail['Lt'];
+        $originLng = (float) $detail['Lg'];
+
+        $stops = $bus->stops;
+
+        if ($stops->isEmpty()) {
+            return $this->error('Esta ruta no tiene paradas asignadas', 400);
+        }
+
+        $lastStop = $stops->last();
+        $destinationLat = $lastStop->latitude;
+        $destinationLng = $lastStop->longitude;
+
+        $waypointsList = [];
+        $intermediateStops = $stops->slice(0, -1);
+        
+        foreach ($intermediateStops as $stop) {
+            $waypointsList[] = "{$stop->latitude},{$stop->longitude}";
+        }
+
+        $cacheKey = "bus_route_polyline_{$plate}";
+
+        $polyline = Cache::remember($cacheKey, 60, function () use ($originLat, $originLng, $destinationLat, $destinationLng, $waypointsList) {
+            $apiKey = config('services.maps.key');
+            
+            if (empty($apiKey)) {
+                return null;
+            }
+
+            $params = [
+                'origin' => "{$originLat},{$originLng}",
+                'destination' => "{$destinationLat},{$destinationLng}",
+                'mode' => 'driving',
+                'key' => $apiKey,
+            ];
+
+            if (!empty($waypointsList)) {
+                $params['waypoints'] = 'optimize:false|' . implode('|', $waypointsList);
+            }
+
+            try {
+                $response = Http::timeout(5)->get('https://maps.googleapis.com/maps/api/directions/json', $params);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    if (($data['status'] ?? '') === 'OK' && isset($data['routes'][0]['overview_polyline']['points'])) {
+                        return $data['routes'][0]['overview_polyline']['points'];
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignore Http errors and just return null to trigger error response
+            }
+
+            return null;
+        });
+
+        if (!$polyline) {
+            return response()->json([
+                'status' => 'REQUEST_DENIED',
+                'error_message' => 'No se pudo calcular la ruta. Verifica la configuración de la API.'
+            ], 502);
+        }
+
+        return response()->json([
+            'routes' => [
+                [
+                    'overview_polyline' => [
+                        'points' => $polyline
+                    ]
+                ]
+            ],
+            'status' => 'OK'
+        ]);
     }
 
     // -------------------------------------------------------------------------

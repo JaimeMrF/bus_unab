@@ -6,7 +6,16 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class DirectionsResponse(
     val routes: List<Route> = emptyList(),
-    val status: String
+    val status: String? = null
+)
+
+/**
+ * Envoltorio estándar para las respuestas de la API de VibraBus
+ */
+@Serializable
+data class BusRouteResponse(
+    val success: Boolean,
+    val data: DirectionsResponse
 )
 
 @Serializable

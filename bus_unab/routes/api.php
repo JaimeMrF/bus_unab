@@ -58,6 +58,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/',               [BusController::class, 'index']);              // GET  /api/v1/buses
                 Route::get('{plate}',         [BusController::class, 'show']);              // GET  /api/v1/buses/RUTA1
                 Route::get('{plate}/stops',   [StopController::class, 'byBus']);            // GET  /api/v1/buses/RUTA1/stops
+                Route::get('{plate}/route',   [BusController::class, 'route']);             // GET  /api/v1/buses/RUTA1/route
                 Route::get('{plate}/occupancy', [BusRequestController::class, 'occupancy']); // GET  /api/v1/buses/RUTA1/occupancy
             });
 

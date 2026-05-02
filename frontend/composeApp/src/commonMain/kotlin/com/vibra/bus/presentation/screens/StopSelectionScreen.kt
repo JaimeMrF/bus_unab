@@ -89,6 +89,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
         val selectedStop      by viewModel.selectedStop.collectAsState()
         val requestState      by viewModel.requestState.collectAsState()
         val busDetail         by viewModel.busDetail.collectAsState()
+        val routePath         by viewModel.routePath.collectAsState()
         val snackbarMsg       by viewModel.snackbarMessage.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
         var showFullDialog    by remember { mutableStateOf(false) }
@@ -396,7 +397,8 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     selectedBus     = null,
                     onBusSelected   = {},
                     stops = stopDtos,
-                    buses = emptyList()
+                    buses = emptyList(),
+                    path = routePath
                 )
 
                 AnimatedVisibility(

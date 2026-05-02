@@ -50,4 +50,8 @@ class BusApi(private val client: HttpClient) {
             setBody(com.vibra.bus.data.model.OccupancyRequest(isFull))
         }.body()
     }
+
+    suspend fun getBusRoute(plate: String): ApiResult<com.vibra.bus.data.model.DirectionsResponse> = safeCall {
+        client.get("$BASE_URL/buses/$plate/route").body()
+    }
 }

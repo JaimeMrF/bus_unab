@@ -42,6 +42,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
         val eta by viewModel.etaMinutes.collectAsState()
         val distance by viewModel.distanceMeters.collectAsState()
         val isArriving by viewModel.isArriving.collectAsState()
+        val routePath by viewModel.routePath.collectAsState()
         var isVisible by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
@@ -78,10 +79,12 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                     onBusSelected = {},
                     stops = listOf(stop),
                     buses = bus?.let { listOf(it) } ?: emptyList(),
-                    path = if (bus != null) listOf(
-                        com.vibra.bus.util.LatLng(bus!!.latitude, bus!!.longitude),
-                        com.vibra.bus.util.LatLng(stop.latitude, stop.longitude)
-                    ) else null
+                    path = routePath.ifEmpty { 
+                        if (bus != null) listOf(
+                            com.vibra.bus.util.LatLng(bus!!.latitude, bus!!.longitude),
+                            com.vibra.bus.util.LatLng(stop.latitude, stop.longitude)
+                        ) else null
+                    }
                 )
 
                 // Overlay Notification when arriving
