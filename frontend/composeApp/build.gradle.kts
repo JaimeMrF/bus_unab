@@ -141,7 +141,7 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        buildConfigField("String", "BASE_URL_ANDROID", "\"http://10.0.2.2:8000/api/v1\"")
+        buildConfigField("String", "BASE_URL_ANDROID", "\"http://192.168.1.4:8000/api/v1\"")
         buildConfigField("String", "BASE_URL_IOS", "\"http://localhost:8000/api/v1\"")
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"887389827022-oj7di7remsi2k1avdgqp8asf65rlu2h3.apps.googleusercontent.com\"")
         

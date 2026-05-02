@@ -31,10 +31,16 @@ class AuthController extends BaseController
             return $this->unauthorized('Token de Google inválido o expirado');
         }
 
-        // 2. Buscar o crear usuario en nuestra BD
+        // 2. Validar dominio institucional
+        $email = $payload['email'] ?? '';
+        if (! str_ends_with($email, '@unab.edu.co')) {
+            return $this->forbidden('Solo se permiten cuentas institucionales @unab.edu.co');
+        }
+
+        // 3. Buscar o crear usuario en nuestra BD
         $user = $this->authService->findOrCreateUser($payload);
 
-        // 3. Generar token Sanctum propio
+        // 4. Generar token Sanctum propio
         $token = $this->authService->generateToken($user);
 
         return $this->successResponse($user, $token);

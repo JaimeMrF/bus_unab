@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             BusSeeder::class,
             StopSeeder::class,
             AdminSeeder::class,
+            DemoUserSeeder::class,
         ]);
     }
 }

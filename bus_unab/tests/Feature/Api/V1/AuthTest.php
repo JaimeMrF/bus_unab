@@ -177,4 +177,44 @@ class AuthTest extends TestCase
         $this->postJson('/api/v1/auth/google', ['id_token' => 'token'])
             ->assertStatus(401);
     }
+
+    public function test_google_login_rejects_non_unab_domain(): void
+    {
+        config(['services.google.client_id' => 'test-client.apps.googleusercontent.com']);
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response([
+                'sub'   => 'google-external-999',
+                'email' => 'externo@gmail.com',
+                'name'  => 'Usuario Externo',
+                'aud'   => 'test-client.apps.googleusercontent.com',
+                'exp'   => time() + 3600,
+            ], 200),
+        ]);
+
+        $this->postJson('/api/v1/auth/google', ['id_token' => 'valid-token'])
+            ->assertStatus(403)
+            ->assertJson(['success' => false]);
+
+        $this->assertDatabaseMissing('users', ['email' => 'externo@gmail.com']);
+    }
+
+    public function test_google_login_allows_unab_domain(): void
+    {
+        config(['services.google.client_id' => 'test-client.apps.googleusercontent.com']);
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response([
+                'sub'   => 'google-unab-001',
+                'email' => 'estudiante@unab.edu.co',
+                'name'  => 'Estudiante UNAB',
+                'aud'   => 'test-client.apps.googleusercontent.com',
+                'exp'   => time() + 3600,
+            ], 200),
+        ]);
+
+        $this->postJson('/api/v1/auth/google', ['id_token' => 'valid-token'])
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+    }
 }

@@ -53,7 +53,7 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
-import com.vibra.bus.presentation.components.QRCodeImage
+import com.vibra.bus.presentation.screens.QRCodeImage
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.MyQRViewModel
 import com.vibra.bus.util.AppSettings
@@ -246,7 +246,7 @@ class MyQRScreen : Screen {
                             contentAlignment = Alignment.Center,
                         ) {
                             if (qrContent.isNotEmpty()) {
-                                QRCodeImage(content = qrContent)
+                                QRCodeImage(content = qrContent, modifier = Modifier.fillMaxSize())
                             }
                         }
                     }

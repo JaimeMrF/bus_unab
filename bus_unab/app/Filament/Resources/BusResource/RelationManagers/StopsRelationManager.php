@@ -14,8 +14,8 @@ class StopsRelationManager extends RelationManager
     protected static ?string $title = 'Paradas de la ruta';
     protected static ?string $modelLabel = 'parada';
     protected static ?string $pluralModelLabel = 'paradas';
+    protected static bool $shouldSkipAuthorization = true;
 
-    // Usado por EditAction para editar los campos del pivot
     public function form(Form $form): Form
     {
         return $form->schema([
@@ -39,11 +39,6 @@ class StopsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('pivot.order')
-                    ->label('#')
-                    ->alignCenter()
-                    ->width('60px'),
-
                 Tables\Columns\TextColumn::make('name')
                     ->label('Parada')
                     ->searchable(),
@@ -53,30 +48,30 @@ class StopsRelationManager extends RelationManager
                     ->color('gray')
                     ->limit(40),
 
+                Tables\Columns\TextColumn::make('pivot.order')
+                    ->label('Orden')
+                    ->alignCenter(),
+
                 Tables\Columns\TextColumn::make('pivot.estimated_minutes')
-                    ->label('Min. desde inicio')
+                    ->label('Min.')
                     ->suffix(' min')
                     ->alignCenter(),
             ])
             ->headerActions([
                 Tables\Actions\AttachAction::make()
-                    ->label('Agregar parada')
                     ->preloadRecordSelect()
                     ->form(fn (Tables\Actions\AttachAction $action): array => [
                         $action->getRecordSelect()
                             ->label('Parada')
-                            ->searchable()
                             ->required(),
-
                         Forms\Components\TextInput::make('order')
                             ->label('Orden en la ruta')
                             ->required()
                             ->numeric()
                             ->minValue(1)
                             ->default(1),
-
                         Forms\Components\TextInput::make('estimated_minutes')
-                            ->label('Minutos desde inicio de ruta')
+                            ->label('Minutos desde inicio')
                             ->required()
                             ->numeric()
                             ->minValue(0)
@@ -85,14 +80,11 @@ class StopsRelationManager extends RelationManager
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->label('Editar'),
-                Tables\Actions\DetachAction::make()
-                    ->label('Quitar'),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DetachAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\DetachBulkAction::make()
-                    ->label('Quitar seleccionadas'),
+                Tables\Actions\DetachBulkAction::make(),
             ]);
     }
 }

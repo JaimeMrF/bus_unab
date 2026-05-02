@@ -3,6 +3,8 @@ package com.vibra.bus.data.repository
 import com.vibra.bus.data.api.RequestApi
 import com.vibra.bus.data.model.CreateRequestResponse
 import com.vibra.bus.data.model.DeleteRequestResponse
+import com.vibra.bus.data.model.QRPayload
+import com.vibra.bus.data.model.QrValidateData
 import com.vibra.bus.util.ApiResult
 import com.vibra.bus.util.AppSettings
 
@@ -35,4 +37,7 @@ class RequestRepository(
         settings.activeRequestBusId,
         settings.activeRequestStopId,
     )
+
+    suspend fun validateQr(payload: QRPayload): ApiResult<QrValidateData> =
+        api.validateQr(payload)
 }

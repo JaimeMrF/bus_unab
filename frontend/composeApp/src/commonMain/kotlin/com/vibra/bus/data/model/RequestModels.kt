@@ -60,3 +60,33 @@ data class QRPayload(
     @SerialName("stop_id") val stopId: Int,
     val ts: Long,
 )
+
+@Serializable
+data class QrValidateRequest(
+    @SerialName("request_id") val requestId: Int,
+    @SerialName("user_id")    val userId: Int,
+    @SerialName("bus_id")     val busId: Int,
+    @SerialName("stop_id")    val stopId: Int,
+    val ts: Long,
+)
+
+@Serializable
+data class QrValidateUserInfo(
+    val id: Int,
+    val name: String,
+    val email: String,
+)
+
+@Serializable
+data class QrValidateData(
+    val user: QrValidateUserInfo,
+    val bus: String,
+    val stop: String,
+)
+
+@Serializable
+data class QrValidateResponse(
+    val success: Boolean,
+    val data: QrValidateData? = null,
+    val message: String? = null,
+)

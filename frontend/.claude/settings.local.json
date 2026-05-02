@@ -5,7 +5,9 @@
       "Bash(php artisan *)",
       "Bash(php --ini)",
       "Bash(php -l app/Filament/Resources/BusResource/RelationManagers/StopsRelationManager.php)",
-      "Bash(php -l app/Filament/Resources/BusResource.php)"
+      "Bash(php -l app/Filament/Resources/BusResource.php)",
+      "Read(//d/USUARIO/Desktop/backend_bus/bus_unab/**)",
+      "Bash(Get-ChildItem -Path . -Filter \"api.php\" -Recurse)"
     ]
   }
 }

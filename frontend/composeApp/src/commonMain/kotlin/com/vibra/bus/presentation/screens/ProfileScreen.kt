@@ -162,7 +162,6 @@ class ProfileScreen : Screen {
                     if (viewModel.isDriver()) {
                         ProfileOption(label = "Modo Conductor")   { navigator.push(DriverModeScreen()) }
                     }
-                    ProfileOption(label = "Recargar saldo")       { navigator.push(RechargeScreen()) }
                     ProfileOption(label = "Notificaciones")       { navigator.push(NotificationsScreen()) }
 
                     Spacer(Modifier.height(32.dp))

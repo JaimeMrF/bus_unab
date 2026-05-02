@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\BusController;
 use App\Http\Controllers\Api\V1\BusRequestController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\PointOfInterestController;
+use App\Http\Controllers\Api\V1\QrController;
 use App\Http\Controllers\Api\V1\StopController;
 use Illuminate\Support\Facades\Route;
 
@@ -73,6 +74,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/',       [BusRequestController::class, 'store']);  // POST   /api/v1/requests
             Route::delete('{bus}', [BusRequestController::class, 'cancel']); // DELETE /api/v1/requests/{busId}
         });
+
+        // Validación de QR — solo conductores y admins
+        Route::post('qr/validate', [QrController::class, 'validate'])
+            ->middleware(['throttle:60,1', 'role:admin,driver']); // POST /api/v1/qr/validate
 
         // Puntos de interés
         Route::get('poi', [PointOfInterestController::class, 'index'])

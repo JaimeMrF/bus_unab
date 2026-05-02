@@ -60,6 +60,7 @@ actual class GoogleSignInManager(private val context: Context) {
     }
 
     actual fun signOut() {
-        clearActivity()
+        // La actividad se limpia solo en onDestroy() via clearActivity().
+        // No la borramos aquí porque la misma Activity sigue viva tras el logout.
     }
 }
