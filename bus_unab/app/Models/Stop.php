@@ -28,6 +28,11 @@ class Stop extends Model
         ];
     }
 
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
     public function buses()
     {
         return $this->belongsToMany(Bus::class, 'route_stops')

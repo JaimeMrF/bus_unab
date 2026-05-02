@@ -9,7 +9,10 @@
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); pages=[{'name':p['name'],'id':p['id'],'children_count':len\\(p.get\\('children',[]\\)\\)} for p in d['document']['children']]; print\\(json.dumps\\({'name':d['name'],'pages':pages},indent=2\\)\\)\")",
       "Bash(curl -s -H \"X-Figma-Token: figd_0CFaLUD0VFs3k19gX2puoAf9dttkCrnOGXXWSfMG\" \"https://api.figma.com/v1/files/vzcARqdXPUcrsSWcSsTJJR?depth=3\")",
       "Bash(python -c ' *)",
-      "Bash(curl -s -H \"X-Figma-Token: figd_0CFaLUD0VFs3k19gX2puoAf9dttkCrnOGXXWSfMG\" \"https://api.figma.com/v1/files/vzcARqdXPUcrsSWcSsTJJR/nodes?ids=1:2,6025:1443,6038:556,6030:1835,6037:2,6038:248,6025:44,6025:243,6038:1233,6025:1143,6025:1318,6038:369,4004:63&depth=4\")"
+      "Bash(curl -s -H \"X-Figma-Token: figd_0CFaLUD0VFs3k19gX2puoAf9dttkCrnOGXXWSfMG\" \"https://api.figma.com/v1/files/vzcARqdXPUcrsSWcSsTJJR/nodes?ids=1:2,6025:1443,6038:556,6030:1835,6037:2,6038:248,6025:44,6025:243,6038:1233,6025:1143,6025:1318,6038:369,4004:63&depth=4\")",
+      "Bash(Get-ChildItem -Path \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\bus_unab\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)"
     ]
   }
 }

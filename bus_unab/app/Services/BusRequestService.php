@@ -35,7 +35,7 @@ class BusRequestService
                 ->where('status', 'pending')
                 ->count();
 
-            $isFull = $pending >= $bus->capacity;
+            $isFull = ($pending + 1) >= $bus->capacity;
 
             // Crear la nueva solicitud
             $request = BusRequest::create([
