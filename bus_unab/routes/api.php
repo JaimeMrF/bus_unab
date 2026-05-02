@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\BusController;
 use App\Http\Controllers\Api\V1\BusRequestController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
 use App\Http\Controllers\Api\V1\PointOfInterestController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\QrController;
 use App\Http\Controllers\Api\V1\StopController;
 use Illuminate\Support\Facades\Route;
@@ -60,9 +61,11 @@ Route::prefix('v1')->group(function () {
                 Route::get('{plate}/occupancy', [BusRequestController::class, 'occupancy']); // GET  /api/v1/buses/RUTA1/occupancy
             });
 
-            // Solo conductores y admins pueden reportar llegada
+            // Solo conductores y admins pueden reportar llegada / proximidad
             Route::post('{plate}/arrived', [BusRequestController::class, 'busArrived'])
                 ->middleware(['throttle:30,1', 'role:admin,driver']); // POST /api/v1/buses/RUTA1/arrived
+            Route::post('{plate}/approaching', [BusRequestController::class, 'busApproaching'])
+                ->middleware(['throttle:30,1', 'role:admin,driver']); // POST /api/v1/buses/RUTA1/approaching
         });
 
         // Paradas
@@ -78,6 +81,10 @@ Route::prefix('v1')->group(function () {
         // Validación de QR — solo conductores y admins
         Route::post('qr/validate', [QrController::class, 'validate'])
             ->middleware(['throttle:60,1', 'role:admin,driver']); // POST /api/v1/qr/validate
+
+        // Broadcast global — solo admin
+        Route::post('admin/broadcast', [NotificationController::class, 'broadcast'])
+            ->middleware(['throttle:10,1', 'role:admin']); // POST /api/v1/admin/broadcast
 
         // Puntos de interés
         Route::get('poi', [PointOfInterestController::class, 'index'])

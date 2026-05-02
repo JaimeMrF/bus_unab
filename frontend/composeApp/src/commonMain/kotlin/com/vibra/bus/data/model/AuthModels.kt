@@ -45,6 +45,7 @@ data class LoginRequest(
 @Serializable
 data class DeviceTokenRequest(
     val token: String,
+    val platform: String,
 )
 
 @Serializable

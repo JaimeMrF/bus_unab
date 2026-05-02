@@ -6,6 +6,7 @@ import com.vibra.bus.data.model.UserDto
 import com.vibra.bus.data.repository.AuthRepository
 import com.vibra.bus.util.ApiResult
 import com.vibra.bus.util.AppSettings
+import com.vibra.bus.util.DEVICE_PLATFORM
 import com.vibra.bus.util.GoogleSignInManager
 import com.vibra.bus.util.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,6 +70,7 @@ class AuthViewModel(
                     val response = result.data
                     val userData = response.data?.user
                     if (response.success && userData != null) {
+                        registerFcmToken()
                         _uiState.value = UiState.Success(userData)
                         _event.value = AuthEvent.NavigateToHome
                     } else {
@@ -113,6 +115,7 @@ class AuthViewModel(
                         val response = result.data
                         val userData = response.data?.user
                         if (response.success && userData != null) {
+                            registerFcmToken()
                             _uiState.value = UiState.Success(userData)
                             _event.value = AuthEvent.NavigateToHome
                         } else {
@@ -142,11 +145,18 @@ class AuthViewModel(
         viewModelScope.launch {
             val fcmToken = settings.fcmToken
             if (fcmToken.isNotEmpty()) {
-                authRepository.deleteDeviceToken(fcmToken)
+                authRepository.deleteDeviceToken(fcmToken, DEVICE_PLATFORM)
             }
             authRepository.logout()
             googleSignInManager.signOut()
             _event.value = AuthEvent.NavigateToLogin
+        }
+    }
+
+    private suspend fun registerFcmToken() {
+        val fcmToken = settings.fcmToken
+        if (fcmToken.isNotEmpty()) {
+            authRepository.registerDeviceToken(fcmToken, DEVICE_PLATFORM)
         }
     }
 

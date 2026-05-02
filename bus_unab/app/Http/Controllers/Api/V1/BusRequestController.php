@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api\V1;
 use App\Models\Bus;
 use App\Models\Stop;
 use App\Services\BusRequestService;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BusRequestController extends BaseController
 {
-    public function __construct(private readonly BusRequestService $service) {}
+    public function __construct(
+        private readonly BusRequestService $service,
+        private readonly NotificationService $notificationService,
+    ) {}
 
     /**
      * El usuario solicita un bus en una parada.
@@ -102,5 +106,31 @@ class BusRequestController extends BaseController
             'stop'           => $stop->name,
             'bus'            => $bus->name,
         ], "{$notified} usuario(s) notificados");
+    }
+
+    /**
+     * [Solo admin/driver] Notifica a los usuarios que el bus está por llegar.
+     * POST /api/v1/buses/{plate}/approaching
+     */
+    public function busApproaching(Request $request, string $plate): JsonResponse
+    {
+        $validated = $request->validate([
+            'stop_id' => 'required|integer|exists:stops,id',
+        ]);
+
+        $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
+        $bus   = Bus::active()->where('plate', $plate)->first();
+
+        if (! $bus) {
+            return $this->notFound("La ruta '{$plate}' no existe");
+        }
+
+        $stop = Stop::findOrFail($validated['stop_id']);
+        $this->notificationService->notifyBusApproaching($bus, $stop);
+
+        return $this->success([
+            'stop' => $stop->name,
+            'bus'  => $bus->name,
+        ], "Usuarios notificados: el bus está llegando a {$stop->name}");
     }
 }

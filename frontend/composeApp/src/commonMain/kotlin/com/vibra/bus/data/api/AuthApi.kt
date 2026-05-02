@@ -40,17 +40,17 @@ class AuthApi(private val client: HttpClient) {
         client.get("$BASE_URL/auth/me").body()
     }
 
-    suspend fun registerDeviceToken(token: String): ApiResult<BasicResponse> = safeCall {
+    suspend fun registerDeviceToken(token: String, platform: String): ApiResult<BasicResponse> = safeCall {
         client.post("$BASE_URL/device-token") {
             contentType(ContentType.Application.Json)
-            setBody(DeviceTokenRequest(token))
+            setBody(DeviceTokenRequest(token, platform))
         }.body()
     }
 
-    suspend fun deleteDeviceToken(token: String): ApiResult<BasicResponse> = safeCall {
+    suspend fun deleteDeviceToken(token: String, platform: String): ApiResult<BasicResponse> = safeCall {
         client.delete("$BASE_URL/device-token") {
             contentType(ContentType.Application.Json)
-            setBody(DeviceTokenRequest(token))
+            setBody(DeviceTokenRequest(token, platform))
         }.body()
     }
 }

@@ -46,11 +46,11 @@ class AuthRepository(
 
     suspend fun getMe(): ApiResult<MeResponse> = api.getMe()
 
-    suspend fun registerDeviceToken(fcmToken: String): ApiResult<BasicResponse> =
-        api.registerDeviceToken(fcmToken)
+    suspend fun registerDeviceToken(fcmToken: String, platform: String): ApiResult<BasicResponse> =
+        api.registerDeviceToken(fcmToken, platform)
 
-    suspend fun deleteDeviceToken(fcmToken: String): ApiResult<BasicResponse> =
-        api.deleteDeviceToken(fcmToken)
+    suspend fun deleteDeviceToken(fcmToken: String, platform: String): ApiResult<BasicResponse> =
+        api.deleteDeviceToken(fcmToken, platform)
 
     fun isLoggedIn(): Boolean = settings.isLoggedIn()
     fun getUserRole(): String = settings.userRole
