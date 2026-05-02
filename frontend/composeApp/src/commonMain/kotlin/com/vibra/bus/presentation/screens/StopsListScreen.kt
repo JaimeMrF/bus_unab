@@ -190,7 +190,7 @@ private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boole
                 colors = CardDefaults.cardColors(containerColor = dotColor),
             ) {
                 Text(
-                    text = "${stop.pivot.order}",
+                    text = "${stop.order}",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -212,7 +212,7 @@ private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boole
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "~${stop.pivot.estimatedMinutes} min", 
+                    text = "~${stop.estimatedMinutes} min",
                     color = MaterialTheme.colorScheme.secondary, 
                     fontSize = 12.sp
                 )

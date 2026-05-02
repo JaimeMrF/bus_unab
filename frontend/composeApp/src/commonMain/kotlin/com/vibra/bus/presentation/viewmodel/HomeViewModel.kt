@@ -80,7 +80,7 @@ class HomeViewModel(
             _busStops.value = emptyList()
             _busStopsLoading.value = true
             when (val result = busRepository.getBusStops(plate)) {
-                is ApiResult.Success -> _busStops.value = result.data.data.sortedBy { it.pivot.order }
+                is ApiResult.Success -> _busStops.value = result.data.data.sortedBy { it.order }
                 else -> {}
             }
             _busStopsLoading.value = false

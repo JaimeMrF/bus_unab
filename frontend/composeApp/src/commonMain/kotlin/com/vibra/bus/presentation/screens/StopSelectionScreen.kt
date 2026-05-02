@@ -515,7 +515,7 @@ private fun StopSelectionRow(
                 )
             }
             Text(
-                "~${stop.pivot.estimatedMinutes} min",
+                "~${stop.estimatedMinutes} min",
                 color      = MaterialTheme.colorScheme.secondary,
                 fontSize   = 12.sp,
                 fontWeight = FontWeight.Medium,

@@ -603,7 +603,7 @@ private fun DriverStopRow(
     stop: StopWithPivotDto,
     onConfirm: () -> Unit,
 ) {
-    val demandCount = stop.pivot.order
+    val demandCount = stop.order
     val (priorityColor, priorityLabel) = when {
         demandCount >= 8 -> Pair(MaterialTheme.colorScheme.error,     "Alta")
         demandCount >= 4 -> Pair(MaterialTheme.colorScheme.secondary, "Media")
@@ -627,7 +627,7 @@ private fun DriverStopRow(
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "${stop.pivot.order}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text(text = "${stop.order}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
 
             Spacer(Modifier.width(12.dp))

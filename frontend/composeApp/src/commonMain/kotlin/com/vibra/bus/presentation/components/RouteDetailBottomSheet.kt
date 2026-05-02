@@ -79,7 +79,7 @@ fun RouteDetailBottomSheet(
             }
 
             if (stops.isNotEmpty()) {
-                val totalMinutes = stops.maxOfOrNull { it.pivot.estimatedMinutes } ?: 0
+                val totalMinutes = stops.maxOfOrNull { it.estimatedMinutes } ?: 0
                 Text(
                     text     = "Duración total: $totalMinutes min",
                     fontSize = 13.sp,
@@ -102,7 +102,7 @@ fun RouteDetailBottomSheet(
             } else {
                 LazyColumn(modifier = Modifier.height(220.dp)) {
                     itemsIndexed(stops) { _, stop ->
-                        StopRow(order = stop.pivot.order, stop = stop)
+                        StopRow(order = stop.order, stop = stop)
                     }
                 }
             }
@@ -152,7 +152,7 @@ private fun StopRow(order: Int, stop: StopWithPivotDto) {
             Text(text = stop.address, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(
-            text     = "~${stop.pivot.estimatedMinutes} min",
+            text     = "~${stop.estimatedMinutes} min",
             fontSize = 12.sp,
             color    = MaterialTheme.colorScheme.primary,
         )

@@ -38,7 +38,7 @@ class StopSelectionViewModel(
             _stopsState.value = UiState.Loading
             when (val result = busRepository.getBusStops(plate)) {
                 is ApiResult.Success -> {
-                    val stops = result.data.data.sortedBy { it.pivot.order }
+                    val stops = result.data.data.sortedBy { it.order }
                     _stopsState.value = UiState.Success(stops)
                     if (stops.isNotEmpty()) _selectedStop.value = stops.first()
                 }

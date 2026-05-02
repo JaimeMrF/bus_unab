@@ -27,7 +27,9 @@ data class StopWithPivotDto(
     val latitude: Double,
     val longitude: Double,
     @SerialName("radius_meters") val radiusMeters: Int = 50,
-    val pivot: StopPivot,
+    val order: Int = 0,
+    @SerialName("estimated_minutes") val estimatedMinutes: Int = 0,
+    val pivot: StopPivot? = null,
 )
 
 @Serializable

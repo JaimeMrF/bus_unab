@@ -42,7 +42,7 @@ class DriverModeViewModel(
 
             when (val result = busRepository.getBusStops(plate)) {
                 is ApiResult.Success -> {
-                    _stopsState.value = UiState.Success(result.data.data.sortedBy { it.pivot.order })
+                    _stopsState.value = UiState.Success(result.data.data.sortedBy { it.order })
                 }
                 is ApiResult.HttpError -> _stopsState.value = UiState.Error(result.message)
                 is ApiResult.NetworkError -> {
