@@ -43,6 +43,11 @@ class Bus extends Model
         return $this->hasMany(RouteStop::class)->orderBy('order');
     }
 
+    public function routeWaypoints()
+    {
+        return $this->hasMany(BusRouteWaypoint::class)->orderBy('order');
+    }
+
     public function requests()
     {
         return $this->hasMany(BusRequest::class);

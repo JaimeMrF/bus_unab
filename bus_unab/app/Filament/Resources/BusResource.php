@@ -106,6 +106,7 @@ class BusResource extends Resource
     {
         return [
             StopsRelationManager::class,
+            \App\Filament\Resources\BusResource\RelationManagers\RouteWaypointsRelationManager::class,
         ];
     }
 

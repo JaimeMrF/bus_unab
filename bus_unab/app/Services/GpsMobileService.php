@@ -81,7 +81,9 @@ class GpsMobileService
                 return null;
             }
 
-            return $data['response']['veh'] ?? [];
+            $vehicles = $data['response']['veh'] ?? [];
+            Log::info('GpsMobileService::getAllBuses - vehículos recibidos', ['vehicles' => $vehicles]);
+            return $vehicles;
 
         } catch (ConnectionException $e) {
             Log::error('GpsMobileService::getAllBuses - error de conexión: ' . $e->getMessage());

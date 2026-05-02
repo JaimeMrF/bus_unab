@@ -11,6 +11,7 @@ import com.vibra.bus.data.repository.BusRepository
 import com.vibra.bus.data.repository.PoiRepository
 import com.vibra.bus.data.repository.StopRepository
 import com.vibra.bus.util.ApiResult
+import com.vibra.bus.util.AppSettings
 import com.vibra.bus.util.LatLng
 import com.vibra.bus.util.LocationManager
 import com.vibra.bus.util.UiState
@@ -25,6 +26,7 @@ class HomeViewModel(
     private val stopRepository: StopRepository,
     private val poiRepository: PoiRepository,
     private val locationManager: LocationManager,
+    private val settings: AppSettings,
 ) : ViewModel() {
 
     private val _busesState = MutableStateFlow<UiState<List<BusSummaryDto>>>(UiState.Loading)
@@ -50,6 +52,9 @@ class HomeViewModel(
 
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    private val _sessionExpired = MutableStateFlow(false)
+    val sessionExpired: StateFlow<Boolean> = _sessionExpired
 
     private var pollingJob: Job? = null
     // ✅ Coordenadas ajustadas a UNAB Bucaramanga
@@ -105,8 +110,11 @@ class HomeViewModel(
                     loadOccupancy(result.data.data.map { it.plate })
                 }
                 is ApiResult.HttpError -> {
-                    if (result.code == 503) _snackbarMessage.value = "GPS no disponible temporalmente"
-                    else _busesState.value = UiState.Error(result.message)
+                    when (result.code) {
+                        401 -> { settings.clearSession(); _sessionExpired.value = true }
+                        503 -> _snackbarMessage.value = "GPS no disponible temporalmente"
+                        else -> _busesState.value = UiState.Error(result.message)
+                    }
                 }
                 is ApiResult.NetworkError -> {
                     _snackbarMessage.value = "Sin conexión a internet"

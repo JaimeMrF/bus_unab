@@ -70,12 +70,23 @@ actual fun MapViewComposable(
     ) {
         // Draw Path (Polyline)
         path?.let { p ->
+            // Sombra / halo exterior
             com.google.maps.android.compose.Polyline(
-                points = p.map { GmsLatLng(it.latitude, it.longitude) },
-                color = androidx.compose.material3.MaterialTheme.colorScheme.secondary,
-                width = 12f,
+                points    = p.map { GmsLatLng(it.latitude, it.longitude) },
+                color     = androidx.compose.ui.graphics.Color(0x4D6200EE),
+                width     = 22f,
                 jointType = com.google.android.gms.maps.model.JointType.ROUND,
-                pattern = listOf(com.google.android.gms.maps.model.Dot())
+                startCap  = com.google.android.gms.maps.model.RoundCap(),
+                endCap    = com.google.android.gms.maps.model.RoundCap(),
+            )
+            // Línea principal sólida
+            com.google.maps.android.compose.Polyline(
+                points    = p.map { GmsLatLng(it.latitude, it.longitude) },
+                color     = androidx.compose.ui.graphics.Color(0xFF6200EE),
+                width     = 12f,
+                jointType = com.google.android.gms.maps.model.JointType.ROUND,
+                startCap  = com.google.android.gms.maps.model.RoundCap(),
+                endCap    = com.google.android.gms.maps.model.RoundCap(),
             )
         }
 
