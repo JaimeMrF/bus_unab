@@ -1,7 +1,11 @@
 package com.vibra.bus.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,18 +14,23 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,11 +40,11 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.theme.VibraBusShapes
-import com.vibra.bus.presentation.theme.VibraBusThemeUtils
 import com.vibra.bus.util.LatLng
 import org.jetbrains.compose.resources.painterResource
 import vibrabus.composeapp.generated.resources.Res
@@ -73,27 +82,50 @@ fun BusMarker(
 
     val rotation by animateFloatAsState(
         targetValue = heading,
-        animationSpec = tween(durationMillis = 500),
+        animationSpec = tween(durationMillis = 800),
         label = "bus_rotation"
     )
     
     Box(
         modifier = modifier
-            .size(48.dp)
-            .scale(scale)
-            .rotate(rotation),
+            .size(56.dp)
+            .scale(scale),
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(Res.drawable.ic_bus_top),
-            contentDescription = "Bus",
-            modifier = Modifier.fillMaxSize()
-        )
+        // Base circular para que el bus no se vea "suelto"
+        Surface(
+            modifier = Modifier.size(42.dp),
+            shape = CircleShape,
+            color = Color.White,
+            shadowElevation = 4.dp
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Image(
+                    painter = painterResource(Res.drawable.ic_bus_top),
+                    contentDescription = "Bus",
+                    modifier = Modifier
+                        .size(34.dp)
+                        .rotate(rotation)
+                )
+            }
+        }
+        
+        // Indicador de dirección externa
+        Canvas(modifier = Modifier.fillMaxSize().rotate(rotation)) {
+            val arrowPath = androidx.compose.ui.graphics.Path().apply {
+                moveTo(size.width / 2, 4.dp.toPx())
+                lineTo(size.width / 2 - 6.dp.toPx(), 12.dp.toPx())
+                lineTo(size.width / 2 + 6.dp.toPx(), 12.dp.toPx())
+                close()
+            }
+            drawPath(arrowPath, color = Color(0xFFFF5722))
+        }
     }
 }
 
 /**
- * Custom stop marker for map with Material 3 styling
+ * Custom stop marker - Redesigned to stand out as a transport hub
+ * Using a "Badge" style that looks like official transport signage.
  */
 @Composable
 fun StopMarker(
@@ -102,82 +134,125 @@ fun StopMarker(
     onClick: () -> Unit = {}
 ) {
     val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.3f else 1f,
-        animationSpec = tween(durationMillis = 200),
+        targetValue = if (isSelected) 1.5f else 1.1f,
+        animationSpec = tween(durationMillis = 300),
         label = "stop_marker_scale"
     )
     
-    val stopColor = VibraBusThemeUtils.routeColor(isSelected)
+    val primaryColor = if (isSelected) Color(0xFF6200EE) else Color(0xFF1976D2)
     
     Box(
         modifier = modifier
-            .size(32.dp)
-            .scale(scale)
-            .clip(VibraBusShapes.StopMarker)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.surface,
-                        stopColor
-                    ),
-                    center = Offset(16f, 16f),
-                    radius = 16f
-                )
-            ),
+            .size(52.dp)
+            .scale(scale),
         contentAlignment = Alignment.Center
     ) {
-        // Stop indicator
-        Canvas(
-            modifier = Modifier.size(12.dp)
-        ) {
+        // Marcador tipo "Totem/Parada"
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val centerX = size.width / 2
+            val centerY = size.height / 2
+            
+            // Sombra
             drawCircle(
-                color = stopColor,
-                radius = size.minDimension / 2,
-                style = Stroke(width = 2.dp.toPx())
+                color = Color.Black.copy(alpha = 0.2f),
+                radius = 8.dp.toPx(),
+                center = Offset(centerX, size.height - 4.dp.toPx())
             )
-            drawCircle(
-                color = stopColor,
-                radius = size.minDimension / 4
+            
+            // Cuerpo cuadrado redondeado (parece señal de bus)
+            val rectWidth = 32.dp.toPx()
+            val rectHeight = 32.dp.toPx()
+            val cornerRadius = 6.dp.toPx()
+            
+            drawRoundRect(
+                color = Color.White,
+                topLeft = Offset(centerX - rectWidth / 2, centerY - rectHeight / 2 - 4.dp.toPx()),
+                size = androidx.compose.ui.geometry.Size(rectWidth, rectHeight),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius)
+            )
+            
+            drawRoundRect(
+                color = primaryColor,
+                topLeft = Offset(centerX - rectWidth / 2, centerY - rectHeight / 2 - 4.dp.toPx()),
+                size = androidx.compose.ui.geometry.Size(rectWidth, rectHeight),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadius, cornerRadius),
+                style = Stroke(width = 3.dp.toPx())
+            )
+
+            // El palo de la señal
+            val stemWidth = 4.dp.toPx()
+            drawRect(
+                color = primaryColor,
+                topLeft = Offset(centerX - stemWidth / 2, centerY + 10.dp.toPx()),
+                size = androidx.compose.ui.geometry.Size(stemWidth, 8.dp.toPx())
             )
         }
+
+        // Icono de bus
+        Icon(
+            imageVector = Icons.Default.DirectionsBus,
+            contentDescription = null,
+            modifier = Modifier
+                .size(22.dp)
+                .offset(y = (-4).dp),
+            tint = primaryColor
+        )
     }
 }
 
 /**
- * User location marker with Material 3 styling
+ * User location marker - High precision style
  */
 @Composable
 fun UserLocationMarker(
     modifier: Modifier = Modifier
 ) {
-    val pulseScale by animateFloatAsState(
-        targetValue = 1.5f,
-        animationSpec = tween(durationMillis = 1000),
-        label = "user_location_pulse"
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulse_alpha"
+    )
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 2.5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulse_scale"
     )
     
     Box(
-        modifier = modifier.size(24.dp),
+        modifier = modifier.size(32.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Outer pulse ring
+        // Onda expansiva de precisión
         Box(
             modifier = Modifier
-                .size(24.dp)
+                .size(16.dp)
                 .scale(pulseScale)
-                .clip(VibraBusShapes.MapButton)
-                .background(
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                )
+                .background(Color(0xFF2196F3).copy(alpha = pulseAlpha), CircleShape)
         )
         
-        // Inner location dot
-        Box(
-            modifier = Modifier
-                .size(12.dp)
-                .clip(VibraBusShapes.MapButton)
-                .background(MaterialTheme.colorScheme.primary)
-        )
+        // Punto central con borde de alta visibilidad
+        Surface(
+            modifier = Modifier.size(14.dp),
+            shape = CircleShape,
+            color = Color.White,
+            shadowElevation = 4.dp
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(2.dp)
+                    .background(Color(0xFF2196F3), CircleShape)
+            )
+        }
     }
 }
 

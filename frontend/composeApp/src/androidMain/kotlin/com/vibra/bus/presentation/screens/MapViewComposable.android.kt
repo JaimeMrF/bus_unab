@@ -58,7 +58,8 @@ actual fun MapViewComposable(
             myLocationButtonEnabled = false,
         ),
         properties = MapProperties(
-            mapStyleOptions = MapStyleOptions(MapStyle.json)
+            mapStyleOptions = MapStyleOptions(MapStyle.json),
+            isMyLocationEnabled = true
         )
     ) {
         // Draw Path (Polyline)
