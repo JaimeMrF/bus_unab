@@ -122,6 +122,7 @@ kotlin {
             implementation(libs.camera.x.lifecycle)
             implementation(libs.camera.x.view)
             implementation(libs.mlkit.barcode)
+            implementation(libs.sceneview)
         }
 
         iosMain.dependencies {

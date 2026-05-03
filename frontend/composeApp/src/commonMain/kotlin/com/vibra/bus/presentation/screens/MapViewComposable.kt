@@ -79,61 +79,10 @@ fun BusMarker(
     heading: Float = 0f,
     onClick: () -> Unit = {}
 ) {
-    val scale by animateFloatAsState(
-        targetValue = if (isSelected) 1.2f else 1f,
-        animationSpec = tween(durationMillis = 200),
-        label = "bus_marker_scale"
-    )
-
-    // Accumulated rotation: always takes the shortest arc (avoids 340° spin when crossing 0°/360°)
-    var targetRotation by remember { mutableFloatStateOf(heading) }
-    LaunchedEffect(heading) {
-        var diff = (heading - targetRotation) % 360f
-        if (diff > 180f) diff -= 360f
-        if (diff < -180f) diff += 360f
-        targetRotation += diff
-    }
-
-    val rotation by animateFloatAsState(
-        targetValue = targetRotation,
-        animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing),
-        label = "bus_rotation"
-    )
-    
-    Box(
-        modifier = modifier
-            .size(56.dp)
-            .scale(scale),
-        contentAlignment = Alignment.Center
-    ) {
-        // Base circular para que el bus no se vea "suelto"
-        Surface(
-            modifier = Modifier.size(42.dp),
-            shape = CircleShape,
-            color = Color.White,
-            shadowElevation = 4.dp
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(Res.drawable.ic_bus_top),
-                    contentDescription = "Bus",
-                    modifier = Modifier
-                        .size(34.dp)
-                        .rotate(rotation)
-                )
-            }
-        }
-        
-        // Indicador de dirección externa
-        Canvas(modifier = Modifier.fillMaxSize().rotate(rotation)) {
-            val arrowPath = androidx.compose.ui.graphics.Path().apply {
-                moveTo(size.width / 2, 4.dp.toPx())
-                lineTo(size.width / 2 - 6.dp.toPx(), 12.dp.toPx())
-                lineTo(size.width / 2 + 6.dp.toPx(), 12.dp.toPx())
-                close()
-            }
-            drawPath(arrowPath, color = Color(0xFFFF5722))
-        }
+    // Hemos vaciado esto para que en Android se use obligatoriamente el ThreeDBusMarker
+    // Si ves este texto en la pantalla, es que algo anda mal con el actual/expect
+    Box(modifier = modifier.size(40.dp), contentAlignment = Alignment.Center) {
+        Text("3D...", color = Color.White, fontSize = 10.sp)
     }
 }
 

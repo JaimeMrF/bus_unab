@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -22,6 +23,14 @@ import com.vibra.bus.data.model.BusSummaryDto
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.MapProperties
 import com.vibra.bus.util.MapStyle
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
+import io.github.sceneview.SceneView
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.math.Rotation
+import io.github.sceneview.math.Scale
+import kotlinx.coroutines.launch
 
 @Composable
 actual fun MapViewComposable(
@@ -160,9 +169,48 @@ private fun AnimatedBusMarker(
             true
         }
     ) {
-        BusMarker(
+        ThreeDBusMarker(
             isSelected = isSelected,
             heading = bus.heading.toFloat()
         )
     }
+}
+
+@Composable
+private fun ThreeDBusMarker(
+    heading: Float,
+    isSelected: Boolean
+) {
+    val scope = rememberCoroutineScope()
+    val scaleFactor = if (isSelected) 1.5f else 1.2f
+
+    AndroidView(
+        modifier = Modifier.size(80.dp),
+        factory = { ctx ->
+            SceneView(ctx).apply {
+                isTransparent = true
+                
+                // Cargamos el nodo del modelo
+                val modelNode = ModelNode(ctx).apply {
+                    loadModelGlb(
+                        context = ctx,
+                        glbFileLocation = "models/bus_unab_3d.glb",
+                        autoAnimate = true,
+                        scaleToUnits = 1.0f
+                    )
+                    scale = Scale(scaleFactor)
+                }
+                addChild(modelNode)
+            }
+        },
+        update = { sceneView ->
+            val modelNode = sceneView.children.firstOrNull { it is ModelNode } as? ModelNode
+            modelNode?.apply {
+                // Ajustamos la rotación según el rumbo del bus
+                // Nota: es posible que debas sumar o restar 90/180 grados según el modelo
+                rotation = Rotation(y = -heading) 
+                scale = Scale(scaleFactor)
+            }
+        }
+    )
 }
