@@ -34,6 +34,9 @@ class StopResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
 
+                Forms\Components\View::make('filament.forms.components.map-picker')
+                    ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('latitude')
                     ->label('Latitud')
                     ->required()

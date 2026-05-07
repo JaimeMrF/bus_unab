@@ -9,7 +9,6 @@ use Filament\Resources\Pages\EditRecord;
 class EditPointOfInterest extends EditRecord
 {
     protected static string $resource = PointOfInterestResource::class;
-
     protected function getHeaderActions(): array
     {
         return [Actions\DeleteAction::make()];

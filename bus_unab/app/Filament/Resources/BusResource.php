@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BusResource\Pages;
 use App\Filament\Resources\BusResource\RelationManagers\StopsRelationManager;
 use App\Models\Bus;
+use Filament\Tables\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -92,6 +93,11 @@ class BusResource extends Resource
                 Tables\Filters\TernaryFilter::make('is_active')->label('Estado'),
             ])
             ->actions([
+                Action::make('editRoute')
+                    ->label('Editar Ruta')
+                    ->icon('heroicon-o-map')
+                    ->color('info')
+                    ->url(fn (Bus $record): string => static::getUrl('route', ['record' => $record->id])),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -116,6 +122,7 @@ class BusResource extends Resource
             'index'  => Pages\ListBuses::route('/'),
             'create' => Pages\CreateBus::route('/create'),
             'edit'   => Pages\EditBus::route('/{record}/edit'),
+            'route'  => Pages\EditBusRoute::route('/{record}/route'),
         ];
     }
 }

@@ -1,11 +1,7 @@
 package com.vibra.bus.presentation.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -43,9 +40,12 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -94,7 +94,12 @@ data class StopSelectionScreen(val plate: String) : Screen {
         val snackbarHostState = remember { SnackbarHostState() }
         var showFullDialog    by remember { mutableStateOf(false) }
         val listState         = rememberLazyListState()
-        val bottomSheetState  = rememberBottomSheetScaffoldState()
+        val bottomSheetState  = rememberBottomSheetScaffoldState(
+            bottomSheetState = rememberStandardBottomSheetState(
+                initialValue = SheetValue.Expanded,
+                skipHiddenState = true
+            )
+        )
         val scope             = rememberCoroutineScope()
 
         val sheetScale by animateFloatAsState(
@@ -134,11 +139,19 @@ data class StopSelectionScreen(val plate: String) : Screen {
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            "Seleccionar parada",
-                            color      = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Column {
+                            Text(
+                                text       = busDetail?.name ?: "Seleccionar parada",
+                                color      = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize   = 17.sp
+                            )
+                            Text(
+                                text     = "Elige dónde subirte",
+                                color    = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                                fontSize = 12.sp
+                            )
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = { navigator.pop() }) {
@@ -151,7 +164,8 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    ),
+                    windowInsets = WindowInsets(0, 0, 0, 0)
                 )
             },
             sheetContent = {
@@ -182,47 +196,45 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment     = Alignment.CenterVertically
                     ) {
-                        Column {
-                            Text(
-                                text  = "Selecciona tu parada",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = Color.White
-                            )
-                            Text(
-                                text  = "Bus: $plate",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.7f)
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .clip(VibraBusShapes.StatusBadge)
-                                .background(MaterialTheme.colorScheme.secondaryContainer)
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text  = if (selectedStop != null) "Seleccionado" else "Pendiente",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
+                        Text(
+                            text       = "¿Dónde subes?",
+                            fontWeight = FontWeight.Bold,
+                            fontSize   = 18.sp,
+                            color      = Color.White
+                        )
+                        if (selectedStop != null) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color(0xFF4CAF50).copy(alpha = 0.2f))
+                                    .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text      = "✓ Seleccionada",
+                                    fontSize  = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color     = Color(0xFF4CAF50)
+                                )
+                            }
                         }
                     }
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
 
-                    val stopList = (stopsState as? UiState.Success)?.data ?: emptyList()
-
+                    // Lista de paradas con altura máxima — nunca empuja el botón fuera
                     when (val state = stopsState) {
                         is UiState.Loading -> {
                             LazyColumn(
-                                contentPadding = PaddingValues(16.dp),
+                                modifier = Modifier.heightIn(max = 280.dp),
+                                contentPadding = PaddingValues(vertical = 4.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                items(5) {
+                                items(4) {
                                     ShimmerBox(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(70.dp)
+                                            .height(64.dp)
                                             .clip(VibraBusShapes.ListItem)
                                     )
                                 }
@@ -237,7 +249,8 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             } else {
                                 LazyColumn(
                                     state = listState,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    modifier = Modifier.heightIn(max = 280.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     items(state.data) { stop ->
                                         StopSelectionRow(
@@ -260,73 +273,10 @@ data class StopSelectionScreen(val plate: String) : Screen {
 
                     Spacer(Modifier.height(16.dp))
 
-                    busDetail?.let { bus ->
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .shadow(
-                                    elevation    = 3.dp,
-                                    shape        = RoundedCornerShape(14.dp),
-                                    ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
-                                )
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(MaterialTheme.colorScheme.surface)
-                                .padding(16.dp),
-                        ) {
-                            Column {
-                                Text(
-                                    bus.name,
-                                    fontWeight = FontWeight.Bold,
-                                    color      = MaterialTheme.colorScheme.onSurface,
-                                    fontSize   = 16.sp
-                                )
-                                Text(
-                                    "Placa: ${bus.plate}",
-                                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 13.sp
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(12.dp))
-                    }
-
-                    Row(
-                        modifier              = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                    ) {
-                        listOf("Ruta", "Parada", "Confirmar", "QR").forEachIndexed { i, label ->
-                            val active = i == 1
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .background(
-                                            if (active) MaterialTheme.colorScheme.primary
-                                            else        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
-                                            RoundedCornerShape(14.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        "${i + 1}",
-                                        color      = MaterialTheme.colorScheme.onPrimary,
-                                        fontSize   = 12.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Text(
-                                    label,
-                                    color    = if (active) MaterialTheme.colorScheme.primary
-                                    else        MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 10.sp
-                                )
-                            }
-                        }
-                    }
-
+                    // Botón siempre visible al fondo del sheet
                     val isLoading = requestState is UiState.Loading
                     Button(
-                        onClick  = {
+                        onClick = {
                             val stop = selectedStop ?: return@Button
                             val bus  = busDetail    ?: return@Button
                             viewModel.confirmStop(bus.id, stop.id)
@@ -334,12 +284,12 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
-                        shape    = VibraBusShapes.ButtonPrimary,
-                        colors   = ButtonDefaults.buttonColors(
+                        shape  = VibraBusShapes.ButtonPrimary,
+                        colors = ButtonDefaults.buttonColors(
                             containerColor         = MaterialTheme.colorScheme.primary,
                             disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
                         ),
-                        enabled  = selectedStop != null && !isLoading,
+                        enabled = selectedStop != null && !isLoading,
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
@@ -349,16 +299,18 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             )
                         } else {
                             Text(
-                                "Confirmar parada",
+                                if (selectedStop != null) "Confirmar — ${selectedStop!!.name}"
+                                else "Elige una parada",
                                 color      = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize   = 15.sp
                             )
                         }
                     }
                     Spacer(Modifier.height(8.dp))
                 }
             },
-            sheetPeekHeight      = 120.dp,
+            sheetPeekHeight      = 460.dp,
             sheetDragHandle = {
                 Box(
                     modifier = Modifier
@@ -401,33 +353,6 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     path = routePath
                 )
 
-                AnimatedVisibility(
-                    visible  = selectedStop != null,
-                    enter    = slideInVertically(
-                        initialOffsetY = { it * 2 },
-                        animationSpec  = tween(durationMillis = 300)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 300)),
-                    exit     = fadeOut(animationSpec = tween(durationMillis = 200)),
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 16.dp, bottom = 140.dp)
-                ) {
-                    Button(
-                        onClick  = {
-                            val stop = selectedStop ?: return@Button
-                            val bus  = busDetail    ?: return@Button
-                            viewModel.confirmStop(bus.id, stop.id)
-                        },
-                        enabled  = selectedStop != null && requestState !is UiState.Loading,
-                        shape    = VibraBusShapes.ButtonPrimary,
-                        colors   = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor   = MaterialTheme.colorScheme.onPrimary
-                        )
-                    ) {
-                        Text("Confirmar")
-                    }
-                }
             }
         }
 
