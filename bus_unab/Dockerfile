@@ -47,7 +47,7 @@ FROM node:20-alpine AS node-build
 
 WORKDIR /var/www/html
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm install --no-audit --no-fund
 COPY resources/ resources/
 COPY vite.config.js tailwind.config.js* postcss.config.js* ./
 RUN npm run build
