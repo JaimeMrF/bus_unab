@@ -2,7 +2,8 @@
 # Deploy script — run on the VPS as root or a user with sudo/docker access
 set -euo pipefail
 
-APP_DIR="/opt/bus_unab"
+REPO_DIR="/opt/bus_unab"
+APP_DIR="${REPO_DIR}/bus_unab"
 REPO_URL="https://github.com/JaimeMrF/bus_unab.git"
 ENV_FILE=".env.production"
 DC="docker compose --env-file ${ENV_FILE}"
@@ -22,12 +23,12 @@ fi
 docker compose version &>/dev/null || error "Docker Compose plugin missing. Run: apt install docker-compose-plugin"
 
 # ── 2. Repo ────────────────────────────────────────────────────────────────────
-if [ -d "$APP_DIR/.git" ]; then
+if [ -d "$REPO_DIR/.git" ]; then
     info "Pulling latest code..."
-    git -C "$APP_DIR" pull --ff-only
+    git -C "$REPO_DIR" pull --ff-only
 else
-    info "Cloning repository to $APP_DIR..."
-    git clone "$REPO_URL" "$APP_DIR"
+    info "Cloning repository to $REPO_DIR..."
+    git clone "$REPO_URL" "$REPO_DIR"
 fi
 
 cd "$APP_DIR"

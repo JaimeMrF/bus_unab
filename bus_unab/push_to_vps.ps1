@@ -5,7 +5,7 @@
 param(
     [string]$User = "root",
     [string]$VpsHost = "79.143.89.188",
-    [string]$AppDir = "/opt/bus_unab"
+    [string]$AppDir = "/opt/bus_unab/bus_unab"
 )
 
 $Target = "${User}@${VpsHost}"
