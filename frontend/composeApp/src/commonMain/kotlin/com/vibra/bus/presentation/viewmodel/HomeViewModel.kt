@@ -118,6 +118,7 @@ class HomeViewModel(
                 }
                 is ApiResult.NetworkError -> {
                     _snackbarMessage.value = "Sin conexión a internet"
+                    _busesState.value = UiState.Error(result.message)
                 }
             }
         }

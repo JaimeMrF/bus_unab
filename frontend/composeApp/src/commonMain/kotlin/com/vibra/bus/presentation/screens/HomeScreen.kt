@@ -86,7 +86,9 @@ class HomeScreen : Screen {
 
         LaunchedEffect(sessionExpired) {
             if (sessionExpired) {
-                navigator.replaceAll(LoginScreen())
+                var root = navigator
+                while (root.parent != null) root = root.parent!!
+                root.replaceAll(LoginScreen())
             }
         }
 

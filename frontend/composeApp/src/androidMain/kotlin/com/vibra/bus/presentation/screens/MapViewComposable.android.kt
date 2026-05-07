@@ -1,36 +1,46 @@
 package com.vibra.bus.presentation.screens
 
+import android.graphics.BitmapFactory
+import android.graphics.Canvas as AndroidCanvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng as GmsLatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.GoogleMapComposable
 import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.vibra.bus.util.LatLng
-import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.data.model.BusSummaryDto
-
+import com.vibra.bus.data.model.StopDto
+import com.vibra.bus.util.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.MapProperties
 import com.vibra.bus.util.MapStyle
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.unit.dp
-import io.github.sceneview.SceneView
-import io.github.sceneview.node.ModelNode
-import io.github.sceneview.math.Rotation
-import io.github.sceneview.math.Scale
-import kotlinx.coroutines.launch
+
+private const val BUS_ASSET_PATH =
+    "composeResources/vibrabus.composeapp.generated.resources/drawable/ic_bus_top.webp"
+
+private data class BusIcons(val normal: BitmapDescriptor?, val selected: BitmapDescriptor?)
+
+// ─── Public expect implementation ────────────────────────────────────────────
 
 @Composable
 actual fun MapViewComposable(
@@ -45,7 +55,8 @@ actual fun MapViewComposable(
     buses: List<BusSummaryDto>,
     path: List<LatLng>?
 ) {
-    val defaultPosition = GmsLatLng(7.1166, -73.1056) // UNAB Jardín, Bucaramanga
+    val context = LocalContext.current
+    val defaultPosition = GmsLatLng(7.1166, -73.1056)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
             userLocation?.let { GmsLatLng(it.latitude, it.longitude) } ?: defaultPosition,
@@ -53,11 +64,21 @@ actual fun MapViewComposable(
         )
     }
 
+    // Load raw bitmap during composition (no Maps dependency).
+    val rawBitmap = remember {
+        try {
+            context.assets.open(BUS_ASSET_PATH).use { BitmapFactory.decodeStream(it) }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // BitmapDescriptors are created in onMapLoaded where BitmapDescriptorFactory is guaranteed ready.
+    var busIcons by remember { mutableStateOf(BusIcons(null, null)) }
+
     LaunchedEffect(userLocation) {
         userLocation?.let {
-            // Solo centramos automáticamente si la ubicación es "válida" para Bucaramanga
-            // Evitamos saltos a USA (lat ~37) si el usuario está en Colombia (lat ~7)
-            if (it.latitude < 15.0) { 
+            if (it.latitude < 15.0) {
                 cameraPositionState.animate(
                     CameraUpdateFactory.newLatLngZoom(GmsLatLng(it.latitude, it.longitude), 15f),
                 )
@@ -74,12 +95,29 @@ actual fun MapViewComposable(
         ),
         properties = MapProperties(
             mapStyleOptions = MapStyleOptions(MapStyle.json),
-            isMyLocationEnabled = true
-        )
+        ),
+        onMapLoaded = {
+            if (rawBitmap != null && busIcons.normal == null) {
+                val density = context.resources.displayMetrics.density
+                val sizePx = (72 * density).toInt()
+                val scaled = android.graphics.Bitmap.createScaledBitmap(rawBitmap, sizePx, sizePx, true)
+
+                val normalDesc = BitmapDescriptorFactory.fromBitmap(scaled)
+
+                val selectedBitmap = scaled.copy(android.graphics.Bitmap.Config.ARGB_8888, true)
+                AndroidCanvas(selectedBitmap).drawBitmap(
+                    scaled, 0f, 0f,
+                    Paint().apply {
+                        colorFilter = PorterDuffColorFilter(0xFF6200EE.toInt(), PorterDuff.Mode.SRC_ATOP)
+                    }
+                )
+                val selectedDesc = BitmapDescriptorFactory.fromBitmap(selectedBitmap)
+
+                busIcons = BusIcons(normalDesc, selectedDesc)
+            }
+        }
     ) {
-        // Draw Path (Polyline)
         path?.let { p ->
-            // Sombra / halo exterior
             com.google.maps.android.compose.Polyline(
                 points    = p.map { GmsLatLng(it.latitude, it.longitude) },
                 color     = androidx.compose.ui.graphics.Color(0x4D6200EE),
@@ -88,7 +126,6 @@ actual fun MapViewComposable(
                 startCap  = com.google.android.gms.maps.model.RoundCap(),
                 endCap    = com.google.android.gms.maps.model.RoundCap(),
             )
-            // Línea principal sólida
             com.google.maps.android.compose.Polyline(
                 points    = p.map { GmsLatLng(it.latitude, it.longitude) },
                 color     = androidx.compose.ui.graphics.Color(0xFF6200EE),
@@ -101,7 +138,7 @@ actual fun MapViewComposable(
 
         userLocation?.let { loc ->
             com.google.maps.android.compose.MarkerComposable(
-                state = com.google.maps.android.compose.MarkerState(position = GmsLatLng(loc.latitude, loc.longitude)),
+                state = MarkerState(position = GmsLatLng(loc.latitude, loc.longitude)),
                 title = "Mi Ubicación"
             ) {
                 UserLocationMarker()
@@ -112,7 +149,7 @@ actual fun MapViewComposable(
             stops.forEach { stop ->
                 val isSelected = selectedStop?.id == stop.id
                 com.google.maps.android.compose.MarkerComposable(
-                    state = com.google.maps.android.compose.MarkerState(position = GmsLatLng(stop.latitude, stop.longitude)),
+                    state = MarkerState(position = GmsLatLng(stop.latitude, stop.longitude)),
                     title = stop.name,
                     onClick = {
                         onStopSelected(stop)
@@ -128,24 +165,29 @@ actual fun MapViewComposable(
             AnimatedBusMarker(
                 bus = bus,
                 isSelected = selectedBus?.plate == bus.plate,
-                onBusSelected = onBusSelected
+                onBusSelected = onBusSelected,
+                normalIcon = busIcons.normal,
+                selectedIcon = busIcons.selected,
             )
         }
     }
 }
 
+// ─── Animated bus marker ──────────────────────────────────────────────────────
+
 @Composable
+@GoogleMapComposable
 private fun AnimatedBusMarker(
     bus: BusSummaryDto,
     isSelected: Boolean,
-    onBusSelected: (BusSummaryDto) -> Unit
+    onBusSelected: (BusSummaryDto) -> Unit,
+    normalIcon: BitmapDescriptor?,
+    selectedIcon: BitmapDescriptor?,
 ) {
-    // Remember marker state per bus plate so it persists across recompositions
     val markerState = remember(bus.plate) {
         MarkerState(position = GmsLatLng(bus.latitude, bus.longitude))
     }
 
-    // Animate lat/lng smoothly between GPS updates (matches the 10s polling interval)
     val animatedLat by animateFloatAsState(
         targetValue = bus.latitude.toFloat(),
         animationSpec = tween(durationMillis = 1500, easing = LinearEasing),
@@ -156,61 +198,28 @@ private fun AnimatedBusMarker(
         animationSpec = tween(durationMillis = 1500, easing = LinearEasing),
         label = "bus_lng_${bus.plate}"
     )
+    val animatedHeading by animateFloatAsState(
+        targetValue = bus.heading.toFloat(),
+        animationSpec = tween(durationMillis = 800, easing = LinearEasing),
+        label = "bus_heading_${bus.plate}"
+    )
 
     LaunchedEffect(animatedLat, animatedLng) {
         markerState.position = GmsLatLng(animatedLat.toDouble(), animatedLng.toDouble())
     }
 
-    com.google.maps.android.compose.MarkerComposable(
+    val icon = (if (isSelected) selectedIcon else normalIcon) ?: return
+
+    Marker(
         state = markerState,
         title = bus.plate,
+        icon = icon,
+        rotation = animatedHeading,
+        flat = true,
+        anchor = Offset(0.5f, 0.5f),
         onClick = {
             onBusSelected(bus)
             true
-        }
-    ) {
-        ThreeDBusMarker(
-            isSelected = isSelected,
-            heading = bus.heading.toFloat()
-        )
-    }
-}
-
-@Composable
-private fun ThreeDBusMarker(
-    heading: Float,
-    isSelected: Boolean
-) {
-    val scope = rememberCoroutineScope()
-    val scaleFactor = if (isSelected) 1.5f else 1.2f
-
-    AndroidView(
-        modifier = Modifier.size(80.dp),
-        factory = { ctx ->
-            SceneView(ctx).apply {
-                isTransparent = true
-                
-                // Cargamos el nodo del modelo
-                val modelNode = ModelNode(ctx).apply {
-                    loadModelGlb(
-                        context = ctx,
-                        glbFileLocation = "models/bus_unab_3d.glb",
-                        autoAnimate = true,
-                        scaleToUnits = 1.0f
-                    )
-                    scale = Scale(scaleFactor)
-                }
-                addChild(modelNode)
-            }
-        },
-        update = { sceneView ->
-            val modelNode = sceneView.children.firstOrNull { it is ModelNode } as? ModelNode
-            modelNode?.apply {
-                // Ajustamos la rotación según el rumbo del bus
-                // Nota: es posible que debas sumar o restar 90/180 grados según el modelo
-                rotation = Rotation(y = -heading) 
-                scale = Scale(scaleFactor)
-            }
         }
     )
 }

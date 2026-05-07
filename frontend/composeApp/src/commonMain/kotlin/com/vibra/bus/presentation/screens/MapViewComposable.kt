@@ -79,10 +79,40 @@ fun BusMarker(
     heading: Float = 0f,
     onClick: () -> Unit = {}
 ) {
-    // Hemos vaciado esto para que en Android se use obligatoriamente el ThreeDBusMarker
-    // Si ves este texto en la pantalla, es que algo anda mal con el actual/expect
-    Box(modifier = modifier.size(40.dp), contentAlignment = Alignment.Center) {
-        Text("3D...", color = Color.White, fontSize = 10.sp)
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.4f else 1.0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "bus_marker_scale"
+    )
+    val rotation by animateFloatAsState(
+        targetValue = heading,
+        animationSpec = tween(durationMillis = 500),
+        label = "bus_marker_rotation"
+    )
+    val bgColor = if (isSelected) Color(0xFF6200EE) else Color.White
+    val iconColor = if (isSelected) Color.White else Color(0xFF6200EE)
+
+    Box(
+        modifier = modifier
+            .size(48.dp)
+            .scale(scale),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(color = Color.Black.copy(alpha = 0.18f), radius = size.minDimension / 2,
+                center = Offset(size.width / 2, size.height / 2 + 3.dp.toPx()))
+            drawCircle(color = bgColor, radius = size.minDimension / 2)
+            if (!isSelected) {
+                drawCircle(color = Color(0xFF6200EE), radius = size.minDimension / 2,
+                    style = Stroke(width = 2.5.dp.toPx()))
+            }
+        }
+        Image(
+            painter = painterResource(Res.drawable.ic_bus_top),
+            contentDescription = null,
+            modifier = Modifier.size(28.dp).rotate(rotation),
+            colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(iconColor)
+        )
     }
 }
 
