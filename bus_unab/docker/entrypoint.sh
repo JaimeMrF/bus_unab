@@ -15,14 +15,19 @@ chown -R www-data:www-data \
 
 # ── Wait for MySQL ─────────────────────────────────────────────────────────────
 echo "[entrypoint] Waiting for MySQL at ${DB_HOST}:${DB_PORT:-3306}..."
-until php -r "
+until php -r '
+$h = getenv("DB_HOST");
+$p = getenv("DB_PORT") ?: "3306";
+$d = getenv("DB_DATABASE");
+$u = getenv("DB_USERNAME");
+$w = getenv("DB_PASSWORD");
 try {
-    new PDO('mysql:host=${DB_HOST};port=${DB_PORT:-3306};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');
+    new PDO("mysql:host=$h;port=$p;dbname=$d", $u, $w);
     exit(0);
-} catch (Exception \$e) {
+} catch (Exception $e) {
     exit(1);
 }
-" 2>/dev/null; do
+' 2>/dev/null; do
     printf '.'
     sleep 2
 done
@@ -32,16 +37,19 @@ echo "[entrypoint] MySQL ready."
 # ── Wait for Redis ─────────────────────────────────────────────────────────────
 if [ -n "${REDIS_HOST}" ]; then
     echo "[entrypoint] Waiting for Redis at ${REDIS_HOST}:${REDIS_PORT:-6379}..."
-    until php -r "
+    until php -r '
+$h = getenv("REDIS_HOST");
+$p = (int)(getenv("REDIS_PORT") ?: 6379);
+$w = getenv("REDIS_PASSWORD");
 try {
-    \$r = new Redis();
-    \$r->connect('${REDIS_HOST}', ${REDIS_PORT:-6379}, 2);
-    if ('${REDIS_PASSWORD}' !== '') \$r->auth('${REDIS_PASSWORD}');
+    $r = new Redis();
+    $r->connect($h, $p, 2);
+    if ($w !== "" && $w !== false) $r->auth($w);
     exit(0);
-} catch (Exception \$e) {
+} catch (Exception $e) {
     exit(1);
 }
-" 2>/dev/null; do
+' 2>/dev/null; do
         printf '.'
         sleep 2
     done

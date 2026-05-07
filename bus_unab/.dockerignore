@@ -15,3 +15,6 @@ bootstrap/cache/*.php
 .phpunit.cache
 tests/
 Makefile
+app.yaml
+push_to_vps.ps1
+deploy.sh

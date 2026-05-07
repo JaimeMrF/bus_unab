@@ -4,31 +4,41 @@
 
 param(
     [string]$User = "root",
-    [string]$Host = "79.143.89.188",
+    [string]$VpsHost = "79.143.89.188",
     [string]$AppDir = "/opt/bus_unab"
 )
 
-$Target = "${User}@${Host}"
+$Target = "${User}@${VpsHost}"
 
 Write-Host "=== Bus UNAB — Push to VPS ===" -ForegroundColor Green
 
 # ── 1. Push latest commits to GitHub first ────────────────────────────────────
-Write-Host "[1/4] Pushing to GitHub..." -ForegroundColor Cyan
+Write-Host "[1/5] Pushing to GitHub..." -ForegroundColor Cyan
 git push
 if ($LASTEXITCODE -ne 0) { Write-Host "git push failed" -ForegroundColor Red; exit 1 }
 
-# ── 2. Copy .env.production (not in git) ─────────────────────────────────────
-Write-Host "[2/4] Copying .env.production to VPS..." -ForegroundColor Cyan
-scp .env.production "${Target}:${AppDir}/.env.production"
+# ── 2. Ensure app dir exists on VPS and copy required files ───────────────────
+Write-Host "[2/5] Ensuring app dir and copying files to VPS..." -ForegroundColor Cyan
+ssh $Target "mkdir -p $AppDir"
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "SCP failed. Make sure SSH access works: ssh ${Target}" -ForegroundColor Red
+    Write-Host "SSH failed. Make sure SSH access works: ssh ${Target}" -ForegroundColor Red
     exit 1
 }
 
+scp .env.production "${Target}:${AppDir}/.env.production"
+if ($LASTEXITCODE -ne 0) { Write-Host "SCP .env.production failed" -ForegroundColor Red; exit 1 }
+
+scp deploy.sh "${Target}:${AppDir}/deploy.sh"
+if ($LASTEXITCODE -ne 0) { Write-Host "SCP deploy.sh failed" -ForegroundColor Red; exit 1 }
+
+ssh $Target "chmod +x ${AppDir}/deploy.sh"
+
 # ── 3. Run deploy.sh on the VPS ───────────────────────────────────────────────
-Write-Host "[3/4] Running deploy.sh on VPS..." -ForegroundColor Cyan
+Write-Host "[3/5] Running deploy.sh on VPS..." -ForegroundColor Cyan
 ssh $Target "bash ${AppDir}/deploy.sh"
 if ($LASTEXITCODE -ne 0) { Write-Host "Deploy script failed" -ForegroundColor Red; exit 1 }
 
 Write-Host ""
-Write-Host "[4/4] Done! Backend at http://${Host}" -ForegroundColor Green
+Write-Host "[4/5] Done! Backend at http://${VpsHost}" -ForegroundColor Green
+Write-Host ""
+Write-Host "Tip: run 'ssh ${Target} make -C ${AppDir} logs-app' to follow app logs" -ForegroundColor DarkGray
