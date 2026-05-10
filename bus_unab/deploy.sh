@@ -13,6 +13,39 @@ info()  { echo -e "${GREEN}[deploy] $*${NC}"; }
 warn()  { echo -e "${YELLOW}[deploy] $*${NC}"; }
 error() { echo -e "${RED}[deploy] $*${NC}"; exit 1; }
 
+# ── 0. SSH resilience warning ──────────────────────────────────────────────────
+if [ -n "${SSH_CONNECTION:-}" ] && [ -z "${STY:-}${TMUX:-}" ]; then
+    warn "Corriendo por SSH sin screen/tmux."
+    warn "Si la sesion se cae, el build muere. Ejecuta primero: screen -S deploy"
+    warn "Continuando en 5 s... (Ctrl+C para cancelar)"
+    sleep 5
+fi
+
+# ── 0b. Swap (evita OOM durante el build en VPS con poca RAM) ──────────────────
+setup_swap() {
+    if swapon --show 2>/dev/null | grep -q "^/swapfile"; then
+        info "Swap ya activo: $(free -h | awk '/^Swap/{print $2}')"
+        return
+    fi
+    info "Creando 2 GB de swap..."
+    if command -v fallocate &>/dev/null; then
+        fallocate -l 2G /swapfile
+    else
+        dd if=/dev/zero of=/swapfile bs=1M count=2048 status=progress
+    fi
+    chmod 600 /swapfile
+    mkswap /swapfile
+    swapon /swapfile
+    grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    info "Swap activo: $(free -h | awk '/^Swap/{print $2}')"
+}
+
+setup_swap
+
+# BuildKit: builds mas eficientes en memoria
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
 # ── 1. Docker ──────────────────────────────────────────────────────────────────
 if ! command -v docker &>/dev/null; then
     warn "Docker not found — installing..."
@@ -47,9 +80,14 @@ if grep -qE '^APP_KEY=[[:space:]]*$' "${ENV_FILE}"; then
 fi
 
 # ── 4. Build & start ───────────────────────────────────────────────────────────
-info "Building images and starting services..."
+info "Actualizando imagenes base (mysql, redis)..."
 ${DC} pull mysql redis 2>/dev/null || true
-${DC} up -d --build --remove-orphans
+
+info "Construyendo imagen de la app (esto puede tardar 3-5 min)..."
+${DC} build --parallel app
+
+info "Iniciando servicios..."
+${DC} up -d --no-build --remove-orphans
 
 # ── 5. Wait and show status ────────────────────────────────────────────────────
 info "Waiting for app to become healthy (up to 120 s)..."

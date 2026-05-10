@@ -19,6 +19,10 @@ services:
         condition: service_healthy
     networks:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     logging:
       driver: "json-file"
       options:
@@ -51,6 +55,10 @@ services:
       start_period: 90s
     networks:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     logging:
       driver: "json-file"
       options:
@@ -64,7 +72,7 @@ services:
       dockerfile: Dockerfile
       target: production
     restart: unless-stopped
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --memory=256
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --memory=128
     env_file: .env.production
     volumes:
       - app_storage:/var/www/html/storage
@@ -75,6 +83,10 @@ services:
         condition: service_healthy
     networks:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     logging:
       driver: "json-file"
       options:
@@ -99,6 +111,10 @@ services:
         condition: service_healthy
     networks:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     logging:
       driver: "json-file"
       options:
@@ -125,6 +141,10 @@ services:
       start_period: 30s
     networks:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 600M
     logging:
       driver: "json-file"
       options:
@@ -138,7 +158,7 @@ services:
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
-      --maxmemory 256mb
+      --maxmemory 128mb
       --maxmemory-policy allkeys-lru
       --save 900 1
       --save 300 10
@@ -151,6 +171,10 @@ services:
       retries: 10
     networks:
       - backend
+    deploy:
+      resources:
+        limits:
+          memory: 192M
     logging:
       driver: "json-file"
       options:
