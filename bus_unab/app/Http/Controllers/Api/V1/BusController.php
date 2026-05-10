@@ -192,6 +192,19 @@ class BusController extends BaseController
      *
      * POST /api/v1/buses/{plate}/location
      */
+    public function clearDriverLocation(string $plate): JsonResponse
+    {
+        $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
+
+        if (empty($plate) || strlen($plate) > 20) {
+            return $this->error('Identificador de ruta inválido', 422);
+        }
+
+        Cache::forget("driver_location_{$plate}");
+
+        return $this->success(['plate' => $plate]);
+    }
+
     public function updateDriverLocation(Request $request, string $plate): JsonResponse
     {
         $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));

@@ -139,6 +139,10 @@ class DriverModeViewModel(
     private fun stopPhoneGps() {
         locationManager.stopLocationUpdates()
         lastKnownLocation = null
+        val plate = _activePlate.value
+        if (plate.isNotEmpty()) {
+            viewModelScope.launch { busRepository.clearDriverLocation(plate) }
+        }
     }
 
     // ── Acciones de conductor ─────────────────────────────────────────────────

@@ -24,6 +24,8 @@ class BusRepository(
 
     suspend fun getBusRoute(plate: String): ApiResult<com.vibra.bus.data.model.DirectionsResponse> = api.getBusRoute(plate)
 
+    suspend fun clearDriverLocation(plate: String) = api.clearDriverLocation(plate)
+
     suspend fun updateDriverLocation(plate: String, lat: Double, lng: Double, heading: Int) =
         api.updateDriverLocation(plate, lat, lng, heading)
 
