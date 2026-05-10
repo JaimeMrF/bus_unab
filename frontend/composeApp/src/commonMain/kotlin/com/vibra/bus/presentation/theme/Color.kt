@@ -9,27 +9,52 @@ val UnabPurple = Color(0xFF1D1B31)      // Deep Dark Purple
 val UnabPurpleLight = Color(0xFF5B2C8C) // Standard UNAB Purple
 val UnabOrange = Color(0xFFE9A427)      // UNAB Orange
 
+// Light theme — warm white background, orange primary, purple disappears
 val LightColorScheme = lightColorScheme(
+    primary = UnabOrange,
+    onPrimary = Color(0xFF1A1200),
+    primaryContainer = Color(0xFFFFF0C6),
+    onPrimaryContainer = Color(0xFF261900),
+    secondary = Color(0xFF7A5200),
+    onSecondary = Color.White,
+    secondaryContainer = Color(0xFFFFDDA8),
+    onSecondaryContainer = Color(0xFF261900),
+    background = Color(0xFFFFFBF5),
+    onBackground = Color(0xFF1D1B1E),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF1D1B1E),
+    surfaceVariant = Color(0xFFF0EBE0),
+    onSurfaceVariant = Color(0xFF4E4539),
+    outline = Color(0xFF80746B),
+    outlineVariant = Color(0xFFD4C8BE),
+    error = Color(0xFFBA1A1A),
+    onError = Color.White,
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF410002),
+    scrim = Color(0xFF000000),
+)
+
+// Purple-primary ("dark") theme
+val DarkColorScheme = darkColorScheme(
     primary = UnabPurpleLight,
     onPrimary = Color.White,
-    primaryContainer = UnabPurple,
+    primaryContainer = Color(0xFF3D1A68),
     onPrimaryContainer = Color.White,
     secondary = UnabOrange,
-    onSecondary = UnabPurple,
+    onSecondary = Color(0xFF1D1B31),
+    secondaryContainer = Color(0xFF3D2A00),
+    onSecondaryContainer = Color.White,
     background = UnabPurple,
     onBackground = Color.White,
     surface = UnabPurple,
     onSurface = Color.White,
+    surfaceVariant = Color(0xFF2D1050),
+    onSurfaceVariant = Color(0xFFCAC4D0),
+    outline = Color(0xFF938F99),
     error = Color(0xFFE5484D),
     onError = Color.White,
-)
-
-val DarkColorScheme = darkColorScheme(
-    primary = UnabPurpleLight,
-    onPrimary = Color.White,
-    secondary = UnabOrange,
-    background = UnabPurple,
-    surface = UnabPurple,
+    errorContainer = Color(0xFF4D1B1B),
+    onErrorContainer = Color(0xFFFF8A80),
 )
 
 object GlassColors {

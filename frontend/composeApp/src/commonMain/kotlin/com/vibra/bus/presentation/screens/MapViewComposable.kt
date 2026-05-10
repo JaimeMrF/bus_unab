@@ -132,7 +132,10 @@ fun StopMarker(
         label = "stop_marker_scale"
     )
     
-    val primaryColor = if (isSelected) Color(0xFF6200EE) else Color(0xFF1976D2)
+    val primaryColor = if (isSelected)
+        MaterialTheme.colorScheme.primary
+    else
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
     
     Box(
         modifier = modifier

@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -97,7 +100,7 @@ data class BusRouteScreen(val plate: String) : Screen {
 
         BottomSheetScaffold(
             scaffoldState       = scaffoldState,
-            sheetPeekHeight     = 200.dp,
+            sheetPeekHeight     = 240.dp,
             sheetContainerColor = Color.Transparent,
             sheetTonalElevation = 0.dp,
             sheetDragHandle = {
@@ -138,7 +141,8 @@ data class BusRouteScreen(val plate: String) : Screen {
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    ),
+                    windowInsets = WindowInsets(0, 0, 0, 0),
                 )
             },
             sheetContent = {
@@ -146,18 +150,8 @@ data class BusRouteScreen(val plate: String) : Screen {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(VibraBusShapes.BottomSheet)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xCC1D1B31), Color(0xF21D1B31))
-                            )
-                        )
-                        .border(
-                            1.dp,
-                            Brush.horizontalGradient(
-                                listOf(Color(0x33FFFFFF), Color(0x1AFFFFFF))
-                            ),
-                            VibraBusShapes.BottomSheet
-                        )
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), VibraBusShapes.BottomSheet)
                         .padding(16.dp)
                 ) {
                     // Bus info card
@@ -184,14 +178,14 @@ data class BusRouteScreen(val plate: String) : Screen {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     bus.name,
-                                    color      = Color.White,
+                                    color      = MaterialTheme.colorScheme.onSurface,
                                     fontWeight = FontWeight.Bold,
                                     fontSize   = 16.sp
                                 )
                                 bus.address?.let {
                                     Text(
                                         it,
-                                        color    = Color.White.copy(alpha = 0.6f),
+                                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 12.sp,
                                         maxLines = 1
                                     )
@@ -233,14 +227,14 @@ data class BusRouteScreen(val plate: String) : Screen {
                     ) {
                         Text(
                             "Paradas de la ruta",
-                            color      = Color.White,
+                            color      = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.SemiBold,
                             fontSize   = 15.sp
                         )
                         if (stopsState is UiState.Success) {
                             Text(
                                 "${routeStops.size} paradas",
-                                color    = Color.White.copy(alpha = 0.5f),
+                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 12.sp
                             )
                         }
@@ -296,6 +290,30 @@ data class BusRouteScreen(val plate: String) : Screen {
                         else -> {}
                     }
 
+                    Spacer(Modifier.height(16.dp))
+
+                    Button(
+                        onClick  = { navigator.push(StopSelectionScreen(plate)) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .navigationBarsPadding(),
+                        shape    = VibraBusShapes.ButtonPrimary,
+                    ) {
+                        Icon(
+                            Icons.Default.DirectionsBus,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint     = MaterialTheme.colorScheme.onPrimary,
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Seleccionar parada",
+                            fontWeight = FontWeight.SemiBold,
+                            color      = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    }
+
                     Spacer(Modifier.height(8.dp))
                 }
             },
@@ -341,13 +359,13 @@ private fun BusStatChip(
     Row(
         modifier          = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White.copy(alpha = 0.08f))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
-        Text(label, color = Color.White, fontSize = 12.sp, maxLines = 1)
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+        Text(label, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, maxLines = 1)
     }
 }
 
@@ -405,7 +423,7 @@ private fun RouteStopRow(
             ) {
                 Text(
                     stop.name,
-                    color      = Color.White,
+                    color      = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Medium,
                     fontSize   = 14.sp,
                     modifier   = Modifier.weight(1f)
@@ -419,7 +437,7 @@ private fun RouteStopRow(
             }
             Text(
                 stop.address,
-                color    = Color.White.copy(alpha = 0.55f),
+                color    = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp,
                 maxLines = 1
             )

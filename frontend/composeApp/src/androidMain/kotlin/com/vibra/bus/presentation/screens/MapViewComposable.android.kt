@@ -35,6 +35,7 @@ import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
+import com.vibra.bus.presentation.theme.LocalIsDarkTheme
 import com.vibra.bus.util.LatLng
 import com.vibra.bus.util.MapStyle
 
@@ -54,6 +55,9 @@ actual fun MapViewComposable(
     buses: List<BusSummaryDto>,
     path: List<LatLng>?,
 ) {
+    val isDark = LocalIsDarkTheme.current
+    val primaryColor = androidx.compose.material3.MaterialTheme.colorScheme.primary
+
     val defaultPosition = GmsLatLng(7.1166, -73.1056)
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
@@ -88,15 +92,17 @@ actual fun MapViewComposable(
                 myLocationButtonEnabled = false,
             ),
             properties = MapProperties(
-                mapStyleOptions = MapStyleOptions(MapStyle.json),
+                mapStyleOptions = if (isDark) MapStyleOptions(MapStyle.json) else null,
             ),
         ) {
             // Polilínea de ruta
             path?.let { p ->
                 val pts = p.map { GmsLatLng(it.latitude, it.longitude) }
+                val outlineColor = if (isDark) Color(0xCCFFFFFF) else Color(0x66000000)
+                val accentColor  = if (isDark) Color(0xFFE9A427) else Color(0xFF5B2C8C)
                 com.google.maps.android.compose.Polyline(
                     points = pts,
-                    color  = androidx.compose.ui.graphics.Color(0xCCFFFFFF),
+                    color  = outlineColor,
                     width  = 18f,
                     jointType = com.google.android.gms.maps.model.JointType.ROUND,
                     startCap  = com.google.android.gms.maps.model.RoundCap(),
@@ -104,7 +110,7 @@ actual fun MapViewComposable(
                 )
                 com.google.maps.android.compose.Polyline(
                     points = pts,
-                    color  = androidx.compose.ui.graphics.Color(0xFF5B2C8C),
+                    color  = primaryColor,
                     width  = 10f,
                     jointType = com.google.android.gms.maps.model.JointType.ROUND,
                     startCap  = com.google.android.gms.maps.model.RoundCap(),
@@ -112,7 +118,7 @@ actual fun MapViewComposable(
                 )
                 com.google.maps.android.compose.Polyline(
                     points  = pts,
-                    color   = androidx.compose.ui.graphics.Color(0xFFE9A427),
+                    color   = accentColor,
                     width   = 3f,
                     jointType = com.google.android.gms.maps.model.JointType.ROUND,
                     startCap  = com.google.android.gms.maps.model.RoundCap(),
@@ -190,6 +196,7 @@ actual fun MapViewComposable(
 
                     BusIconOverlay(
                         heading  = animatedHeading,
+                        isDark   = isDark,
                         modifier = Modifier
                             .size(MODEL_SIZE_DP)
                             .offset {
@@ -206,7 +213,12 @@ actual fun MapViewComposable(
 }
 
 @Composable
-private fun BusIconOverlay(heading: Float, modifier: Modifier) {
+private fun BusIconOverlay(heading: Float, isDark: Boolean, modifier: Modifier) {
+    val bodyColor  = if (isDark) Color(0xFF5B2C8C) else Color(0xFFE9A427)
+    val roofColor  = if (isDark) Color(0xFF4A2275) else Color(0xFFCC8500)
+    val stripeColor = if (isDark) Color(0xFFE9A427) else Color(0xFF5B2C8C)
+    val arrowColor  = if (isDark) Color(0xFFE9A427) else Color(0xFF5B2C8C)
+
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val cx = size.width  / 2f
@@ -215,14 +227,13 @@ private fun BusIconOverlay(heading: Float, modifier: Modifier) {
 
             rotate(degrees = heading, pivot = Offset(cx, cy)) {
 
-                // Dimensiones del bus dentro del canvas cuadrado
-                val bW = s * 0.48f          // ancho carrocería
-                val bH = s * 0.78f          // largo carrocería
-                val bL = cx - bW / 2f       // borde izquierdo
-                val bT = cy - bH / 2f       // borde frontal
-                val bR = bL + bW            // borde derecho
-                val bB = bT + bH            // borde trasero
-                val cr = s * 0.09f          // radio esquinas cuerpo
+                val bW = s * 0.48f
+                val bH = s * 0.78f
+                val bL = cx - bW / 2f
+                val bT = cy - bH / 2f
+                val bR = bL + bW
+                val bB = bT + bH
+                val cr = s * 0.09f
 
                 // — Sombra —
                 drawRoundRect(
@@ -240,25 +251,25 @@ private fun BusIconOverlay(heading: Float, modifier: Modifier) {
                     cornerRadius = CornerRadius(cr + 1.5f),
                 )
 
-                // — Carrocería base (morado UNAB) —
+                // — Carrocería base —
                 drawRoundRect(
-                    color        = Color(0xFF5B2C8C),
+                    color        = bodyColor,
                     topLeft      = Offset(bL, bT),
                     size         = Size(bW, bH),
                     cornerRadius = CornerRadius(cr),
                 )
 
-                // — Panel de techo (ligeramente más oscuro, da profundidad) —
+                // — Panel de techo (ligeramente más oscuro) —
                 drawRoundRect(
-                    color        = Color(0xFF4A2275),
+                    color        = roofColor,
                     topLeft      = Offset(bL + bW * 0.13f, bT + bH * 0.11f),
                     size         = Size(bW * 0.74f, bH * 0.78f),
                     cornerRadius = CornerRadius(cr * 0.55f),
                 )
 
-                // — Franja lateral UNAB (amarilla, horizontal) —
+                // — Franja lateral UNAB —
                 drawRect(
-                    color   = Color(0xFFE9A427),
+                    color   = stripeColor,
                     topLeft = Offset(bL, cy - s * 0.052f),
                     size    = Size(bW, s * 0.104f),
                 )
@@ -337,7 +348,7 @@ private fun BusIconOverlay(heading: Float, modifier: Modifier) {
                         lineTo(cx + aHalf, aBase)
                         close()
                     },
-                    color = Color(0xFFE9A427),
+                    color = arrowColor,
                 )
             }
         }

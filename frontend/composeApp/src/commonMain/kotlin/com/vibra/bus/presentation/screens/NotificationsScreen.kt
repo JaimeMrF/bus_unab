@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.Card
@@ -28,7 +30,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -41,6 +44,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.NotificationItem
 import com.vibra.bus.presentation.components.EmptyState
 import com.vibra.bus.presentation.viewmodel.NotificationsViewModel
@@ -54,40 +59,49 @@ class NotificationsScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
+        val navigator     = LocalNavigator.currentOrThrow
         val viewModel     = koinViewModel<NotificationsViewModel>()
         val notifications by viewModel.notifications.collectAsState()
 
-        Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
-            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-                // Header
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
-                ) {
-                    Text(
-                        text       = "Notificaciones",
-                        fontSize   = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color      = MaterialTheme.colorScheme.onPrimary,
-                        modifier   = Modifier.align(Alignment.CenterStart),
-                    )
-                    if (notifications.isNotEmpty()) {
-                        IconButton(
-                            onClick  = { viewModel.clearAll() },
-                            modifier = Modifier.align(Alignment.CenterEnd),
-                        ) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Notificaciones",
+                            color      = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navigator.pop() }) {
                             Icon(
-                                imageVector        = Icons.Default.DeleteSweep,
-                                contentDescription = "Borrar todo",
-                                tint               = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = MaterialTheme.colorScheme.onPrimary,
                             )
                         }
-                    }
-                }
-
+                    },
+                    actions = {
+                        if (notifications.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.clearAll() }) {
+                                Icon(
+                                    Icons.Default.DeleteSweep,
+                                    contentDescription = "Borrar todo",
+                                    tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    windowInsets = WindowInsets(0, 0, 0, 0),
+                )
+            },
+        ) { padding ->
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                 if (notifications.isEmpty()) {
                     EmptyState(
                         message  = "Sin notificaciones",

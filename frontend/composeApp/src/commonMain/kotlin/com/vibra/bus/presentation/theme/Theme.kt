@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
@@ -26,6 +27,9 @@ data class VibraBusColors(
 val LocalVibraBusColors = staticCompositionLocalOf<VibraBusColors> {
     error("No VibraBusColors provided")
 }
+
+val LocalIsDarkTheme = compositionLocalOf { true }
+val LocalThemeToggle = compositionLocalOf<(Boolean) -> Unit> { {} }
 
 // Light Theme Colors
 private val LightVibraBusColors = VibraBusColors(

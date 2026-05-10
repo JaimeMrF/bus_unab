@@ -23,10 +23,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -52,6 +54,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
+import com.vibra.bus.presentation.theme.LocalIsDarkTheme
+import com.vibra.bus.presentation.theme.LocalThemeToggle
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
@@ -67,6 +71,8 @@ class ProfileScreen : Screen {
         val profile       by viewModel.profile.collectAsState()
         val authEvent     by authViewModel.event.collectAsState()
         var showLogout    by remember { mutableStateOf(false) }
+        val isDark        = LocalIsDarkTheme.current
+        val toggleTheme   = LocalThemeToggle.current
 
         LaunchedEffect(authEvent) {
             if (authEvent is AuthEvent.NavigateToLogin) {
@@ -103,14 +109,15 @@ class ProfileScreen : Screen {
             ) {
 
                 // ── Header con gradiente ──────────────────────────────────────
+                val headerGradient = if (isDark)
+                    Brush.verticalGradient(listOf(Color(0xFF2D1050), Color(0xFF5B2C8C)))
+                else
+                    Brush.verticalGradient(listOf(Color(0xFFCC8500), Color(0xFFE9A427)))
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xFF2D1050), Color(0xFF5B2C8C))
-                            )
-                        )
+                        .background(headerGradient)
                         .padding(top = 36.dp, bottom = 28.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -126,16 +133,16 @@ class ProfileScreen : Screen {
                                     .border(3.dp, MaterialTheme.colorScheme.secondary, CircleShape),
                             )
                         } else {
+                            val avatarGradient = if (isDark)
+                                Brush.radialGradient(listOf(Color(0xFF7B4DB0), Color(0xFF3A1A68)))
+                            else
+                                Brush.radialGradient(listOf(Color(0xFFE9A427), Color(0xFFCC8500)))
                             Box(
                                 modifier = Modifier
                                     .size(96.dp)
                                     .clip(CircleShape)
-                                    .background(
-                                        Brush.radialGradient(
-                                            listOf(Color(0xFF7B4DB0), Color(0xFF3A1A68))
-                                        )
-                                    )
-                                    .border(3.dp, MaterialTheme.colorScheme.secondary, CircleShape),
+                                    .background(avatarGradient)
+                                    .border(3.dp, Color.White.copy(alpha = 0.5f), CircleShape),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
@@ -187,7 +194,7 @@ class ProfileScreen : Screen {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF221840))
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
                         .padding(vertical = 16.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
@@ -197,7 +204,7 @@ class ProfileScreen : Screen {
                         Modifier
                             .width(1.dp)
                             .height(32.dp)
-                            .background(Color.White.copy(alpha = 0.12f))
+                            .background(MaterialTheme.colorScheme.outlineVariant)
                     )
                     QuickStat(
                         value = if (profile.role == "driver") "Conductor" else "Estudiante",
@@ -207,7 +214,7 @@ class ProfileScreen : Screen {
                         Modifier
                             .width(1.dp)
                             .height(32.dp)
-                            .background(Color.White.copy(alpha = 0.12f))
+                            .background(MaterialTheme.colorScheme.outlineVariant)
                     )
                     QuickStat(value = "Activo", label = "Estado")
                 }
@@ -239,7 +246,55 @@ class ProfileScreen : Screen {
                     onClick  = { navigator.push(MyQRScreen()) },
                 )
 
-                Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(10.dp))
+
+                // ── Apariencia ────────────────────────────────────────
+                ProfileSectionLabel("Apariencia")
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 3.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 14.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            Icons.Filled.Palette,
+                            contentDescription = null,
+                            tint     = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text       = "Tema de color",
+                            color      = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium,
+                            fontSize   = 15.sp,
+                        )
+                        Text(
+                            text     = if (isDark) "Morado (oscuro)" else "Naranja (cálido)",
+                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp,
+                        )
+                    }
+                    Switch(
+                        checked         = !isDark,
+                        onCheckedChange = { checked -> toggleTheme(!checked) },
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
 
                 // ── Cerrar sesión ─────────────────────────────────────────────
                 Column(
@@ -274,12 +329,12 @@ class ProfileScreen : Screen {
                         modifier            = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text("VibraBus v1.0.0", fontSize = 12.sp, color = Color.White.copy(alpha = 0.25f))
+                        Text("VibraBus v1.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                         Spacer(Modifier.height(2.dp))
                         Text(
                             "Universidad Autónoma de Bucaramanga",
                             fontSize = 11.sp,
-                            color    = Color.White.copy(alpha = 0.18f),
+                            color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                         )
                         Spacer(Modifier.height(20.dp))
                     }
@@ -292,9 +347,9 @@ class ProfileScreen : Screen {
 @Composable
 private fun QuickStat(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
         Spacer(Modifier.height(3.dp))
-        Text(label, fontSize = 11.sp, color = Color.White.copy(alpha = 0.45f))
+        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f))
     }
 }
 
@@ -304,7 +359,7 @@ private fun ProfileSectionLabel(title: String) {
         text          = title.uppercase(),
         fontSize      = 11.sp,
         fontWeight    = FontWeight.SemiBold,
-        color         = Color.White.copy(alpha = 0.38f),
+        color         = MaterialTheme.colorScheme.onSurfaceVariant,
         letterSpacing = 1.1.sp,
         modifier      = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
     )
@@ -323,7 +378,7 @@ private fun ProfileItem(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 3.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.04f))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -346,7 +401,7 @@ private fun ProfileItem(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text       = label,
-                color      = Color.White,
+                color      = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Medium,
                 fontSize   = 15.sp,
             )
@@ -354,7 +409,7 @@ private fun ProfileItem(
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text     = subtitle,
-                    color    = Color.White.copy(alpha = 0.45f),
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                 )
             }
@@ -362,7 +417,7 @@ private fun ProfileItem(
         Icon(
             Icons.AutoMirrored.Default.ArrowForwardIos,
             contentDescription = null,
-            tint               = Color.White.copy(alpha = 0.22f),
+            tint               = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier           = Modifier.size(13.dp),
         )
     }

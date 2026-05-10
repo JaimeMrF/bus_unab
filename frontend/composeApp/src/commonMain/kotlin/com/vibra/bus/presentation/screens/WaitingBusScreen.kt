@@ -2,6 +2,7 @@ package com.vibra.bus.presentation.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -16,25 +17,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import androidx.compose.foundation.Image
-import androidx.compose.ui.layout.ContentScale
 import com.vibra.bus.data.model.StopDto
-import com.vibra.bus.presentation.components.PrimaryGlassButton
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.WaitingBusViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
 import vibrabus.composeapp.generated.resources.buho_viendo_mapa
+
+expect fun startBusTracking(plate: String, stopLat: Double, stopLng: Double, stopName: String)
+expect fun stopBusTracking()
 
 data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
 
@@ -52,7 +52,12 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
 
         LaunchedEffect(Unit) {
             viewModel.startTracking(plate, stop)
+            startBusTracking(plate, stop.latitude, stop.longitude, stop.name)
             isVisible = true
+        }
+
+        DisposableEffect(Unit) {
+            onDispose { stopBusTracking() }
         }
 
         Scaffold(
@@ -126,26 +131,14 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                     enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                     exit = fadeOut()
                 ) {
-                    Box(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(VibraBusShapes.BottomSheet)
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    listOf(
-                                        Color(0xB31D1B31), // Dark Glass
-                                        Color(0xE61D1B31)
-                                    )
-                                )
-                            )
-                            .border(
-                                width = 1.dp,
-                                brush = Brush.horizontalGradient(listOf(Color(0x33FFFFFF), Color(0x1AFFFFFF))),
-                                shape = VibraBusShapes.BottomSheet
-                            )
+                            .background(MaterialTheme.colorScheme.surface)
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), VibraBusShapes.BottomSheet)
                             .padding(20.dp)
                     ) {
-                    Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -156,12 +149,12 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                     text = bus?.name ?: "Buscando bus...",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = "Placa: $plate",
                                     fontSize = 14.sp,
-                                    color = Color.White.copy(alpha = 0.7f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             if (bus == null) {
@@ -172,7 +165,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                     contentScale = ContentScale.Fit,
                                 )
                             }
-                            
+
                             // ETA Circle
                             Box(
                                 modifier = Modifier
@@ -198,10 +191,9 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                         }
 
                         Spacer(Modifier.height(16.dp))
-                        
+
                         LinearProgressIndicator(
-                            progress = { 
-                                // Simulate progress based on distance (closer = more progress)
+                            progress = {
                                 val d = distance ?: 1000
                                 (1f - (d.toFloat() / 1000f)).coerceIn(0.1f, 1f)
                             },
@@ -209,26 +201,38 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                             color = MaterialTheme.colorScheme.secondary,
                             trackColor = MaterialTheme.colorScheme.secondaryContainer
                         )
-                        
+
                         Spacer(Modifier.height(16.dp))
 
                         Text(
-                            text = if (isArriving) "¡Prepara tu QR para abordar!" else "Aproximadamente a ${(distance ?: 0) / 100} cuadras",
+                            text = if (isArriving) "¡Prepara tu QR para abordar!"
+                                   else "Aproximadamente a ${(distance ?: 0) / 100} cuadras",
                             fontSize = 14.sp,
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 16.dp)
                         )
 
-                        PrimaryGlassButton(
-                            text = "Mostrar mi QR",
+                        Button(
                             onClick = { navigator.push(MyQRScreen()) },
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
+                            shape = VibraBusShapes.ButtonPrimary,
+                        ) {
+                            Icon(
+                                Icons.Default.QrCode,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "Mostrar mi QR",
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
-}
-

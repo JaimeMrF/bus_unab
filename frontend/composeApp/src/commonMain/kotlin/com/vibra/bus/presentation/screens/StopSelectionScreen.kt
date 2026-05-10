@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -175,21 +174,8 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(VibraBusShapes.BottomSheet)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xB31D1B31),
-                                    Color(0xE61D1B31)
-                                )
-                            )
-                        )
-                        .border(
-                            width = 1.dp,
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(Color(0x33FFFFFF), Color(0x1AFFFFFF))
-                            ),
-                            shape = VibraBusShapes.BottomSheet
-                        )
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), VibraBusShapes.BottomSheet)
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Row(
@@ -201,7 +187,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             text       = "¿Dónde subes?",
                             fontWeight = FontWeight.Bold,
                             fontSize   = 18.sp,
-                            color      = Color.White
+                            color      = MaterialTheme.colorScheme.onSurface
                         )
                         if (selectedStop != null) {
                             Box(
@@ -324,7 +310,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         .background(MaterialTheme.colorScheme.outline)
                 )
             },
-            sheetContainerColor  = Color.Transparent, // Transparent to use our custom glass background
+            sheetContainerColor  = Color.Transparent,
             sheetTonalElevation  = 0.dp,
             containerColor       = MaterialTheme.colorScheme.background
         ) { padding ->
@@ -414,8 +400,8 @@ private fun StopSelectionRow(
             )
             .clip(RoundedCornerShape(12.dp))
             .background(
-                if (isSelected) Color.White.copy(alpha = 0.15f)
-                else            Color.White.copy(alpha = 0.05f)
+                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                else            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             )
             .clickable(onClick = onClick)
             .padding(12.dp),
@@ -425,8 +411,8 @@ private fun StopSelectionRow(
                 selected = isSelected,
                 onClick  = onClick,
                 colors   = RadioButtonDefaults.colors(
-                    selectedColor = MaterialTheme.colorScheme.secondary,
-                    unselectedColor = Color.White.copy(alpha = 0.6f)
+                    selectedColor   = MaterialTheme.colorScheme.primary,
+                    unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
             )
             Column(
@@ -436,12 +422,12 @@ private fun StopSelectionRow(
             ) {
                 Text(
                     stop.name,
-                    color      = Color.White,
+                    color      = MaterialTheme.colorScheme.onSurface,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
                     stop.address,
-                    color    = Color.White.copy(alpha = 0.7f),
+                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             }

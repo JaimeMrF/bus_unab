@@ -1,10 +1,5 @@
 package com.vibra.bus.presentation.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,9 +15,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -29,24 +29,25 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.RequestInfo
 import com.vibra.bus.presentation.components.EmptyState
 import com.vibra.bus.presentation.components.ShimmerBox
@@ -63,18 +64,12 @@ class MyTripsScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
         val viewModel = koinViewModel<MyTripsViewModel>()
         val tripsState by viewModel.tripsState.collectAsState()
         val isRefreshing by viewModel.isRefreshing.collectAsState()
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
         val snackbarState = remember { SnackbarHostState() }
-        var isVisible by remember { mutableStateOf(false) }
-
-        val headerScale by animateFloatAsState(
-            targetValue = if (isVisible) 1f else 0.9f,
-            animationSpec = tween(durationMillis = 600),
-            label = "header_scale"
-        )
 
         LaunchedEffect(snackbarMsg) {
             snackbarMsg?.let {
@@ -83,53 +78,44 @@ class MyTripsScreen : Screen {
             }
         }
 
-        LaunchedEffect(Unit) { isVisible = true }
-
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarState) },
             containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text       = "Mis Viajes",
+                                color      = MaterialTheme.colorScheme.onPrimary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize   = 17.sp,
+                            )
+                            Text(
+                                text     = "Historial de solicitudes",
+                                color    = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                                fontSize = 12.sp,
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navigator.pop() }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver",
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    windowInsets = WindowInsets(0, 0, 0, 0),
+                )
+            },
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 
-                // ── Header ───────────────────────────────────────────────────
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { -it },
-                        animationSpec = tween(durationMillis = 600)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 600))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.primary)
-                            .padding(horizontal = 20.dp, vertical = 18.dp)
-                            .scale(headerScale),
-                    ) {
-                        Column {
-                            Text(
-                                text = "Mis Viajes",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                style = MaterialTheme.typography.headlineMedium
-                            )
-                            Text(
-                                text = "Historial de solicitudes",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                }
-
-                // ── Contenido ─────────────────────────────────────────────────
-                // Movemos AnimatedVisibility para que envuelva al PullToRefreshBox
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 300))
-                ) {
                     PullToRefreshBox(
                         isRefreshing = isRefreshing,
                         onRefresh = { viewModel.refresh() },
@@ -175,7 +161,6 @@ class MyTripsScreen : Screen {
                             }
                         }
                     }
-                }
             }
         }
     }

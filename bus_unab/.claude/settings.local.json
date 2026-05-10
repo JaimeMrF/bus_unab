@@ -26,7 +26,8 @@
       "Bash(Measure-Object)",
       "Bash(Select-Object -ExpandProperty Count)",
       "Bash(Get-ChildItem -Path \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\frontend\" -Recurse -Directory)",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "PowerShell(Get-Content *)"
     ]
   }
 }

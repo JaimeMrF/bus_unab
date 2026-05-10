@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -36,6 +39,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -55,7 +59,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,8 +70,6 @@ import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
 import androidx.compose.foundation.Image
 import com.vibra.bus.presentation.components.BusCard
-import com.vibra.bus.presentation.components.PrimaryGlassButton
-import com.vibra.bus.presentation.components.SecondaryGlassButton
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import org.jetbrains.compose.resources.painterResource
 import vibrabus.composeapp.generated.resources.Res
@@ -198,19 +199,13 @@ class HomeScreen : Screen {
                             .shadow(
                                 elevation = 20.dp,
                                 shape = RoundedCornerShape(24.dp),
-                                spotColor = Color.Black.copy(alpha = 0.5f)
+                                spotColor = Color.Black.copy(alpha = 0.4f)
                             )
                             .clip(RoundedCornerShape(24.dp))
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color(0xCC1D1B31), Color(0xF21D1B31))
-                                )
-                            )
+                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
                             .border(
                                 width = 1.dp,
-                                brush = Brush.linearGradient(
-                                    listOf(Color(0x40FFFFFF), Color(0x10FFFFFF))
-                                ),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
                                 shape = RoundedCornerShape(24.dp)
                             )
                     ) {
@@ -231,7 +226,7 @@ class HomeScreen : Screen {
                                         text = "¡Hola, ${profile.name.split(" ").firstOrNull() ?: ""}! 🦉",
                                         fontSize = 17.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onSurface,
                                         lineHeight = 22.sp
                                     )
                                     Spacer(Modifier.height(2.dp))
@@ -244,7 +239,7 @@ class HomeScreen : Screen {
                                             else -> "Buscando buses cercanos..."
                                         },
                                         fontSize = 13.sp,
-                                        color = Color.White.copy(alpha = 0.55f)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
 
@@ -276,49 +271,46 @@ class HomeScreen : Screen {
 
                             // Acciones
                             if (profile.role == "driver") {
-                                PrimaryGlassButton(
-                                    text = "Entrar a Modo Conductor",
-                                    onClick = { navigator.push(DriverModeScreen()) },
-                                    modifier = Modifier.fillMaxWidth().height(50.dp)
-                                )
+                                Button(
+                                    onClick  = { navigator.push(DriverModeScreen()) },
+                                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                                    shape    = VibraBusShapes.ButtonPrimary,
+                                ) {
+                                    Text("Entrar a Modo Conductor", fontWeight = FontWeight.SemiBold)
+                                }
                             } else if (selectedBus != null) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    SecondaryGlassButton(
-                                        text = "Ver Ruta",
-                                        onClick = { navigator.push(BusRouteScreen(selectedBus!!.plate)) },
+                                    OutlinedButton(
+                                        onClick  = { navigator.push(BusRouteScreen(selectedBus!!.plate)) },
                                         modifier = Modifier.weight(1f).height(50.dp),
-                                        icon = {
-                                            Icon(
-                                                Icons.Default.Map,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(17.dp),
-                                                tint = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        }
-                                    )
-                                    PrimaryGlassButton(
-                                        text = "Seguir Bus",
-                                        onClick = { navigator.push(StopSelectionScreen(selectedBus!!.plate)) },
+                                        shape    = VibraBusShapes.ButtonPrimary,
+                                        border   = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                                    ) {
+                                        Icon(Icons.Default.Map, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("Ver Ruta", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    Button(
+                                        onClick  = { navigator.push(StopSelectionScreen(selectedBus!!.plate)) },
                                         modifier = Modifier.weight(1f).height(50.dp),
-                                        icon = {
-                                            Icon(
-                                                Icons.Default.DirectionsBus,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(17.dp),
-                                                tint = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        }
-                                    )
+                                        shape    = VibraBusShapes.ButtonPrimary,
+                                    ) {
+                                        Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("Seguir Bus", fontWeight = FontWeight.SemiBold)
+                                    }
                                 }
                             } else {
-                                PrimaryGlassButton(
-                                    text = "Buscar Rutas",
-                                    onClick = { showBusSheet = true },
-                                    modifier = Modifier.fillMaxWidth().height(50.dp)
-                                )
+                                Button(
+                                    onClick  = { showBusSheet = true },
+                                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                                    shape    = VibraBusShapes.ButtonPrimary,
+                                ) {
+                                    Text("Buscar Rutas", fontWeight = FontWeight.SemiBold)
+                                }
                             }
                         }
                     }
@@ -331,13 +323,13 @@ class HomeScreen : Screen {
             ModalBottomSheet(
                 onDismissRequest = { showBusSheet = false },
                 sheetState = busSheetState,
-                containerColor = Color(0xFF1D1B31),
+                containerColor = MaterialTheme.colorScheme.surface,
                 dragHandle = {
                     Box(
                         modifier = Modifier
                             .padding(top = 14.dp, bottom = 6.dp)
                             .size(width = 36.dp, height = 4.dp)
-                            .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), RoundedCornerShape(2.dp))
                     )
                 }
             ) {
@@ -359,7 +351,7 @@ class HomeScreen : Screen {
                                 text = "Elige tu ruta",
                                 fontSize = 21.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(Modifier.height(3.dp))
                             Text(
@@ -369,7 +361,7 @@ class HomeScreen : Screen {
                                     else -> "${busList.size} buses disponibles"
                                 },
                                 fontSize = 13.sp,
-                                color = Color.White.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -391,7 +383,7 @@ class HomeScreen : Screen {
                                     text = "${busList.size}",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
@@ -399,7 +391,7 @@ class HomeScreen : Screen {
 
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 24.dp),
-                        color = Color.White.copy(alpha = 0.07f)
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
                     )
                     Spacer(Modifier.height(8.dp))
 
@@ -423,12 +415,12 @@ class HomeScreen : Screen {
                                     text = "No hay buses activos ahora",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = Color.White.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = "Intenta de nuevo en unos minutos",
                                     fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.35f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -445,7 +437,7 @@ class HomeScreen : Screen {
                                         scope.launch { busSheetState.hide() }
                                             .invokeOnCompletion {
                                                 showBusSheet = false
-                                                navigator.push(StopSelectionScreen(bus.plate))
+                                                selectedBus = bus
                                             }
                                     }
                                 )
