@@ -13,12 +13,13 @@
         ])
         ->values();
 
-    // Paradas ya asignadas a este bus, en orden
+    // Paradas ya asignadas a este bus, en orden (filtra stops eliminados)
     $assignedStops = $record->routeStops
         ->sortBy('order')
+        ->filter(fn ($rs) => $rs->stop !== null && $rs->stop->latitude !== null && $rs->stop->longitude !== null)
         ->map(fn ($rs) => [
             'stop_id'           => $rs->stop_id,
-            'name'              => $rs->stop->name ?? '?',
+            'name'              => $rs->stop->name,
             'lat'               => (float) $rs->stop->latitude,
             'lng'               => (float) $rs->stop->longitude,
             'order'             => (int) $rs->order,
