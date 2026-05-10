@@ -10,12 +10,16 @@ return new class extends Migration
     {
         // Soft deletes en buses
         Schema::table('buses', function (Blueprint $table) {
-            $table->softDeletes()->after('is_active');
+            if (!Schema::hasColumn('buses', 'deleted_at')) {
+                $table->softDeletes()->after('is_active');
+            }
         });
 
         // Soft deletes en stops
         Schema::table('stops', function (Blueprint $table) {
-            $table->softDeletes()->after('is_active');
+            if (!Schema::hasColumn('stops', 'deleted_at')) {
+                $table->softDeletes()->after('is_active');
+            }
         });
 
         // Corregir el unique constraint en bus_requests:
