@@ -178,7 +178,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color(0xB31D1B31), // Dark Glass
+                                    Color(0xB31D1B31),
                                     Color(0xE61D1B31)
                                 )
                             )
@@ -190,8 +190,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             ),
                             shape = VibraBusShapes.BottomSheet
                         )
-                        .padding(16.dp)
-                        .scale(sheetScale)
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
@@ -315,7 +314,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     Spacer(Modifier.height(8.dp))
                 }
             },
-            sheetPeekHeight      = 460.dp,
+            sheetPeekHeight      = 380.dp,
             sheetDragHandle = {
                 Box(
                     modifier = Modifier

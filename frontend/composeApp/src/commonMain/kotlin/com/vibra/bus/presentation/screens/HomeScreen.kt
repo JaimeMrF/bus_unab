@@ -391,7 +391,7 @@ class HomeScreen : Screen {
                                     text = "${busList.size}",
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = Color.White
                                 )
                             }
                         }

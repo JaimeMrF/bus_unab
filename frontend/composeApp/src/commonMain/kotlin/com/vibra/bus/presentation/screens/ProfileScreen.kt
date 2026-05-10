@@ -3,6 +3,7 @@ package com.vibra.bus.presentation.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,7 +42,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,12 +61,12 @@ class ProfileScreen : Screen {
 
     @Composable
     override fun Content() {
-        val navigator    = LocalNavigator.currentOrThrow
-        val viewModel    = koinViewModel<ProfileViewModel>()
-        val authViewModel= koinViewModel<AuthViewModel>()
-        val profile      by viewModel.profile.collectAsState()
-        val authEvent    by authViewModel.event.collectAsState()
-        var showLogout   by remember { mutableStateOf(false) }
+        val navigator     = LocalNavigator.currentOrThrow
+        val viewModel     = koinViewModel<ProfileViewModel>()
+        val authViewModel = koinViewModel<AuthViewModel>()
+        val profile       by viewModel.profile.collectAsState()
+        val authEvent     by authViewModel.event.collectAsState()
+        var showLogout    by remember { mutableStateOf(false) }
 
         LaunchedEffect(authEvent) {
             if (authEvent is AuthEvent.NavigateToLogin) {
@@ -76,10 +82,10 @@ class ProfileScreen : Screen {
                 text             = { Text("¿Estás seguro de que deseas cerrar sesión?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
                 confirmButton    = {
                     TextButton(onClick = { showLogout = false; authViewModel.logout() }) {
-                        Text("Sí, cerrar sesión", color = MaterialTheme.colorScheme.error)
+                        Text("Sí, cerrar", color = MaterialTheme.colorScheme.error)
                     }
                 },
-                dismissButton = {
+                dismissButton    = {
                     TextButton(onClick = { showLogout = false }) {
                         Text("Cancelar", color = MaterialTheme.colorScheme.primary)
                     }
@@ -90,58 +96,82 @@ class ProfileScreen : Screen {
 
         Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
             Column(
-                modifier            = Modifier
+                modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
                     .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // Header morado
+
+                // ── Header con gradiente ──────────────────────────────────────
                 Box(
-                    modifier         = Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primary)
-                        .padding(vertical = 32.dp),
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF2D1050), Color(0xFF5B2C8C))
+                            )
+                        )
+                        .padding(top = 36.dp, bottom = 28.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         // Avatar
                         if (profile.avatar.isNotEmpty()) {
                             AsyncImage(
-                                model           = profile.avatar,
+                                model              = profile.avatar,
                                 contentDescription = "Avatar",
-                                modifier        = Modifier
-                                    .size(88.dp)
+                                modifier           = Modifier
+                                    .size(96.dp)
                                     .clip(CircleShape)
                                     .border(3.dp, MaterialTheme.colorScheme.secondary, CircleShape),
                             )
                         } else {
                             Box(
-                                modifier         = Modifier
-                                    .size(88.dp)
+                                modifier = Modifier
+                                    .size(96.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f))
+                                    .background(
+                                        Brush.radialGradient(
+                                            listOf(Color(0xFF7B4DB0), Color(0xFF3A1A68))
+                                        )
+                                    )
                                     .border(3.dp, MaterialTheme.colorScheme.secondary, CircleShape),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Text(
                                     text       = profile.name.firstOrNull()?.uppercase() ?: "U",
-                                    fontSize   = 36.sp,
+                                    fontSize   = 40.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color      = MaterialTheme.colorScheme.surface,
+                                    color      = Color.White,
                                 )
                             }
                         }
-                        Spacer(Modifier.height(12.dp))
-                        Text(profile.name,  fontSize = 20.sp, fontWeight = FontWeight.Bold,  color = MaterialTheme.colorScheme.surface)
-                        Text(profile.email, fontSize = 13.sp, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.75f))
-                        Spacer(Modifier.height(8.dp))
-                        // Badge dorado de rol
+                        Spacer(Modifier.height(14.dp))
+                        Text(
+                            text       = profile.name,
+                            fontSize   = 21.sp,
+                            fontWeight = FontWeight.Bold,
+                            color      = Color.White,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text  = profile.email,
+                            fontSize = 13.sp,
+                            color = Color.White.copy(alpha = 0.65f),
+                        )
+                        Spacer(Modifier.height(14.dp))
                         Box(
                             modifier = Modifier
-                                .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.20f), RoundedCornerShape(8.dp))
-                                .border(1.dp, MaterialTheme.colorScheme.secondary, RoundedCornerShape(8.dp))
-                                .padding(horizontal = 14.dp, vertical = 4.dp),
+                                .background(
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                                    RoundedCornerShape(20.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f),
+                                    RoundedCornerShape(20.dp)
+                                )
+                                .padding(horizontal = 18.dp, vertical = 5.dp),
                         ) {
                             Text(
                                 text       = if (profile.role == "driver") "Conductor" else "Estudiante",
@@ -153,29 +183,105 @@ class ProfileScreen : Screen {
                     }
                 }
 
-                // Opciones
+                // ── Franja de info rápida ─────────────────────────────────────
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF221840))
+                        .padding(vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    QuickStat(value = "UNAB", label = "Universidad")
+                    Box(
+                        Modifier
+                            .width(1.dp)
+                            .height(32.dp)
+                            .background(Color.White.copy(alpha = 0.12f))
+                    )
+                    QuickStat(
+                        value = if (profile.role == "driver") "Conductor" else "Estudiante",
+                        label = "Rol"
+                    )
+                    Box(
+                        Modifier
+                            .width(1.dp)
+                            .height(32.dp)
+                            .background(Color.White.copy(alpha = 0.12f))
+                    )
+                    QuickStat(value = "Activo", label = "Estado")
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // ── Opciones ──────────────────────────────────────────────────
+                ProfileSectionLabel("Opciones")
+
+                ProfileItem(
+                    icon     = Icons.Filled.Notifications,
+                    label    = "Notificaciones",
+                    subtitle = "Alertas y avisos de tu bus",
+                    iconBg   = Color(0xFF155A38),
+                    onClick  = { navigator.push(NotificationsScreen()) },
+                )
+                ProfileItem(
+                    icon     = Icons.Filled.History,
+                    label    = "Mis viajes",
+                    subtitle = "Historial de trayectos",
+                    iconBg   = Color(0xFF0C4F7A),
+                    onClick  = { navigator.push(MyTripsScreen()) },
+                )
+                ProfileItem(
+                    icon     = Icons.Filled.QrCode,
+                    label    = "Mi código QR",
+                    subtitle = "Acceso rápido al código de viaje",
+                    iconBg   = Color(0xFF6B4000),
+                    onClick  = { navigator.push(MyQRScreen()) },
+                )
+
+                Spacer(Modifier.height(28.dp))
+
+                // ── Cerrar sesión ─────────────────────────────────────────────
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 24.dp),
+                        .padding(horizontal = 20.dp),
                 ) {
-                    if (viewModel.isDriver()) {
-                        ProfileOption(label = "Modo Conductor")   { navigator.push(DriverModeScreen()) }
-                    }
-                    ProfileOption(label = "Notificaciones")       { navigator.push(NotificationsScreen()) }
-
-                    Spacer(Modifier.height(32.dp))
-
-                    // Botón cerrar sesión
                     Button(
                         onClick  = { showLogout = true },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape    = RoundedCornerShape(12.dp),
-                        colors   = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        shape    = RoundedCornerShape(14.dp),
+                        colors   = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
+                        ),
                     ) {
-                        Icon(Icons.AutoMirrored.Default.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.surface)
+                        Icon(
+                            Icons.AutoMirrored.Default.ExitToApp,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.error,
+                        )
                         Spacer(Modifier.width(8.dp))
-                        Text("Cerrar sesión", color = MaterialTheme.colorScheme.surface, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Cerrar sesión",
+                            color      = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+
+                    Spacer(Modifier.height(22.dp))
+
+                    Column(
+                        modifier            = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text("VibraBus v1.0.0", fontSize = 12.sp, color = Color.White.copy(alpha = 0.25f))
+                        Spacer(Modifier.height(2.dp))
+                        Text(
+                            "Universidad Autónoma de Bucaramanga",
+                            fontSize = 11.sp,
+                            color    = Color.White.copy(alpha = 0.18f),
+                        )
+                        Spacer(Modifier.height(20.dp))
                     }
                 }
             }
@@ -184,25 +290,80 @@ class ProfileScreen : Screen {
 }
 
 @Composable
-private fun ProfileOption(label: String, onClick: () -> Unit) {
-    Box(
+private fun QuickStat(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+        Spacer(Modifier.height(3.dp))
+        Text(label, fontSize = 11.sp, color = Color.White.copy(alpha = 0.45f))
+    }
+}
+
+@Composable
+private fun ProfileSectionLabel(title: String) {
+    Text(
+        text          = title.uppercase(),
+        fontSize      = 11.sp,
+        fontWeight    = FontWeight.SemiBold,
+        color         = Color.White.copy(alpha = 0.38f),
+        letterSpacing = 1.1.sp,
+        modifier      = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+    )
+}
+
+@Composable
+private fun ProfileItem(
+    icon    : ImageVector,
+    label   : String,
+    subtitle: String,
+    iconBg  : Color,
+    onClick : () -> Unit,
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .shadow(2.dp, RoundedCornerShape(12.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 16.dp, vertical = 3.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White.copy(alpha = 0.04f))
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = 14.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(label, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f), fontSize = 15.sp)
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(iconBg),
+            contentAlignment = Alignment.Center,
+        ) {
             Icon(
-                Icons.AutoMirrored.Default.ArrowForwardIos,
+                icon,
                 contentDescription = null,
-                tint     = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(14.dp),
+                tint               = Color.White,
+                modifier           = Modifier.size(20.dp),
             )
         }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text       = label,
+                color      = Color.White,
+                fontWeight = FontWeight.Medium,
+                fontSize   = 15.sp,
+            )
+            if (subtitle.isNotEmpty()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text     = subtitle,
+                    color    = Color.White.copy(alpha = 0.45f),
+                    fontSize = 12.sp,
+                )
+            }
+        }
+        Icon(
+            Icons.AutoMirrored.Default.ArrowForwardIos,
+            contentDescription = null,
+            tint               = Color.White.copy(alpha = 0.22f),
+            modifier           = Modifier.size(13.dp),
+        )
     }
 }

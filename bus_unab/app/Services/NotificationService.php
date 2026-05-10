@@ -33,11 +33,32 @@ class NotificationService
 
         $tokens = DeviceToken::whereIn('user_id', $userIds)->pluck('token')->toArray();
 
+        $minutes  = $this->estimateEtaMinutes($bus->latitude, $bus->longitude, $stop->latitude, $stop->longitude);
+        $etaText  = $minutes === 1 ? '1 minuto' : "{$minutes} minutos";
+
         $this->sendToTokens($tokens,
             title: "🚌 {$bus->name} está llegando",
-            body:  "Tu bus estará en {$stop->name} en aproximadamente 2 minutos",
-            data:  ['type' => 'bus_approaching', 'bus_id' => (string) $bus->id, 'stop_id' => (string) $stop->id]
+            body:  "Llegará a {$stop->name} en ~{$etaText}",
+            data:  [
+                'type'         => 'bus_approaching',
+                'bus_id'       => (string) $bus->id,
+                'stop_id'      => (string) $stop->id,
+                'minutes_away' => (string) $minutes,
+            ]
         );
+    }
+
+    /** Distancia Haversine → tiempo estimado a velocidad urbana (25 km/h). */
+    private function estimateEtaMinutes(float $busLat, float $busLon, float $stopLat, float $stopLon): int
+    {
+        $R    = 6371;
+        $dLat = deg2rad($stopLat - $busLat);
+        $dLon = deg2rad($stopLon - $busLon);
+        $a    = sin($dLat / 2) ** 2
+              + cos(deg2rad($busLat)) * cos(deg2rad($stopLat)) * sin($dLon / 2) ** 2;
+        $km   = 2 * $R * asin(sqrt($a));
+
+        return max(1, min((int) ceil($km / 25 * 60), 30));
     }
 
     public function notifyBusAlmostFull(Bus $bus): void
@@ -94,7 +115,7 @@ class NotificationService
                             'token'        => $token,
                             'notification' => ['title' => $title, 'body' => $body],
                             'data'         => array_map('strval', $data),
-                            'android'      => ['notification' => ['sound' => 'default', 'icon' => 'ico', 'color' => '#6F119B']],
+                            'android'      => ['notification' => ['sound' => 'default', 'icon' => 'ic_notification', 'color' => '#5B2C8C']],
                         ],
                     ]);
 
