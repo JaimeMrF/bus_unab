@@ -116,6 +116,9 @@ kotlin {
             implementation(libs.credential.manager.play.services)
             implementation(libs.google.id)
 
+            // SceneView (3D / GLB rendering)
+            implementation(libs.sceneview)
+
             // CameraX + MLKit
             implementation(libs.camera.x.core)
             implementation(libs.camera.x.camera2)
