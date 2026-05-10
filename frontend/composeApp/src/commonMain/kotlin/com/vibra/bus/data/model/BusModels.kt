@@ -30,13 +30,13 @@ data class BusDetailDto(
 
 @Serializable
 data class BusesResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val data: List<BusSummaryDto> = emptyList(),
 )
 
 @Serializable
 data class BusDetailResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val data: BusDetailDto? = null,
 )
 
@@ -52,7 +52,7 @@ data class OccupancyDto(
 
 @Serializable
 data class OccupancyResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val data: OccupancyDto? = null,
 )
 
@@ -68,8 +68,8 @@ data class ArrivedResponseData(
 
 @Serializable
 data class ArrivedResponse(
-    val success: Boolean,
-    val data: ArrivedResponseData,
+    val success: Boolean = false,
+    val data: ArrivedResponseData? = null,
 )
 
 @Serializable
@@ -87,6 +87,6 @@ data class BusCatalogItem(
 
 @Serializable
 data class BusCatalogResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val data: List<BusCatalogItem> = emptyList(),
 )

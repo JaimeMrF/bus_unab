@@ -43,18 +43,18 @@ data class CreateRequestData(
 
 @Serializable
 data class CreateRequestResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val data: CreateRequestData? = null,
 )
 
 @Serializable
 data class DeleteRequestResponse(
-    val success: Boolean,
+    val success: Boolean = false,
 )
 
 @Serializable
 data class ListRequestsResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val data: List<RequestInfo> = emptyList(),
 )
 
@@ -92,7 +92,7 @@ data class QrValidateData(
 
 @Serializable
 data class QrValidateResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val data: QrValidateData? = null,
     val message: String? = null,
 )

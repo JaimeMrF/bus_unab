@@ -45,7 +45,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
@@ -61,7 +60,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.presentation.components.LoginInputField
 import com.vibra.bus.presentation.components.PrimaryGlassButton
 import com.vibra.bus.presentation.components.SecondaryGlassButton
-import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.theme.rubikGlitchFamily
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
@@ -85,6 +83,7 @@ class LoginScreen : Screen {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var isFormVisible by remember { mutableStateOf(false) }
+        var showDriverForm by remember { mutableStateOf(false) }
 
         val isLoading = uiState is UiState.Loading
 
@@ -92,12 +91,6 @@ class LoginScreen : Screen {
             targetValue = if (isFormVisible) 1f else 0.8f,
             animationSpec = tween(durationMillis = 800),
             label = "logo_scale"
-        )
-
-        val formAlpha by animateFloatAsState(
-            targetValue = if (isFormVisible) 1f else 0f,
-            animationSpec = tween(durationMillis = 1000, delayMillis = 300),
-            label = "form_alpha"
         )
 
         LaunchedEffect(event) {
@@ -137,10 +130,12 @@ class LoginScreen : Screen {
                     .padding(padding)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
+                verticalArrangement = if (showDriverForm) Arrangement.Top else Arrangement.Center
             ) {
 
-                Spacer(Modifier.height(24.dp)) // ← era 40dp
+                if (showDriverForm) {
+                    Spacer(Modifier.height(24.dp))
+                }
 
                 // ── Mascota Búho ──────────────────────────────────────────────────
                 AnimatedVisibility(
@@ -214,112 +209,20 @@ class LoginScreen : Screen {
                     }
                 }
 
-                Spacer(Modifier.height(24.dp)) // ← era 48dp
+                Spacer(Modifier.height(24.dp))
 
-                // ── Formulario ────────────────────────────────────────────────────
-                AnimatedVisibility(
-                    visible = isFormVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { it },
-                        animationSpec = tween(durationMillis = 1200, delayMillis = 400)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 1200, delayMillis = 400)),
-                    exit = fadeOut(animationSpec = tween(durationMillis = 300))
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(horizontal = 32.dp)
-                            .alpha(formAlpha),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp) // ← era 20dp
-                    ) {
-                        LoginInputField(
-                            value = email,
-                            onValueChange = { email = it },
-                            placeholder = "Correo electrónico",
-                            icon = Icons.Default.Email,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                        )
-
-                        LoginInputField(
-                            value = password,
-                            onValueChange = { password = it },
-                            placeholder = "Contraseña",
-                            icon = Icons.Default.Lock,
-                            isPassword = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-                        )
-
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            TextButton(
-                                onClick = {},
-                                contentPadding = PaddingValues(vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = "¿Olvidaste tu contraseña?",
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        PrimaryGlassButton(
-                            text = "Iniciar Sesión",
-                            onClick = { viewModel.login(email, password) },
-                            loading = isLoading,
-                            enabled = email.isNotBlank() && password.isNotBlank()
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(16.dp)) // ← era 32dp
-
-                // ── Divisor ───────────────────────────────────────────────────────
-                AnimatedVisibility(
-                    visible = isFormVisible,
-                    enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 600))
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp)
-                    ) {
-                        HorizontalDivider(
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
-                        Text(
-                            text = "O",
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.weight(1f),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(16.dp)) // ← era 24dp
-
-                // ── Botón Google con recuadro "Recomendado" ───────────────────────
+                // ── Botón Google (principal) ──────────────────────────────────────
                 AnimatedVisibility(
                     visible = isFormVisible,
                     enter = slideInVertically(
                         initialOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 1000, delayMillis = 800)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 1000, delayMillis = 800))
+                        animationSpec = tween(durationMillis = 1000, delayMillis = 400)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 1000, delayMillis = 400))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 32.dp)    // mismo padding lateral que "Iniciar Sesión"
+                            .padding(horizontal = 32.dp)
                             .clip(RoundedCornerShape(18.dp))
                             .background(
                                 brush = Brush.verticalGradient(
@@ -339,7 +242,7 @@ class LoginScreen : Screen {
                                 ),
                                 shape = RoundedCornerShape(18.dp)
                             )
-                            .padding(horizontal = 16.dp, vertical = 14.dp) // ← aire interno para que no toque
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -347,16 +250,14 @@ class LoginScreen : Screen {
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = "⭐  RECOMENDADO",
+                                text = "⭐  ESTUDIANTES UNAB",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Color(0xFFF5A623),
                                 letterSpacing = 2.sp
                             )
-                            // fillMaxWidth hace que el botón ocupe todo el ancho disponible
-                            // igual que PrimaryGlassButton arriba
                             SecondaryGlassButton(
-                                text = "Ingresa con Google",
+                                text = "Ingresa con Google (@unab.edu.co)",
                                 onClick = { viewModel.loginWithGoogle() },
                                 showRecommendedBadge = false,
                                 loading = isLoading,
@@ -366,40 +267,92 @@ class LoginScreen : Screen {
                     }
                 }
 
-                Spacer(Modifier.height(16.dp)) // ← era 24dp
+                Spacer(Modifier.height(20.dp))
 
-                // ── Enlace Registrarse ────────────────────────────────────────────
+                // ── Formulario conductor (oculto por defecto) ─────────────────────
                 AnimatedVisibility(
-                    visible = isFormVisible,
-                    enter = fadeIn(animationSpec = tween(durationMillis = 1200, delayMillis = 1000))
+                    visible = showDriverForm,
+                    enter = slideInVertically(
+                        initialOffsetY = { it / 2 },
+                        animationSpec = tween(durationMillis = 400)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 400)),
+                    exit = slideOutVertically(
+                        targetOffsetY = { it / 2 },
+                        animationSpec = tween(durationMillis = 300)
+                    ) + fadeOut(animationSpec = tween(durationMillis = 300))
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(horizontal = 32.dp)
+                    Column(
+                        modifier = Modifier.padding(horizontal = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = "¿No tienes cuenta?",
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        TextButton(
-                            onClick = { /* Navigate to register */ },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
+                            HorizontalDivider(
+                                modifier = Modifier.weight(1f),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            )
                             Text(
-                                text = "Contacta Soporte",
-                                color = MaterialTheme.colorScheme.secondary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold
+                                text = "  Acceso conductores  ",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.weight(1f),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                             )
                         }
+
+                        LoginInputField(
+                            value = email,
+                            onValueChange = { email = it },
+                            placeholder = "Correo electrónico",
+                            icon = Icons.Default.Email,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        )
+
+                        LoginInputField(
+                            value = password,
+                            onValueChange = { password = it },
+                            placeholder = "Contraseña",
+                            icon = Icons.Default.Lock,
+                            isPassword = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        )
+
+                        PrimaryGlassButton(
+                            text = "Iniciar Sesión",
+                            onClick = { viewModel.login(email, password) },
+                            loading = isLoading,
+                            enabled = email.isNotBlank() && password.isNotBlank()
+                        )
                     }
                 }
 
-                Spacer(Modifier.height(24.dp)) // ← era 40dp
+                // ── Botón ¿Eres conductor? ────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isFormVisible,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 600))
+                ) {
+                    TextButton(
+                        onClick = { showDriverForm = !showDriverForm },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = if (showDriverForm) "← No soy conductor" else "¿Eres conductor?",
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                if (showDriverForm) {
+                    Spacer(Modifier.height(24.dp))
+                }
             }
         }
     }

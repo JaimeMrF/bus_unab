@@ -20,15 +20,15 @@ data class AuthResponseData(
 
 @Serializable
 data class AuthResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val message: String? = null,
     val data: AuthResponseData? = null,
 )
 
 @Serializable
 data class MeResponse(
-    val success: Boolean,
-    val data: UserDto,
+    val success: Boolean = false,
+    val data: UserDto? = null,
 )
 
 @Serializable
@@ -50,6 +50,6 @@ data class DeviceTokenRequest(
 
 @Serializable
 data class BasicResponse(
-    val success: Boolean,
+    val success: Boolean = false,
     val message: String? = null,
 )

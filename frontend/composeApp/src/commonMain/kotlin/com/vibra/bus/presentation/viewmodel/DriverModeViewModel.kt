@@ -95,7 +95,7 @@ class DriverModeViewModel(
         viewModelScope.launch {
             when (val result = busRepository.confirmArrival(plate, stopId)) {
                 is ApiResult.Success -> {
-                    val count = result.data.data.notifiedUsers
+                    val count = result.data.data?.notifiedUsers ?: 0
                     _snackbarMessage.value = "$count usuario(s) notificados"
                 }
                 is ApiResult.HttpError -> _snackbarMessage.value = result.message

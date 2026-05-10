@@ -42,8 +42,13 @@ class AuthViewModel(
             _uiState.value = UiState.Loading
             when (val result = authRepository.getMe()) {
                 is ApiResult.Success -> {
-                    _uiState.value = UiState.Success(result.data.data)
-                    _event.value = AuthEvent.NavigateToHome
+                    val userData = result.data.data
+                    if (userData != null) {
+                        _uiState.value = UiState.Success(userData)
+                        _event.value = AuthEvent.NavigateToHome
+                    } else {
+                        _event.value = AuthEvent.NavigateToLogin
+                    }
                 }
                 is ApiResult.HttpError -> {
                     if (result.code == 401) {
