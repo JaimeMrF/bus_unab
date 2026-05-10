@@ -240,19 +240,17 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
     return {
         allStops,
         route:           [],   // [{stop_id, name, lat, lng, estimated_minutes}]
-        waypoints:       [],   // [{lat, lng, label}]
+        waypoints:       [],   // [{lat, lng, label, _seg, _t}] – siempre ordenado por _seg luego _t
+        waypointMarkers: [],   // array paralelo a waypoints: instancias Leaflet marker
         stopMarkers:     {},   // stop_id → leaflet marker
-        waypointMarkers: [],
         guideLine:       null,
         osrmLines:       [],
         map:             null,
-        mode:            'stop',  // 'stop' | 'waypoint' | 'delete'
+        mode:            'stop',
         saving:          false,
         previewLoading:  false,
 
-        // ── Bootstrap ────────────────────────────────────────────────────────
         init() {
-            // Cargar paradas ya asignadas
             assignedStops.forEach(s => this.route.push({
                 stop_id:           s.stop_id,
                 name:              s.name,
@@ -263,9 +261,9 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
 
             this.waitForLeaflet(() => this.setupMap());
 
-            // Re-dibujar marcadores cuando cambia route
             this.$watch('route', () => {
                 this.refreshStopMarkers();
+                this.refreshWaypointSegments();
                 this.drawGuideLine();
             });
         },
@@ -287,22 +285,18 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
                 maxZoom: 19,
             }).addTo(this.map);
 
-            // Dibujar todos los marcadores de paradas
             allStops.forEach(s => this.createStopMarker(s));
             this.refreshStopMarkers();
 
-            // Cargar waypoints existentes
-            existingWaypoints.forEach(wp => this.addWaypointMarker(wp.lat, wp.lng, wp.label || ''));
+            existingWaypoints.forEach(wp => this.addWaypointAt(wp.lat, wp.lng, wp.label || ''));
             this.drawGuideLine();
 
-            // Ajustar bounds
             const pts = allStops.map(s => [s.lat, s.lng]);
             if (pts.length > 1) this.map.fitBounds(L.latLngBounds(pts), { padding: [40, 40] });
 
-            // Clic en mapa vacío → añadir waypoint (si modo waypoint)
             this.map.on('click', e => {
                 if (this.mode === 'waypoint') {
-                    this.addWaypointMarker(e.latlng.lat, e.latlng.lng, '');
+                    this.addWaypointAt(e.latlng.lat, e.latlng.lng, '');
                     this.drawGuideLine();
                 }
             });
@@ -314,25 +308,15 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
                 icon: this.grayIcon(),
                 zIndexOffset: 100,
             }).addTo(this.map);
-
             mkr.bindTooltip(this.esc(stop.name), { direction: 'top', opacity: .9 });
-
-            mkr.on('click', () => {
-                if (this.mode === 'stop') {
-                    this.toggleStop(stop);
-                }
-            });
-
+            mkr.on('click', () => { if (this.mode === 'stop') this.toggleStop(stop); });
             this.stopMarkers[stop.id] = mkr;
         },
 
         refreshStopMarkers() {
-            const assignedIds = new Set(this.route.map(r => r.stop_id));
-
-            allStops.forEach((stop, _) => {
+            allStops.forEach(stop => {
                 const mkr = this.stopMarkers[stop.id];
                 if (!mkr) return;
-
                 const idx = this.route.findIndex(r => r.stop_id === stop.id);
                 if (idx >= 0) {
                     mkr.setIcon(this.numberedIcon(idx + 1));
@@ -350,49 +334,76 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
                 this.route.splice(idx, 1);
             } else {
                 this.route.push({
-                    stop_id:           stop.id,
-                    name:              stop.name,
-                    lat:               stop.lat,
-                    lng:               stop.lng,
-                    estimated_minutes: 0,
+                    stop_id: stop.id, name: stop.name,
+                    lat: stop.lat, lng: stop.lng, estimated_minutes: 0,
                 });
             }
-            // $watch lo maneja
         },
 
-        removeStop(idx) {
-            this.route.splice(idx, 1);
-        },
+        removeStop(idx) { this.route.splice(idx, 1); },
 
         moveStop(idx, dir) {
             const newIdx = idx + dir;
             if (newIdx < 0 || newIdx >= this.route.length) return;
-            const tmp = this.route[idx];
-            this.route[idx]    = this.route[newIdx];
-            this.route[newIdx] = tmp;
-            // Forzar reactivity en Alpine
+            [this.route[idx], this.route[newIdx]] = [this.route[newIdx], this.route[idx]];
             this.route = [...this.route];
         },
 
         // ── Waypoints ─────────────────────────────────────────────────────────
-        addWaypointMarker(lat, lng, label) {
+
+        // Devuelve el segmento más cercano {seg, t} para un punto dado.
+        findBestSegment(lat, lng) {
+            const N = this.route.length;
+            if (N < 2) return { seg: 0, t: 0 };
+            let best = { seg: 0, dist: Infinity, t: 0 };
+            for (let i = 0; i < N - 1; i++) {
+                const { dist, t } = this.ptSegDist(
+                    lat, lng,
+                    this.route[i].lat,   this.route[i].lng,
+                    this.route[i+1].lat, this.route[i+1].lng,
+                );
+                if (dist < best.dist) best = { seg: i, dist, t };
+            }
+            return best;
+        },
+
+        // Índice de inserción para mantener waypoints ordenados por _seg, _t.
+        findInsertIndex(seg, t) {
+            for (let i = 0; i < this.waypoints.length; i++) {
+                const w = this.waypoints[i];
+                if (w._seg > seg || (w._seg === seg && w._t > t)) return i;
+            }
+            return this.waypoints.length;
+        },
+
+        // Crea un waypoint y lo inserta en la posición correcta de la secuencia.
+        addWaypointAt(lat, lng, label) {
+            const { seg, t } = this.findBestSegment(lat, lng);
+            const insertIdx  = this.findInsertIndex(seg, t);
+
             const mkr = L.marker([lat, lng], {
                 draggable: true,
                 icon: this.waypointIcon(),
                 zIndexOffset: 200,
             }).addTo(this.map);
 
-            const wpIdx = this.waypoints.length;
-            this.waypoints.push({ lat, lng, label });
+            this.waypoints.splice(insertIdx, 0, { lat, lng, label, _seg: seg, _t: t });
+            this.waypointMarkers.splice(insertIdx, 0, mkr);
 
             mkr.on('dragend', e => {
                 const i = this.waypointMarkers.indexOf(mkr);
-                if (i !== -1) {
-                    const p = e.target.getLatLng();
-                    this.waypoints[i].lat = p.lat;
-                    this.waypoints[i].lng = p.lng;
-                    this.drawGuideLine();
-                }
+                if (i === -1) return;
+                const p = e.target.getLatLng();
+                const { seg: newSeg, t: newT } = this.findBestSegment(p.lat, p.lng);
+                const savedLabel = this.waypoints[i].label;
+                // Quitar de posición actual
+                this.waypoints.splice(i, 1);
+                this.waypointMarkers.splice(i, 1);
+                // Insertar en nueva posición ordenada
+                const newIdx = this.findInsertIndex(newSeg, newT);
+                this.waypoints.splice(newIdx, 0, { lat: p.lat, lng: p.lng, label: savedLabel, _seg: newSeg, _t: newT });
+                this.waypointMarkers.splice(newIdx, 0, mkr);
+                this.drawGuideLine();
             });
 
             mkr.on('click', () => {
@@ -406,13 +417,29 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
                     }
                 }
             });
+        },
 
-            this.waypointMarkers.push(mkr);
+        // Recomputa _seg y _t de todos los waypoints cuando cambian las paradas.
+        refreshWaypointSegments() {
+            if (this.waypoints.length === 0) return;
+            this.waypoints.forEach(wp => {
+                const { seg, t } = this.findBestSegment(wp.lat, wp.lng);
+                wp._seg = seg;
+                wp._t   = t;
+            });
+            // Ordenar ambos arrays usando la misma permutación de índices.
+            const indices = Array.from({ length: this.waypoints.length }, (_, i) => i);
+            indices.sort((a, b) => {
+                const wa = this.waypoints[a], wb = this.waypoints[b];
+                return wa._seg !== wb._seg ? wa._seg - wb._seg : wa._t - wb._t;
+            });
+            this.waypoints       = indices.map(i => this.waypoints[i]);
+            this.waypointMarkers = indices.map(i => this.waypointMarkers[i]);
         },
 
         clearWaypoints() {
             this.waypointMarkers.forEach(m => m.remove());
-            this.waypoints = [];
+            this.waypoints       = [];
             this.waypointMarkers = [];
             this.osrmLines.forEach(l => l.remove());
             this.osrmLines = [];
@@ -427,6 +454,25 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
             this.guideLine = L.polyline(path.map(p => [p.lat, p.lng]), {
                 color: '#6366f1', weight: 3, opacity: 0.5, dashArray: '7 6',
             }).addTo(this.map);
+        },
+
+        // Ruta completa en orden: stops intercalados con sus waypoints.
+        buildOrderedPath() {
+            const N = this.route.length;
+            if (N === 0) return this.waypoints.map(w => ({ lat: w.lat, lng: w.lng }));
+            if (N === 1) return [this.route[0], ...this.waypoints];
+
+            // waypoints ya están ordenados por _seg luego _t
+            const path = [];
+            let wi = 0;
+            for (let i = 0; i < N; i++) {
+                path.push(this.route[i]);
+                while (wi < this.waypoints.length && this.waypoints[wi]._seg === i) {
+                    path.push(this.waypoints[wi]);
+                    wi++;
+                }
+            }
+            return path;
         },
 
         // ── OSRM ─────────────────────────────────────────────────────────────
@@ -462,77 +508,40 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
                     order:             (i + 1) * 10,
                     estimated_minutes: s.estimated_minutes ?? 0,
                 }));
-
                 const waypoints = this.prepareWaypoints(routeStops);
-
                 await this.$wire.saveAll(routeStops, waypoints);
             } finally {
                 this.saving = false;
             }
         },
 
-        // ── Calcular orden de waypoints según segmentos ───────────────────────
+        // Asigna órdenes numéricos a los waypoints respetando el orden de segmentos.
         prepareWaypoints(routeStops) {
-            if (this.waypoints.length === 0) return [];
-            const N = this.route.length;
-            if (N < 2) {
-                return this.waypoints.map((wp, i) => ({
-                    lat: wp.lat, lng: wp.lng, label: wp.label || '', order: (i + 1) * 5,
-                }));
-            }
-
-            const tagged = this.waypoints.map(wp => {
-                let best = { seg: 0, dist: Infinity, t: 0.5 };
-                for (let i = 0; i < N - 1; i++) {
-                    const { dist, t } = this.ptSegDist(
-                        wp.lat, wp.lng,
-                        this.route[i].lat, this.route[i].lng,
-                        this.route[i+1].lat, this.route[i+1].lng,
-                    );
-                    if (dist < best.dist) best = { seg: i, dist, t };
-                }
-                return { ...wp, _seg: best.seg, _t: best.t };
-            });
+            if (this.waypoints.length === 0 || routeStops.length < 2) return [];
 
             const result = [];
-            for (let seg = 0; seg < N - 1; seg++) {
+            let i = 0;
+            while (i < this.waypoints.length) {
+                const seg = this.waypoints[i]._seg;
+                if (seg >= routeStops.length - 1) { i++; continue; }
+
+                const group = [];
+                while (i < this.waypoints.length && this.waypoints[i]._seg === seg) {
+                    group.push(this.waypoints[i++]);
+                }
+
                 const orderA = routeStops[seg].order;
                 const orderB = routeStops[seg + 1].order;
-                const group  = tagged.filter(w => w._seg === seg).sort((a, b) => a._t - b._t);
                 const step   = (orderB - orderA) / (group.length + 1);
-                group.forEach((wp, i) => result.push({
-                    lat: wp.lat, lng: wp.lng, label: wp.label || '',
-                    order: Math.round(orderA + step * (i + 1)),
+
+                group.forEach((wp, j) => result.push({
+                    lat:   wp.lat,
+                    lng:   wp.lng,
+                    label: wp.label || '',
+                    order: Math.round(orderA + step * (j + 1)),
                 }));
             }
             return result;
-        },
-
-        // ── Ruta ordenada completa (stops + waypoints) ────────────────────────
-        buildOrderedPath() {
-            const N = this.route.length;
-            if (N === 0) return this.waypoints;
-            if (N === 1) return [this.route[0], ...this.waypoints];
-
-            const tagged = this.waypoints.map(wp => {
-                let best = { seg: 0, dist: Infinity, t: 0.5 };
-                for (let i = 0; i < N - 1; i++) {
-                    const { dist, t } = this.ptSegDist(
-                        wp.lat, wp.lng,
-                        this.route[i].lat, this.route[i].lng,
-                        this.route[i+1].lat, this.route[i+1].lng,
-                    );
-                    if (dist < best.dist) best = { seg: i, dist, t };
-                }
-                return { ...wp, _seg: best.seg, _t: best.t };
-            });
-
-            const path = [];
-            for (let i = 0; i < N; i++) {
-                path.push(this.route[i]);
-                tagged.filter(w => w._seg === i).sort((a,b) => a._t - b._t).forEach(w => path.push(w));
-            }
-            return path;
         },
 
         // ── Geometría ─────────────────────────────────────────────────────────
@@ -556,7 +565,7 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
             return pts;
         },
 
-        // ── Iconos ─────────────────────────────────────────────────────────────
+        // ── Iconos ──────────────────────────────────────────────────────────────
         grayIcon() {
             return L.divIcon({
                 className: '',

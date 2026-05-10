@@ -94,7 +94,7 @@ class NotificationService
                             'token'        => $token,
                             'notification' => ['title' => $title, 'body' => $body],
                             'data'         => array_map('strval', $data),
-                            'android'      => ['notification' => ['sound' => 'default']],
+                            'android'      => ['notification' => ['sound' => 'default', 'icon' => 'ico', 'color' => '#6F119B']],
                         ],
                     ]);
 

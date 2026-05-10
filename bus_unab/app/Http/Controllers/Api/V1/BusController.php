@@ -123,7 +123,7 @@ class BusController extends BaseController
 
         // Combina paradas + waypoints personalizados ordenados para trazar la ruta completa
         $stopCoords = $stops->map(fn ($s) => [
-            'order'  => $s->pivot->order * 100,
+            'order'  => $s->pivot->order,
             'coords' => [$s->longitude, $s->latitude],
         ]);
 
