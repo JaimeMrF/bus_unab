@@ -90,3 +90,15 @@ data class BusCatalogResponse(
     val success: Boolean = false,
     val data: List<BusCatalogItem> = emptyList(),
 )
+
+@Serializable
+data class DriverLocationRequest(
+    val lat: Double,
+    val lng: Double,
+    val heading: Int,
+)
+
+@Serializable
+data class DriverLocationResponse(
+    val success: Boolean = false,
+)

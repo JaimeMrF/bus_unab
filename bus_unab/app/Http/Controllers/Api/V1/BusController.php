@@ -52,7 +52,17 @@ class BusController extends BaseController
 
         $buses = collect($externalBuses)
             ->filter(fn ($v) => isset($localBuses[$v['Placa']]))
-            ->map(fn ($v) => $this->formatBusSummary($v, $localBuses[$v['Placa']]))
+            ->map(function ($v) use ($localBuses) {
+                $dto = $this->formatBusSummary($v, $localBuses[$v['Placa']]);
+                // Override with driver's phone location if it was broadcast recently
+                $driverLoc = Cache::get("driver_location_{$dto['plate']}");
+                if ($driverLoc) {
+                    $dto['latitude']  = $driverLoc['lat'];
+                    $dto['longitude'] = $driverLoc['lng'];
+                    $dto['heading']   = $driverLoc['heading'];
+                }
+                return $dto;
+            })
             ->values();
 
         return $this->success($buses);
@@ -173,6 +183,41 @@ class BusController extends BaseController
             ]],
             'status' => 'OK',
         ]);
+    }
+
+    /**
+     * Recibe la ubicación en tiempo real del teléfono del conductor.
+     * La almacena en caché 90 segundos; si el conductor deja de enviar,
+     * el index() vuelve a usar el GPS del vehículo automáticamente.
+     *
+     * POST /api/v1/buses/{plate}/location
+     */
+    public function updateDriverLocation(Request $request, string $plate): JsonResponse
+    {
+        $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
+
+        if (empty($plate) || strlen($plate) > 20) {
+            return $this->error('Identificador de ruta inválido', 422);
+        }
+
+        $bus = Bus::active()->where('plate', $plate)->first();
+        if (! $bus) {
+            return $this->notFound("La ruta '{$plate}' no existe o no está activa");
+        }
+
+        $validated = $request->validate([
+            'lat'     => 'required|numeric|between:-90,90',
+            'lng'     => 'required|numeric|between:-180,180',
+            'heading' => 'nullable|numeric|between:0,360',
+        ]);
+
+        Cache::put("driver_location_{$plate}", [
+            'lat'     => (float) $validated['lat'],
+            'lng'     => (float) $validated['lng'],
+            'heading' => (int) ($validated['heading'] ?? 0),
+        ], 90);
+
+        return $this->success(['plate' => $plate]);
     }
 
     // -------------------------------------------------------------------------

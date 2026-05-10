@@ -24,6 +24,9 @@ class BusRepository(
 
     suspend fun getBusRoute(plate: String): ApiResult<com.vibra.bus.data.model.DirectionsResponse> = api.getBusRoute(plate)
 
+    suspend fun updateDriverLocation(plate: String, lat: Double, lng: Double, heading: Int) =
+        api.updateDriverLocation(plate, lat, lng, heading)
+
     suspend fun getDirections(origin: String, destination: String, waypoints: String?, apiKey: String) =
         googleMapsApi?.getDirections(origin, destination, waypoints, apiKey)
 }

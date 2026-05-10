@@ -70,6 +70,8 @@ Route::prefix('v1')->group(function () {
                 ->middleware(['throttle:30,1', 'role:admin,driver']); // POST /api/v1/buses/RUTA1/approaching
             Route::post('{plate}/occupancy', [BusRequestController::class, 'updateOccupancy'])
                 ->middleware(['throttle:30,1', 'role:admin,driver']); // POST /api/v1/buses/RUTA1/occupancy
+            Route::post('{plate}/location', [BusController::class, 'updateDriverLocation'])
+                ->middleware(['throttle:60,1', 'role:admin,driver']); // POST /api/v1/buses/RUTA1/location
         });
 
         // Paradas

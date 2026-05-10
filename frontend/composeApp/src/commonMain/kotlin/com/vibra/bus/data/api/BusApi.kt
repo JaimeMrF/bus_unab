@@ -3,6 +3,8 @@ package com.vibra.bus.data.api
 import com.vibra.bus.data.model.ArrivedRequest
 import com.vibra.bus.data.model.ArrivedResponse
 import com.vibra.bus.data.model.BusCatalogResponse
+import com.vibra.bus.data.model.DriverLocationRequest
+import com.vibra.bus.data.model.DriverLocationResponse
 import com.vibra.bus.data.model.BusDetailResponse
 import com.vibra.bus.data.model.BusStopsResponse
 import com.vibra.bus.data.model.BusesResponse
@@ -65,5 +67,17 @@ class BusApi(private val client: HttpClient) {
 
     suspend fun getBusRoute(plate: String): ApiResult<com.vibra.bus.data.model.DirectionsResponse> = safeCall {
         client.get("$BASE_URL/buses/$plate/route").body()
+    }
+
+    suspend fun updateDriverLocation(
+        plate: String,
+        lat: Double,
+        lng: Double,
+        heading: Int,
+    ): ApiResult<DriverLocationResponse> = safeCall {
+        client.post("$BASE_URL/buses/$plate/location") {
+            contentType(ContentType.Application.Json)
+            setBody(DriverLocationRequest(lat, lng, heading))
+        }.body()
     }
 }

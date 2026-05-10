@@ -40,6 +40,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -82,6 +83,7 @@ import androidx.compose.ui.layout.ContentScale
 import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.DriverModeViewModel
+import com.vibra.bus.presentation.viewmodel.LocationSource
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.UiState
 import org.jetbrains.compose.resources.painterResource
@@ -106,6 +108,7 @@ class DriverModeScreen : Screen {
         val activePlate by viewModel.activePlate.collectAsState()
         val isFull by viewModel.isFull.collectAsState()
         val passengerCount by viewModel.passengerCount.collectAsState()
+        val locationSource by viewModel.locationSource.collectAsState()
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
         var showStopSelector by remember { mutableStateOf(false) }
@@ -393,6 +396,15 @@ class DriverModeScreen : Screen {
                     }
                 }
 
+                // ── Fuente de ubicación ───────────────────────────────────────
+                item {
+                    LocationSourceCard(
+                        current  = locationSource,
+                        onChange = { viewModel.setLocationSource(it) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                }
+
                 // ── Título paradas ────────────────────────────────────────────
                 item {
                     Row(
@@ -535,6 +547,87 @@ private fun BusSelectorSheet(
                 }
                 else -> {}
             }
+        }
+    }
+}
+
+// ── Tarjeta fuente de ubicación ───────────────────────────────────────────────
+
+@Composable
+private fun LocationSourceCard(
+    current: LocationSource,
+    onChange: (LocationSource) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(2.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                "Fuente de ubicación del bus",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                LocationSourceChip(
+                    label    = "GPS del bus",
+                    icon     = Icons.Default.DirectionsBus,
+                    selected = current == LocationSource.BUS_GPS,
+                    onClick  = { onChange(LocationSource.BUS_GPS) },
+                    modifier = Modifier.weight(1f),
+                )
+                LocationSourceChip(
+                    label    = "Mi teléfono",
+                    icon     = Icons.Default.MyLocation,
+                    selected = current == LocationSource.PHONE_GPS,
+                    onClick  = { onChange(LocationSource.PHONE_GPS) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Text(
+                text = if (current == LocationSource.PHONE_GPS)
+                    "Tu ubicación se envía al servidor cada pocos segundos"
+                else
+                    "Se usa el rastreador GPS instalado en el vehículo",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LocationSourceChip(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val bg = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+    val fg = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(bg)
+            .border(
+                width = if (selected) 1.5.dp else 0.dp,
+                color = if (selected) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent,
+                shape = RoundedCornerShape(12.dp),
+            )
+            .clickable { onClick() }
+            .padding(vertical = 10.dp, horizontal = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+            Icon(icon, contentDescription = null, tint = fg, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = fg)
         }
     }
 }
