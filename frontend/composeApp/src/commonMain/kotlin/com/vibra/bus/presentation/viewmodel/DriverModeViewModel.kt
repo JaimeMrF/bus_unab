@@ -104,6 +104,16 @@ class DriverModeViewModel(
         }
     }
 
+    fun notifyApproaching(plate: String, stopId: Int) {
+        viewModelScope.launch {
+            when (val result = busRepository.notifyApproaching(plate, stopId)) {
+                is ApiResult.Success -> _snackbarMessage.value = "Usuarios avisados: bus aproximándose"
+                is ApiResult.HttpError -> _snackbarMessage.value = result.message
+                is ApiResult.NetworkError -> _snackbarMessage.value = "Sin conexión a internet"
+            }
+        }
+    }
+
     fun toggleOccupancy(plate: String) {
         viewModelScope.launch {
             val newState = !_isFull.value

@@ -92,6 +92,7 @@ class DriverModeScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val canPop = navigator.canPop
         val viewModel = koinViewModel<DriverModeViewModel>()
         val profileViewModel = koinViewModel<ProfileViewModel>()
         val profile by profileViewModel.profile.collectAsState()
@@ -130,7 +131,8 @@ class DriverModeScreen : Screen {
                 catalogState = catalogState,
                 driverName = profile.name.split(" ").firstOrNull() ?: profile.name,
                 onSelect = { viewModel.selectBus(it) },
-                onBack = { navigator.pop() },
+                onBack = { if (canPop) navigator.pop() },
+                showBack = canPop,
             )
             return
         }
@@ -168,8 +170,10 @@ class DriverModeScreen : Screen {
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }, modifier = Modifier.clip(VibraBusShapes.MapButton)) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = MaterialTheme.colorScheme.onPrimary)
+                        if (canPop) {
+                            IconButton(onClick = { navigator.pop() }, modifier = Modifier.clip(VibraBusShapes.MapButton)) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = MaterialTheme.colorScheme.onPrimary)
+                            }
                         }
                     },
                     actions = {
@@ -397,7 +401,11 @@ class DriverModeScreen : Screen {
                     }
                     is UiState.Success -> {
                         items(state.data) { stop ->
-                            DriverStopRow(stop = stop, onConfirm = { viewModel.confirmArrival(activePlate, stop.id) })
+                            DriverStopRow(
+                                stop = stop,
+                                onApproaching = { viewModel.notifyApproaching(activePlate, stop.id) },
+                                onConfirm = { viewModel.confirmArrival(activePlate, stop.id) },
+                            )
                         }
                     }
                     is UiState.Error -> {
@@ -442,14 +450,17 @@ private fun BusSelectorSheet(
     driverName: String,
     onSelect: (BusCatalogItem) -> Unit,
     onBack: () -> Unit,
+    showBack: Boolean = true,
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Selecciona tu ruta", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = MaterialTheme.colorScheme.onPrimary)
+                    if (showBack) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = MaterialTheme.colorScheme.onPrimary)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -525,7 +536,7 @@ private fun DriverStatCard(value: String, label: String, valueColor: Color = Mat
 }
 
 @Composable
-private fun DriverStopRow(stop: StopWithPivotDto, onConfirm: () -> Unit) {
+private fun DriverStopRow(stop: StopWithPivotDto, onApproaching: () -> Unit, onConfirm: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -535,26 +546,41 @@ private fun DriverStopRow(stop: StopWithPivotDto, onConfirm: () -> Unit) {
             .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("${stop.pivot?.order ?: stop.order}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("${stop.pivot?.order ?: stop.order}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stop.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    Text(stop.address, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
-            Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(stop.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                Text(stop.address, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(Modifier.width(10.dp))
-            Button(
-                onClick = onConfirm,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-            ) {
-                Text("Confirmar", color = MaterialTheme.colorScheme.onPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onApproaching,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                    contentPadding = PaddingValues(vertical = 6.dp),
+                ) {
+                    Text("Aproximando", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    contentPadding = PaddingValues(vertical = 6.dp),
+                ) {
+                    Text("Llegué", color = MaterialTheme.colorScheme.onPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

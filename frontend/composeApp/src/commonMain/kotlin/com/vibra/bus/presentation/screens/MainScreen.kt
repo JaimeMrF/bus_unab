@@ -44,12 +44,13 @@ class MainScreen : Screen {
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                 when (selectedRoute) {
-                    "home" -> Navigator(HomeScreen()) { SlideTransition(it) }
-                    "trips" -> Navigator(MyTripsScreen()) { SlideTransition(it) }
-                    "qr" -> Navigator(MyQRScreen()) { SlideTransition(it) }
-                    "scanner" -> Navigator(QRScannerScreen()) { SlideTransition(it) }
+                    "home"          -> Navigator(HomeScreen()) { SlideTransition(it) }
+                    "trips"         -> if (isDriver) Navigator(DriverModeScreen()) { SlideTransition(it) }
+                                       else Navigator(MyTripsScreen()) { SlideTransition(it) }
+                    "qr"            -> Navigator(MyQRScreen()) { SlideTransition(it) }
+                    "scanner"       -> Navigator(QRScannerScreen()) { SlideTransition(it) }
                     "notifications" -> Navigator(NotificationsScreen()) { SlideTransition(it) }
-                    "profile" -> Navigator(ProfileScreen()) { SlideTransition(it) }
+                    "profile"       -> Navigator(ProfileScreen()) { SlideTransition(it) }
                 }
             }
         }

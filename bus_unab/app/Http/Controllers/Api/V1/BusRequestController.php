@@ -8,6 +8,7 @@ use App\Services\BusRequestService;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BusRequestController extends BaseController
 {
@@ -128,6 +129,31 @@ class BusRequestController extends BaseController
             'stop'           => $stop->name,
             'bus'            => $bus->name,
         ], "{$notified} usuario(s) notificados");
+    }
+
+    /**
+     * [Solo admin/driver] El conductor reporta manualmente si el bus está lleno.
+     * POST /api/v1/buses/{plate}/occupancy
+     */
+    public function updateOccupancy(Request $request, string $plate): JsonResponse
+    {
+        $validated = $request->validate(['is_full' => 'required|boolean']);
+
+        $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
+        $bus   = Bus::active()->where('plate', $plate)->first();
+
+        if (! $bus) {
+            return $this->notFound("La ruta '{$plate}' no existe");
+        }
+
+        $cacheKey = "bus_manually_full_{$plate}";
+        if ($validated['is_full']) {
+            Cache::put($cacheKey, true, 86400);
+        } else {
+            Cache::forget($cacheKey);
+        }
+
+        return $this->success($this->service->getOccupancy($bus));
     }
 
     /**

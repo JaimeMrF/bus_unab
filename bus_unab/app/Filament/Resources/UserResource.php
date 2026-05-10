@@ -71,13 +71,15 @@ class UserResource extends Resource
                     ->label('Correo')
                     ->searchable(),
 
-                Tables\Columns\BadgeColumn::make('role')
+                Tables\Columns\TextColumn::make('role')
                     ->label('Rol')
-                    ->colors([
-                        'danger'   => 'admin',
-                        'warning'  => 'driver',
-                        'primary'  => 'student',
-                    ])
+                    ->badge()
+                    ->color(fn ($state) => match($state) {
+                        'admin'   => 'danger',
+                        'driver'  => 'warning',
+                        'student' => 'primary',
+                        default   => 'gray',
+                    })
                     ->formatStateUsing(fn ($state) => match($state) {
                         'admin'   => 'Administrador',
                         'driver'  => 'Conductor',

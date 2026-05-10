@@ -63,11 +63,13 @@ Route::prefix('v1')->group(function () {
                 Route::get('{plate}/occupancy', [BusRequestController::class, 'occupancy']); // GET  /api/v1/buses/RUTA1/occupancy
             });
 
-            // Solo conductores y admins pueden reportar llegada / proximidad
+            // Solo conductores y admins pueden reportar llegada / proximidad / aforo
             Route::post('{plate}/arrived', [BusRequestController::class, 'busArrived'])
                 ->middleware(['throttle:30,1', 'role:admin,driver']); // POST /api/v1/buses/RUTA1/arrived
             Route::post('{plate}/approaching', [BusRequestController::class, 'busApproaching'])
                 ->middleware(['throttle:30,1', 'role:admin,driver']); // POST /api/v1/buses/RUTA1/approaching
+            Route::post('{plate}/occupancy', [BusRequestController::class, 'updateOccupancy'])
+                ->middleware(['throttle:30,1', 'role:admin,driver']); // POST /api/v1/buses/RUTA1/occupancy
         });
 
         // Paradas

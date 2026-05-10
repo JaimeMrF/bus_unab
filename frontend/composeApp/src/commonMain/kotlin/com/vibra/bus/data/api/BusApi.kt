@@ -49,6 +49,13 @@ class BusApi(private val client: HttpClient) {
         }.body()
     }
 
+    suspend fun notifyApproaching(plate: String, stopId: Int): ApiResult<ArrivedResponse> = safeCall {
+        client.post("$BASE_URL/buses/$plate/approaching") {
+            contentType(ContentType.Application.Json)
+            setBody(ArrivedRequest(stopId))
+        }.body()
+    }
+
     suspend fun updateBusOccupancy(plate: String, isFull: Boolean): ApiResult<OccupancyResponse> = safeCall {
         client.post("$BASE_URL/buses/$plate/occupancy") {
             contentType(ContentType.Application.Json)

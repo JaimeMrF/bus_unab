@@ -80,16 +80,25 @@ class PointOfInterestResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\BadgeColumn::make('category')
+                Tables\Columns\TextColumn::make('category')
                     ->label('Categoría')
-                    ->colors([
-                        'primary' => 'campus',
-                        'warning' => 'parking',
-                        'success' => 'food',
-                        'danger'  => 'health',
-                        'info'    => 'transport',
-                        'gray'    => 'other',
-                    ]),
+                    ->badge()
+                    ->color(fn ($state) => match($state) {
+                        'campus'    => 'primary',
+                        'parking'   => 'warning',
+                        'food'      => 'success',
+                        'health'    => 'danger',
+                        'transport' => 'info',
+                        default     => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => match($state) {
+                        'campus'    => 'Campus UNAB',
+                        'parking'   => 'Parqueadero',
+                        'food'      => 'Alimentación',
+                        'health'    => 'Salud',
+                        'transport' => 'Transporte',
+                        default     => 'Otro',
+                    }),
 
                 Tables\Columns\TextColumn::make('latitude')->label('Lat')->numeric(5),
                 Tables\Columns\TextColumn::make('longitude')->label('Lng')->numeric(5),
