@@ -9,6 +9,7 @@ use App\Models\Stop;
 use App\Services\GpsMobileService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BusMapController extends Controller
 {
@@ -64,6 +65,28 @@ class BusMapController extends Controller
                     'last_updated_at' => $detail['FdS'] ?? null,
                     'online'          => true,
                 ];
+            }
+
+            // Sobreescribir con la ubicación del teléfono del conductor si está activa
+            $driverLoc = Cache::get("driver_location_{$bus->plate}");
+            if ($driverLoc) {
+                if ($gps) {
+                    $gps['latitude']  = $driverLoc['lat'];
+                    $gps['longitude'] = $driverLoc['lng'];
+                    $gps['heading']   = $driverLoc['heading'];
+                } else {
+                    $gps = [
+                        'latitude'        => $driverLoc['lat'],
+                        'longitude'       => $driverLoc['lng'],
+                        'speed_kmh'       => 0,
+                        'heading'         => $driverLoc['heading'],
+                        'address'         => null,
+                        'driver'          => null,
+                        'last_event'      => null,
+                        'last_updated_at' => null,
+                        'online'          => true,
+                    ];
+                }
             }
 
             return [
