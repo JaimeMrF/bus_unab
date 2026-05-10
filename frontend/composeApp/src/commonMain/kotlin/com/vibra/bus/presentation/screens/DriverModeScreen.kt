@@ -13,6 +13,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,8 +37,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Switch
@@ -49,6 +52,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -62,7 +66,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -72,6 +75,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.vibra.bus.data.model.BusCatalogItem
 import com.vibra.bus.data.model.StopWithPivotDto
 import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
@@ -80,12 +84,9 @@ import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
 
-// ✅ Shape local — reemplaza el ButtonShape que no existe en M3
 private val ButtonShape = RoundedCornerShape(14.dp)
 
 class DriverModeScreen : Screen {
-
-    private val assignedPlate = "RUTA1"
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -95,7 +96,10 @@ class DriverModeScreen : Screen {
         val profileViewModel = koinViewModel<ProfileViewModel>()
         val profile by profileViewModel.profile.collectAsState()
         val stopsState by viewModel.stopsState.collectAsState()
+        val catalogState by viewModel.catalogState.collectAsState()
+        val activePlate by viewModel.activePlate.collectAsState()
         val isFull by viewModel.isFull.collectAsState()
+        val passengerCount by viewModel.passengerCount.collectAsState()
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
         var showStopSelector by remember { mutableStateOf(false) }
@@ -112,16 +116,7 @@ class DriverModeScreen : Screen {
             label = "pulseAlpha",
         )
 
-        val headerScale by animateFloatAsState(
-            targetValue = if (isHeaderVisible) 1f else 0.9f,
-            animationSpec = tween(durationMillis = 600),
-            label = "header_scale"
-        )
-
-        LaunchedEffect(Unit) {
-            viewModel.loadStops(assignedPlate)
-            isHeaderVisible = true
-        }
+        LaunchedEffect(Unit) { isHeaderVisible = true }
         LaunchedEffect(snackbarMsg) {
             snackbarMsg?.let {
                 snackbarHostState.showSnackbar(it)
@@ -129,7 +124,19 @@ class DriverModeScreen : Screen {
             }
         }
 
-        // ✅ Un solo Scaffold
+        // Selector de bus si no hay ruta activa
+        if (activePlate.isEmpty()) {
+            BusSelectorSheet(
+                catalogState = catalogState,
+                driverName = profile.name.split(" ").firstOrNull() ?: profile.name,
+                onSelect = { viewModel.selectBus(it) },
+                onBack = { navigator.pop() },
+            )
+            return
+        }
+
+        val stopCount = (stopsState as? UiState.Success)?.data?.size ?: 0
+
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background,
@@ -141,73 +148,56 @@ class DriverModeScreen : Screen {
                                 text = "Modo Conductor",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 17.sp,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = MaterialTheme.colorScheme.onPrimary,
                             )
                             Spacer(Modifier.width(12.dp))
                             Box(
                                 modifier = Modifier
                                     .clip(VibraBusShapes.StatusBadge)
                                     .background(MaterialTheme.colorScheme.secondary.copy(alpha = pulseAlpha))
-                                    .border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.secondary,
-                                        shape = VibraBusShapes.StatusBadge
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    .border(1.dp, MaterialTheme.colorScheme.secondary, VibraBusShapes.StatusBadge)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
                             ) {
                                 Text(
                                     text = "EN RUTA",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSecondary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
                                 )
                             }
                         }
                     },
                     navigationIcon = {
-                        IconButton(
-                            onClick = { navigator.pop() },
-                            modifier = Modifier.clip(VibraBusShapes.MapButton)
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Regresar",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
+                        IconButton(onClick = { navigator.pop() }, modifier = Modifier.clip(VibraBusShapes.MapButton)) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = MaterialTheme.colorScheme.onPrimary)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { viewModel.changeBus() }) {
+                            Icon(Icons.Default.SwapHoriz, contentDescription = "Cambiar ruta", tint = MaterialTheme.colorScheme.onPrimary)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
                 )
-            }
+            },
         ) { padding ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.surface
-                            )
-                        )
-                    )
+                    .background(Brush.verticalGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.surface)))
                     .padding(padding),
                 contentPadding = PaddingValues(bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
 
-                // ── Header saludo ────────────────────────────────────────────
+                // ── Header saludo ─────────────────────────────────────────────
                 item {
                     AnimatedVisibility(
                         visible = isHeaderVisible,
-                        enter = slideInVertically(
-                            initialOffsetY = { -it },
-                            animationSpec = tween(durationMillis = 600)
-                        ) + fadeIn(animationSpec = tween(durationMillis = 600))
+                        enter = slideInVertically(initialOffsetY = { -it }, animationSpec = tween(600)) + fadeIn(tween(600)),
                     ) {
                         Column(
                             modifier = Modifier
@@ -222,7 +212,7 @@ class DriverModeScreen : Screen {
                                 color = MaterialTheme.colorScheme.onPrimary,
                             )
                             Text(
-                                text = "Estás asignado a:",
+                                text = "Estás conduciendo:",
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                                 modifier = Modifier.padding(top = 2.dp),
@@ -231,65 +221,46 @@ class DriverModeScreen : Screen {
                     }
                 }
 
-                // ── Card ruta asignada ───────────────────────────────────────
+                // ── Card ruta asignada ────────────────────────────────────────
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 14.dp)
-                            .shadow(
-                                elevation = 8.dp,
-                                shape = RoundedCornerShape(20.dp),
-                                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-                            )
+                            .shadow(8.dp, RoundedCornerShape(20.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
                             .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primary,
-                                        Color(0xFF7A3DB8),
-                                    ),
-                                ),
-                            )
+                            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, Color(0xFF7A3DB8))))
                             .padding(18.dp),
                     ) {
                         Column {
                             Text(
-                                text = "Ruta asignada",
+                                text = "Ruta activa",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.65f),
                                 letterSpacing = 0.8.sp,
                             )
                             Text(
-                                text = assignedPlate,
+                                text = activePlate,
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.padding(top = 2.dp),
                             )
-                            Text(
-                                text = "Jardín → Casona → CSU",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f),
-                                modifier = Modifier.padding(bottom = 14.dp),
-                            )
+                            Spacer(Modifier.height(14.dp))
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Column {
+                                TextButton(
+                                    onClick = { viewModel.changeBus() },
+                                    contentPadding = PaddingValues(horizontal = 0.dp),
+                                ) {
                                     Text(
-                                        text = "Bus asignado",
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
-                                    )
-                                    Text(
-                                        text = "UNAB-01",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.secondary,
+                                        text = "Cambiar ruta →",
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                                     )
                                 }
                                 Box(
@@ -302,18 +273,10 @@ class DriverModeScreen : Screen {
                                         Box(
                                             modifier = Modifier
                                                 .size(8.dp)
-                                                .background(
-                                                    MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha),
-                                                    CircleShape,
-                                                ),
+                                                .background(MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha), CircleShape),
                                         )
                                         Spacer(Modifier.width(6.dp))
-                                        Text(
-                                            text = "En ruta",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onPrimary,
-                                        )
+                                        Text(text = "En ruta", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary)
                                     }
                                 }
                             }
@@ -321,202 +284,125 @@ class DriverModeScreen : Screen {
                     }
                 }
 
-                // ── Stats rápidos ────────────────────────────────────────────
+                // ── Stats reales ──────────────────────────────────────────────
                 item {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 14.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 14.dp),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
+                        DriverStatCard(value = passengerCount.toString(), label = "Pasajeros", modifier = Modifier.weight(1f))
+                        DriverStatCard(value = stopCount.toString(), label = "Paradas", modifier = Modifier.weight(1f))
                         DriverStatCard(
-                            value = "12", 
-                            label = "Pasajeros", 
-                            modifier = Modifier.weight(1f)
-                        )
-                        DriverStatCard(
-                            value = "5",  
-                            label = "Paradas",   
-                            modifier = Modifier.weight(1f)
-                        )
-                        DriverStatCard(
-                            value = "7:00",
-                            label = "Próx. salida",
-                            valueColor = MaterialTheme.colorScheme.secondary,
+                            value = if (isFull) "LLENO" else "Libre",
+                            label = "Estado",
+                            valueColor = if (isFull) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
                             modifier = Modifier.weight(1f),
                         )
                     }
                 }
 
-                // ── Acciones principales ─────────────────────────────────────
+                // ── Acciones principales ──────────────────────────────────────
                 item {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         Button(
                             onClick = { showStopSelector = true },
                             modifier = Modifier.fillMaxWidth().height(54.dp),
                             shape = ButtonShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.secondary,
-                            ),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                             elevation = ButtonDefaults.buttonElevation(4.dp),
                         ) {
-                            Text(
-                                text = "📍  Confirmar llegada a parada",
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                            )
+                            Text("📍  Confirmar llegada a parada", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
-
                         OutlinedButton(
                             onClick = { navigator.push(QRScannerScreen()) },
                             modifier = Modifier.fillMaxWidth().height(54.dp),
                             shape = ButtonShape,
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary,
-                            ),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
                             border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary),
                         ) {
-                            Text(
-                                text = "📷  Escanear QR de pasajero",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                            )
+                            Text("📷  Escanear QR de pasajero", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
                     }
                 }
 
-                // ── Card de Estado del Bus (Ocupación) ────────────────────────
+                // ── Toggle ocupación ──────────────────────────────────────────
                 item {
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(2.dp)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(2.dp),
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isFull) 
-                                                MaterialTheme.colorScheme.errorContainer 
-                                            else 
-                                                MaterialTheme.colorScheme.primaryContainer
-                                        ),
-                                    contentAlignment = Alignment.Center
+                                    modifier = Modifier.size(40.dp).clip(CircleShape)
+                                        .background(if (isFull) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer),
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
                                         imageVector = if (isFull) Icons.Default.Groups else Icons.Default.Group,
                                         contentDescription = null,
-                                        tint = if (isFull) 
-                                            MaterialTheme.colorScheme.error 
-                                        else 
-                                            MaterialTheme.colorScheme.primary
+                                        tint = if (isFull) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                                     )
                                 }
                                 Spacer(Modifier.width(12.dp))
                                 Column {
-                                    Text(
-                                        text = "Estado del Bus",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Text("Estado del Bus", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                     Text(
                                         text = if (isFull) "Bus LLENO (Sin cupos)" else "Hay asientos disponibles",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = if (isFull) 
-                                            MaterialTheme.colorScheme.error 
-                                        else 
-                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = if (isFull) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                             }
-                            
                             Switch(
                                 checked = isFull,
-                                onCheckedChange = { viewModel.toggleOccupancy(assignedPlate) },
+                                onCheckedChange = { viewModel.toggleOccupancy(activePlate) },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = MaterialTheme.colorScheme.error,
                                     checkedTrackColor = MaterialTheme.colorScheme.errorContainer,
-                                )
+                                ),
                             )
                         }
                     }
                 }
 
-                // ── Título paradas ───────────────────────────────────────────
+                // ── Título paradas ────────────────────────────────────────────
                 item {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            text = "Paradas de la ruta",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f),
-                        )
+                        Text("Paradas de la ruta", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                         if (stopsState is UiState.Loading) {
-                            Text(
-                                text = "Cargando...",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                            Text("Cargando...", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
 
-                // ── Lista de paradas ─────────────────────────────────────────
+                // ── Lista de paradas ──────────────────────────────────────────
                 when (val state = stopsState) {
                     is UiState.Loading -> {
                         items(5) {
-                            ShimmerBox(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 5.dp)
-                                    .height(80.dp)
-                                    .clip(VibraBusShapes.ListItem)
-                            )
+                            ShimmerBox(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp).height(80.dp).clip(VibraBusShapes.ListItem))
                         }
                     }
                     is UiState.Success -> {
                         items(state.data) { stop ->
-                            DriverStopRow(
-                                stop = stop,
-                                onConfirm = { viewModel.confirmArrival(assignedPlate, stop.id) },
-                            )
+                            DriverStopRow(stop = stop, onConfirm = { viewModel.confirmArrival(activePlate, stop.id) })
                         }
                     }
                     is UiState.Error -> {
                         item {
-                            Text(
-                                text = state.message,
-                                color = MaterialTheme.colorScheme.error,
-                                fontSize = 13.sp,
-                                modifier = Modifier.padding(horizontal = 20.dp),
-                            )
+                            Text(text = state.message, color = MaterialTheme.colorScheme.error, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 20.dp))
                         }
                     }
                     else -> {}
@@ -524,7 +410,7 @@ class DriverModeScreen : Screen {
             }
         }
 
-        // ── Bottom sheet selector de parada ──────────────────────────────────
+        // ── Bottom sheet selector de parada ───────────────────────────────────
         if (showStopSelector && stopsState is UiState.Success) {
             val stops = (stopsState as UiState.Success<List<StopWithPivotDto>>).data
             ModalBottomSheet(
@@ -534,22 +420,10 @@ class DriverModeScreen : Screen {
                 shape = VibraBusShapes.BottomSheet,
             ) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    Text(
-                        text = "¿En qué parada llegaste?",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(vertical = 12.dp),
-                    )
+                    Text("¿En qué parada llegaste?", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 12.dp))
                     LazyColumn {
                         items(stops) { stop ->
-                            StopConfirmRow(
-                                stop = stop,
-                                onConfirm = {
-                                    showStopSelector = false
-                                    viewModel.confirmArrival(assignedPlate, stop.id)
-                                },
-                            )
+                            StopConfirmRow(stop = stop, onConfirm = { showStopSelector = false; viewModel.confirmArrival(activePlate, stop.id) })
                         }
                         item { Spacer(Modifier.height(32.dp)) }
                     }
@@ -559,57 +433,99 @@ class DriverModeScreen : Screen {
     }
 }
 
+// ── Selector de bus (pantalla completa cuando no hay ruta activa) ─────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BusSelectorSheet(
+    catalogState: UiState<List<BusCatalogItem>>,
+    driverName: String,
+    onSelect: (BusCatalogItem) -> Unit,
+    onBack: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Selecciona tu ruta", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+            Text("Hola, $driverName", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text("¿Qué ruta estás conduciendo hoy?", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
+
+            when (val state = catalogState) {
+                is UiState.Loading -> {
+                    repeat(3) {
+                        ShimmerBox(modifier = Modifier.fillMaxWidth().height(80.dp).padding(vertical = 6.dp).clip(RoundedCornerShape(14.dp)))
+                    }
+                }
+                is UiState.Success -> {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        items(state.data) { bus ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth().clickable { onSelect(bus) },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                elevation = CardDefaults.cardElevation(2.dp),
+                            ) {
+                                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Icon(Icons.Default.DirectionsBus, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                    Spacer(Modifier.width(14.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(bus.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
+                                        Text(bus.plate, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text("Capacidad: ${bus.capacity} pasajeros", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+                is UiState.Error -> {
+                    Text(state.message, color = MaterialTheme.colorScheme.error)
+                }
+                else -> {}
+            }
+        }
+    }
+}
+
 // ── Sub-composables ───────────────────────────────────────────────────────────
 
 @Composable
-private fun DriverStatCard(
-    value: String,
-    label: String,
-    valueColor: Color = MaterialTheme.colorScheme.primary,
-    modifier: Modifier = Modifier,
-) {
+private fun DriverStatCard(value: String, label: String, valueColor: Color = MaterialTheme.colorScheme.primary, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .shadow(4.dp, RoundedCornerShape(14.dp), ambientColor = Color.Black.copy(alpha = 0.1f))
             .clip(RoundedCornerShape(14.dp))
-            .background(Color.White.copy(alpha = 0.08f)) // Glass effect
-            .border(
-                width = 1.dp,
-                brush = Brush.horizontalGradient(listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.05f))),
-                shape = RoundedCornerShape(14.dp)
-            )
+            .background(Color.White.copy(alpha = 0.08f))
+            .border(1.dp, Brush.horizontalGradient(listOf(Color.White.copy(alpha = 0.2f), Color.White.copy(alpha = 0.05f))), RoundedCornerShape(14.dp))
             .padding(vertical = 12.dp, horizontal = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = value, 
-                fontSize = 20.sp, 
-                fontWeight = FontWeight.ExtraBold, 
-                color = if (valueColor == MaterialTheme.colorScheme.primary) Color.White else valueColor
-            )
-            Text(
-                text = label, 
-                fontSize = 10.sp, 
-                color = Color.White.copy(alpha = 0.7f), 
-                modifier = Modifier.padding(top = 2.dp)
-            )
+            Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = if (valueColor == MaterialTheme.colorScheme.primary) Color.White else valueColor)
+            Text(text = label, fontSize = 10.sp, color = Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(top = 2.dp))
         }
     }
 }
 
 @Composable
-private fun DriverStopRow(
-    stop: StopWithPivotDto,
-    onConfirm: () -> Unit,
-) {
-    val demandCount = stop.pivot?.order ?: 0 // ✅ Acceso seguro con safe call
-    val (priorityColor, priorityLabel) = when {
-        demandCount >= 8 -> Pair(MaterialTheme.colorScheme.error,     "Alta")
-        demandCount >= 4 -> Pair(MaterialTheme.colorScheme.secondary, "Media")
-        else             -> Pair(MaterialTheme.colorScheme.primary,   "Baja")
-    }
-
+private fun DriverStopRow(stop: StopWithPivotDto, onConfirm: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -621,50 +537,31 @@ private fun DriverStopRow(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
+                modifier = Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "${stop.pivot?.order ?: 0}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                Text("${stop.pivot?.order ?: stop.order}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
-
             Spacer(Modifier.width(12.dp))
-
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = stop.name,    fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = stop.address, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.height(4.dp))
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(priorityColor.copy(alpha = 0.10f))
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
-                ) {
-                    Text(text = priorityLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = priorityColor)
-                }
+                Text(stop.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text(stop.address, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-
             Spacer(Modifier.width(10.dp))
-
             Button(
                 onClick = onConfirm,
                 shape = RoundedCornerShape(10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
             ) {
-                Text(text = "Confirmar", color = MaterialTheme.colorScheme.onPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("Confirmar", color = MaterialTheme.colorScheme.onPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
 @Composable
-private fun StopConfirmRow(
-    stop: StopWithPivotDto,
-    onConfirm: () -> Unit,
-) {
+private fun StopConfirmRow(stop: StopWithPivotDto, onConfirm: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -676,8 +573,8 @@ private fun StopConfirmRow(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = stop.name,    color = MaterialTheme.colorScheme.onSurface,        fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                Text(text = stop.address, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                Text(stop.name, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                Text(stop.address, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
             }
             Button(
                 onClick = onConfirm,
@@ -685,7 +582,7 @@ private fun StopConfirmRow(
                 shape = RoundedCornerShape(10.dp),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
             ) {
-                Text(text = "Confirmar", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Confirmar", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     }

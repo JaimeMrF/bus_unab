@@ -53,6 +53,12 @@ data class DeleteRequestResponse(
 )
 
 @Serializable
+data class ListRequestsResponse(
+    val success: Boolean,
+    val data: List<RequestInfo> = emptyList(),
+)
+
+@Serializable
 data class QRPayload(
     @SerialName("request_id") val requestId: Int,
     @SerialName("user_id") val userId: Int,

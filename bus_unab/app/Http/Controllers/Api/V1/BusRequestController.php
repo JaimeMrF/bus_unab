@@ -64,6 +64,28 @@ class BusRequestController extends BaseController
     }
 
     /**
+     * Solicitudes activas del usuario autenticado.
+     * GET /api/v1/requests
+     */
+    public function myRequests(Request $request): JsonResponse
+    {
+        $requests = $request->user()
+            ->busRequests()
+            ->with(['bus:id,name,plate', 'stop:id,name,address'])
+            ->where('status', 'pending')
+            ->latest()
+            ->get()
+            ->map(fn ($r) => [
+                'id'     => $r->id,
+                'status' => $r->status,
+                'bus'    => ['id' => $r->bus->id, 'name' => $r->bus->name, 'plate' => $r->bus->plate],
+                'stop'   => ['id' => $r->stop->id, 'name' => $r->stop->name, 'address' => $r->stop->address],
+            ]);
+
+        return $this->success($requests);
+    }
+
+    /**
      * Aforo actual de un bus.
      * GET /api/v1/buses/{plate}/occupancy
      */

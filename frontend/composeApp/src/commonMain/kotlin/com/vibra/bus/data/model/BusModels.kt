@@ -76,3 +76,17 @@ data class ArrivedResponse(
 data class OccupancyRequest(
     @SerialName("is_full") val isFull: Boolean,
 )
+
+@Serializable
+data class BusCatalogItem(
+    val id: Int,
+    val name: String,
+    val plate: String,
+    val capacity: Int,
+)
+
+@Serializable
+data class BusCatalogResponse(
+    val success: Boolean,
+    val data: List<BusCatalogItem> = emptyList(),
+)

@@ -48,6 +48,10 @@ class AppSettings(private val settings: Settings) {
         get() = settings.getString("notifications_json", "[]")
         set(value) = settings.putString("notifications_json", value)
 
+    var driverActivePlate: String
+        get() = settings.getString("driver_active_plate", "")
+        set(value) = settings.putString("driver_active_plate", value)
+
     fun isLoggedIn(): Boolean = token.isNotEmpty()
 
     fun clearSession() {
@@ -60,5 +64,6 @@ class AppSettings(private val settings: Settings) {
         settings.remove("active_request_id")
         settings.remove("active_request_bus_id")
         settings.remove("active_request_stop_id")
+        settings.remove("driver_active_plate")
     }
 }

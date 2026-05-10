@@ -2,6 +2,7 @@ package com.vibra.bus.data.api
 
 import com.vibra.bus.data.model.ArrivedRequest
 import com.vibra.bus.data.model.ArrivedResponse
+import com.vibra.bus.data.model.BusCatalogResponse
 import com.vibra.bus.data.model.BusDetailResponse
 import com.vibra.bus.data.model.BusStopsResponse
 import com.vibra.bus.data.model.BusesResponse
@@ -17,6 +18,10 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 class BusApi(private val client: HttpClient) {
+
+    suspend fun getBusCatalog(): ApiResult<BusCatalogResponse> = safeCall {
+        client.get("$BASE_URL/buses/catalog").body()
+    }
 
     suspend fun getBuses(lat: Double, lng: Double): ApiResult<BusesResponse> = safeCall {
         client.get("$BASE_URL/buses") {

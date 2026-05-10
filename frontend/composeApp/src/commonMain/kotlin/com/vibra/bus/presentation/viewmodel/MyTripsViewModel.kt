@@ -19,28 +19,30 @@ class MyTripsViewModel(
     private val _tripsState = MutableStateFlow<UiState<List<RequestInfo>>>(UiState.Loading)
     val tripsState: StateFlow<UiState<List<RequestInfo>>> = _tripsState
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing
+
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage
 
     init {
-        loadLocalTrip()
+        loadTrips()
     }
 
-    private fun loadLocalTrip() {
-        val (reqId, busId, stopId) = requestRepository.getActiveRequest()
-        if (reqId != -1) {
-            _tripsState.value = UiState.Success(
-                listOf(
-                    RequestInfo(
-                        id = reqId,
-                        status = "pending",
-                        bus = com.vibra.bus.data.model.RequestBusInfo(busId, "Bus activo", ""),
-                        stop = com.vibra.bus.data.model.RequestStopInfo(stopId, "Parada seleccionada", ""),
-                    )
-                )
-            )
-        } else {
-            _tripsState.value = UiState.Success(emptyList())
+    fun loadTrips() {
+        viewModelScope.launch {
+            _tripsState.value = UiState.Loading
+            when (val result = requestRepository.getMyRequests()) {
+                is ApiResult.Success -> {
+                    _tripsState.value = UiState.Success(result.data.data)
+                }
+                is ApiResult.HttpError -> {
+                    _tripsState.value = UiState.Error(result.message)
+                }
+                is ApiResult.NetworkError -> {
+                    _tripsState.value = UiState.Error("Sin conexión a internet")
+                }
+            }
         }
     }
 
@@ -49,7 +51,7 @@ class MyTripsViewModel(
             when (val result = requestRepository.deleteRequest(busId)) {
                 is ApiResult.Success -> {
                     _snackbarMessage.value = "Viaje cancelado"
-                    loadLocalTrip()
+                    loadTrips()
                 }
                 is ApiResult.HttpError -> _snackbarMessage.value = result.message
                 is ApiResult.NetworkError -> _snackbarMessage.value = "Sin conexión a internet"
@@ -57,6 +59,13 @@ class MyTripsViewModel(
         }
     }
 
-    fun refresh() { loadLocalTrip() }
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            loadTrips()
+            _isRefreshing.value = false
+        }
+    }
+
     fun consumeSnackbar() { _snackbarMessage.value = null }
 }

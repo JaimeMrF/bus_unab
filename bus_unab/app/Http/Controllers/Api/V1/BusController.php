@@ -15,6 +15,18 @@ class BusController extends BaseController
     public function __construct(private readonly GpsMobileService $gpsService) {}
 
     /**
+     * Retorna todos los buses activos desde la BD (sin GPS).
+     * Usado por el conductor para seleccionar su ruta asignada.
+     * GET /api/v1/buses/catalog
+     */
+    public function catalog(): JsonResponse
+    {
+        return $this->success(
+            Bus::active()->get(['id', 'name', 'plate', 'capacity'])
+        );
+    }
+
+    /**
      * Retorna la ubicación en tiempo real de todos los buses activos.
      *
      * @queryParam lat float  Latitud del usuario (entre -90 y 90).   Example: 7.1218

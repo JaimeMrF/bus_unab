@@ -62,6 +62,7 @@ class MyTripsScreen : Screen {
     override fun Content() {
         val viewModel = koinViewModel<MyTripsViewModel>()
         val tripsState by viewModel.tripsState.collectAsState()
+        val isRefreshing by viewModel.isRefreshing.collectAsState()
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
         val snackbarState = remember { SnackbarHostState() }
         var isVisible by remember { mutableStateOf(false) }
@@ -127,7 +128,7 @@ class MyTripsScreen : Screen {
                     enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 300))
                 ) {
                     PullToRefreshBox(
-                        isRefreshing = false,
+                        isRefreshing = isRefreshing,
                         onRefresh = { viewModel.refresh() },
                         modifier = Modifier.fillMaxSize(),
                     ) {

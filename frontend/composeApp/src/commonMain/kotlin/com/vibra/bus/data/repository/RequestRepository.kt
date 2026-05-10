@@ -3,6 +3,7 @@ package com.vibra.bus.data.repository
 import com.vibra.bus.data.api.RequestApi
 import com.vibra.bus.data.model.CreateRequestResponse
 import com.vibra.bus.data.model.DeleteRequestResponse
+import com.vibra.bus.data.model.ListRequestsResponse
 import com.vibra.bus.data.model.QRPayload
 import com.vibra.bus.data.model.QrValidateData
 import com.vibra.bus.util.ApiResult
@@ -12,6 +13,8 @@ class RequestRepository(
     private val api: RequestApi,
     private val settings: AppSettings,
 ) {
+    suspend fun getMyRequests(): ApiResult<ListRequestsResponse> = api.getMyRequests()
+
     suspend fun createRequest(busId: Int, stopId: Int): ApiResult<CreateRequestResponse> {
         return api.createRequest(busId, stopId).also { result ->
             if (result is ApiResult.Success) {

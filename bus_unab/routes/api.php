@@ -56,6 +56,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('buses')->group(function () {
             Route::middleware('throttle:60,1')->group(function () {
                 Route::get('/',               [BusController::class, 'index']);              // GET  /api/v1/buses
+                Route::get('catalog',         [BusController::class, 'catalog']);           // GET  /api/v1/buses/catalog
                 Route::get('{plate}',         [BusController::class, 'show']);              // GET  /api/v1/buses/RUTA1
                 Route::get('{plate}/stops',   [StopController::class, 'byBus']);            // GET  /api/v1/buses/RUTA1/stops
                 Route::get('{plate}/route',   [BusController::class, 'route']);             // GET  /api/v1/buses/RUTA1/route
@@ -75,8 +76,9 @@ Route::prefix('v1')->group(function () {
 
         // Solicitudes de bus (aforo) — 20 solicitudes por minuto máximo
         Route::prefix('requests')->middleware('throttle:20,1')->group(function () {
-            Route::post('/',       [BusRequestController::class, 'store']);  // POST   /api/v1/requests
-            Route::delete('{bus}', [BusRequestController::class, 'cancel']); // DELETE /api/v1/requests/{busId}
+            Route::get('/',        [BusRequestController::class, 'myRequests']); // GET    /api/v1/requests
+            Route::post('/',       [BusRequestController::class, 'store']);      // POST   /api/v1/requests
+            Route::delete('{bus}', [BusRequestController::class, 'cancel']);     // DELETE /api/v1/requests/{busId}
         });
 
         // Validación de QR — solo conductores y admins
