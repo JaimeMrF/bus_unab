@@ -17,7 +17,9 @@
       "Bash(New-Item -ItemType Directory -Force -Path \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\bus_unab\\\\resources\\\\views\\\\filament\\\\forms\\\\components\")",
       "Bash(Out-Null)",
       "Bash(Write-Output \"Created\")",
-      "PowerShell(Get-ChildItem \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\bus_unab\\\\\" | Where-Object { $_.Name -notmatch '^vendor' } | Select-Object -ExpandProperty Name)"
+      "PowerShell(Get-ChildItem \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\bus_unab\\\\\" | Where-Object { $_.Name -notmatch '^vendor' } | Select-Object -ExpandProperty Name)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
