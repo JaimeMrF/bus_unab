@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Confiar en todos los proxies inversos (nginx sistema → nginx Docker)
+        $middleware->trustProxies(at: '*');
+
         // Sanctum: autenticación stateless para la app móvil (tokens Bearer)
         $middleware->statefulApi();
 
