@@ -245,7 +245,7 @@ class MyTripsScreen : Screen {
                     if (trip.status == "pending") {
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            text = "Desliza para cancelar →",
+                            text = "← Desliza para cancelar",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         )

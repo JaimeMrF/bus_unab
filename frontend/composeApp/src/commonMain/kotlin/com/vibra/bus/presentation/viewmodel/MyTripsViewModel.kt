@@ -53,8 +53,14 @@ class MyTripsViewModel(
                     _snackbarMessage.value = "Viaje cancelado"
                     loadTrips()
                 }
-                is ApiResult.HttpError -> _snackbarMessage.value = result.message
-                is ApiResult.NetworkError -> _snackbarMessage.value = "Sin conexión a internet"
+                is ApiResult.HttpError -> {
+                    _snackbarMessage.value = result.message
+                    loadTrips()
+                }
+                is ApiResult.NetworkError -> {
+                    _snackbarMessage.value = "Sin conexión a internet"
+                    loadTrips()
+                }
             }
         }
     }

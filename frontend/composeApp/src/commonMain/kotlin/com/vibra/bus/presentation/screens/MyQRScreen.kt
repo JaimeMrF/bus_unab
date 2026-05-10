@@ -104,12 +104,14 @@ class MyQRScreen : Screen {
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
-                            Icon(
-                                Icons.AutoMirrored.Default.ArrowBack,
-                                "Volver",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
+                        if (navigator.canPop) {
+                            IconButton(onClick = { navigator.pop() }) {
+                                Icon(
+                                    Icons.AutoMirrored.Default.ArrowBack,
+                                    "Volver",
+                                    tint = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
