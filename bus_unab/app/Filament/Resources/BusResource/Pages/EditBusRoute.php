@@ -9,22 +9,24 @@ use App\Models\RouteStop;
 use App\Models\Stop;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
+use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class EditBusRoute extends Page
 {
+    use InteractsWithRecord;
+
     protected static string $resource = BusResource::class;
     protected static string $view     = 'filament.resources.bus-resource.pages.edit-bus-route';
 
-    public Bus $record;
-
     public function mount(int|string $record): void
     {
-        $this->record = Bus::with([
+        $this->record = $this->resolveRecord($record);
+        $this->record->load([
             'routeStops.stop',
             'routeWaypoints' => fn ($q) => $q->orderBy('order'),
-        ])->findOrFail($record);
+        ]);
     }
 
     public function getTitle(): string
