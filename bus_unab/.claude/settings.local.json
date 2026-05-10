@@ -24,7 +24,9 @@
       "PowerShell(python -c \"from PIL import Image; print\\('Pillow OK'\\)\" 2>&1)",
       "Bash(Get-ChildItem -Path \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\frontend\" -Recurse -Filter \"*.kt\" -File)",
       "Bash(Measure-Object)",
-      "Bash(Select-Object -ExpandProperty Count)"
+      "Bash(Select-Object -ExpandProperty Count)",
+      "Bash(Get-ChildItem -Path \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\frontend\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }

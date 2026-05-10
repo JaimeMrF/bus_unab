@@ -71,6 +71,8 @@ import com.vibra.bus.presentation.components.EmptyState
 import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.buho_muy_triste
 import com.vibra.bus.util.UiState
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -265,7 +267,8 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         is UiState.Error -> {
                             EmptyState(
                                 message = "Error al cargar paradas",
-                                subtitle = state.message
+                                subtitle = state.message,
+                                image = Res.drawable.buho_muy_triste,
                             )
                         }
                         else -> {}

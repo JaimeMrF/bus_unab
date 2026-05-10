@@ -77,12 +77,17 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.BusCatalogItem
 import com.vibra.bus.data.model.StopWithPivotDto
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.DriverModeViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.UiState
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.buho_conductor
 
 private val ButtonShape = RoundedCornerShape(14.dp)
 
@@ -203,23 +208,32 @@ class DriverModeScreen : Screen {
                         visible = isHeaderVisible,
                         enter = slideInVertically(initialOffsetY = { -it }, animationSpec = tween(600)) + fadeIn(tween(600)),
                     ) {
-                        Column(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.primary)
                                 .padding(horizontal = 20.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(
-                                text = "¡Hola, ${profile.name.split(" ").firstOrNull() ?: profile.name}!",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                            )
-                            Text(
-                                text = "Estás conduciendo:",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                                modifier = Modifier.padding(top = 2.dp),
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "¡Hola, ${profile.name.split(" ").firstOrNull() ?: profile.name}!",
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                )
+                                Text(
+                                    text = "Estás conduciendo:",
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                                    modifier = Modifier.padding(top = 2.dp),
+                                )
+                            }
+                            Image(
+                                painter = painterResource(Res.drawable.buho_conductor),
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                contentScale = ContentScale.Fit,
                             )
                         }
                     }
@@ -469,8 +483,18 @@ private fun BusSelectorSheet(
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            Text("Hola, $driverName", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Text("¿Qué ruta estás conduciendo hoy?", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Hola, $driverName", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Text("¿Qué ruta estás conduciendo hoy?", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
+                }
+                Image(
+                    painter = painterResource(Res.drawable.buho_conductor),
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    contentScale = ContentScale.Fit,
+                )
+            }
 
             when (val state = catalogState) {
                 is UiState.Loading -> {

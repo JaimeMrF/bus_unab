@@ -25,11 +25,16 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.components.PrimaryGlassButton
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.WaitingBusViewModel
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.buho_viendo_mapa
 
 data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
 
@@ -146,7 +151,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = bus?.name ?: "Buscando bus...",
                                     fontSize = 18.sp,
@@ -157,6 +162,14 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                     text = "Placa: $plate",
                                     fontSize = 14.sp,
                                     color = Color.White.copy(alpha = 0.7f)
+                                )
+                            }
+                            if (bus == null) {
+                                Image(
+                                    painter = painterResource(Res.drawable.buho_viendo_mapa),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(56.dp),
+                                    contentScale = ContentScale.Fit,
                                 )
                             }
                             

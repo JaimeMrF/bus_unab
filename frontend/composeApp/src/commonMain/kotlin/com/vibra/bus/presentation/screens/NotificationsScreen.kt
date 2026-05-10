@@ -36,6 +36,8 @@ import com.vibra.bus.presentation.components.EmptyState
 import com.vibra.bus.presentation.viewmodel.NotificationsViewModel
 import com.vibra.bus.util.toRelativeTime
 import org.koin.compose.viewmodel.koinViewModel
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.buho_con_celular
 
 class NotificationsScreen : Screen {
 
@@ -66,6 +68,7 @@ class NotificationsScreen : Screen {
                     EmptyState(
                         message  = "Sin notificaciones",
                         subtitle = "Aquí verás las alertas de tu bus",
+                        image    = Res.drawable.buho_con_celular,
                     )
                 } else {
                     LazyColumn(contentPadding = PaddingValues(16.dp)) {

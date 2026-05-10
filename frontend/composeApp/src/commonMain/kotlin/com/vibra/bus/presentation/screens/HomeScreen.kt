@@ -65,10 +65,14 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
+import androidx.compose.foundation.Image
 import com.vibra.bus.presentation.components.BusCard
 import com.vibra.bus.presentation.components.PrimaryGlassButton
 import com.vibra.bus.presentation.components.SecondaryGlassButton
 import com.vibra.bus.presentation.theme.VibraBusShapes
+import org.jetbrains.compose.resources.painterResource
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.buho_curioso
 import com.vibra.bus.presentation.viewmodel.HomeViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.UiState
@@ -410,7 +414,11 @@ class HomeScreen : Screen {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Text(text = "🚌", fontSize = 44.sp)
+                                Image(
+                                    painter = painterResource(Res.drawable.buho_curioso),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(90.dp),
+                                )
                                 Text(
                                     text = "No hay buses activos ahora",
                                     fontSize = 15.sp,

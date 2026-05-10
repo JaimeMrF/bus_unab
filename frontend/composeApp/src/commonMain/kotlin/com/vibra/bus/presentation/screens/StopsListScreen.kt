@@ -51,6 +51,9 @@ import com.vibra.bus.presentation.components.EmptyState
 import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.buho_muy_triste
+import vibrabus.composeapp.generated.resources.buho_curioso
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -136,6 +139,7 @@ data class StopsListScreen(val plate: String) : Screen {
                                 EmptyState(
                                     message = "Sin paradas disponibles",
                                     subtitle = "No hay paradas registradas para esta ruta",
+                                    image = Res.drawable.buho_curioso,
                                     ctaLabel = "Reintentar",
                                     onCtaClick = { viewModel.loadStops(plate) }
                                 )
@@ -158,6 +162,7 @@ data class StopsListScreen(val plate: String) : Screen {
                             EmptyState(
                                 message = "Error al cargar paradas",
                                 subtitle = state.message,
+                                image = Res.drawable.buho_muy_triste,
                                 ctaLabel = "Reintentar",
                                 onCtaClick = { viewModel.loadStops(plate) }
                             )
