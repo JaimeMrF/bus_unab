@@ -38,4 +38,15 @@ class NotificationsViewModel(private val settings: AppSettings) : ViewModel() {
         _notifications.value = updated
         settings.notificationsJson = Json.encodeToString(updated)
     }
+
+    fun deleteNotification(id: String) {
+        val updated = _notifications.value.filter { it.id != id }
+        _notifications.value = updated
+        settings.notificationsJson = Json.encodeToString(updated)
+    }
+
+    fun clearAll() {
+        _notifications.value = emptyList()
+        settings.notificationsJson = Json.encodeToString(emptyList<NotificationItem>())
+    }
 }

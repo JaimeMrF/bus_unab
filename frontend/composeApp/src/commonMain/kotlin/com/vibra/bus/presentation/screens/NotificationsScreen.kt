@@ -15,11 +15,21 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,6 +51,7 @@ import vibrabus.composeapp.generated.resources.buho_con_celular
 
 class NotificationsScreen : Screen {
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val viewModel     = koinViewModel<NotificationsViewModel>()
@@ -49,19 +60,32 @@ class NotificationsScreen : Screen {
         Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 
-                // Header morado
+                // Header
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.primary)
-                        .padding(horizontal = 20.dp, vertical = 18.dp),
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
                 ) {
                     Text(
                         text       = "Notificaciones",
                         fontSize   = 22.sp,
                         fontWeight = FontWeight.Bold,
                         color      = MaterialTheme.colorScheme.onPrimary,
+                        modifier   = Modifier.align(Alignment.CenterStart),
                     )
+                    if (notifications.isNotEmpty()) {
+                        IconButton(
+                            onClick  = { viewModel.clearAll() },
+                            modifier = Modifier.align(Alignment.CenterEnd),
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Default.DeleteSweep,
+                                contentDescription = "Borrar todo",
+                                tint               = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                            )
+                        }
+                    }
                 }
 
                 if (notifications.isEmpty()) {
@@ -72,8 +96,11 @@ class NotificationsScreen : Screen {
                     )
                 } else {
                     LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                        items(notifications) { notif ->
-                            NotificationCard(notif)
+                        items(notifications, key = { it.id }) { notif ->
+                            SwipeToDeleteNotification(
+                                notif    = notif,
+                                onDelete = { viewModel.deleteNotification(notif.id) },
+                            )
                         }
                     }
                 }
@@ -82,45 +109,73 @@ class NotificationsScreen : Screen {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeToDeleteNotification(notif: NotificationItem, onDelete: () -> Unit) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false
+        }
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 5.dp)
+                    .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(14.dp))
+                    .padding(end = 20.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Icon(
+                    imageVector        = Icons.Default.Delete,
+                    contentDescription = "Eliminar",
+                    tint               = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        },
+        modifier = Modifier.padding(vertical = 5.dp),
+    ) {
+        NotificationCard(notif)
+    }
+}
+
 @Composable
 private fun NotificationCard(notif: NotificationItem) {
     val (icon, color) = when (notif.type) {
-        "bus_arrival"    -> Pair("🚌", MaterialTheme.colorScheme.primary)
-        "bus_approaching"-> Pair("⏰", MaterialTheme.colorScheme.secondary)
-        "bus_almost_full"-> Pair("⚠️", Color(0xFFF97316))
-        else             -> Pair("🔔", MaterialTheme.colorScheme.primary)
+        "bus_arrival"     -> Pair("🚌", MaterialTheme.colorScheme.primary)
+        "bus_approaching" -> Pair("⏰", MaterialTheme.colorScheme.secondary)
+        "bus_almost_full" -> Pair("⚠️", Color(0xFFF97316))
+        else              -> Pair("🔔", MaterialTheme.colorScheme.primary)
     }
 
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp)
-            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f))
+            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f)),
+        shape  = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape    = RoundedCornerShape(14.dp),
-            colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        Row(
+            modifier          = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            Row(
-                modifier          = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.Top,
+            Box(
+                modifier         = Modifier
+                    .size(42.dp)
+                    .background(color.copy(alpha = 0.12f), CircleShape),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier         = Modifier
-                        .size(42.dp)
-                        .background(color.copy(alpha = 0.12f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(icon, fontSize = 20.sp)
-                }
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(notif.title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
-                    Text(notif.body,  color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
-                }
-                Text(notif.timestamp.toRelativeTime(), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+                Text(icon, fontSize = 20.sp)
             }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(notif.title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
+                Text(notif.body,  color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+            }
+            Text(notif.timestamp.toRelativeTime(), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
         }
     }
 }

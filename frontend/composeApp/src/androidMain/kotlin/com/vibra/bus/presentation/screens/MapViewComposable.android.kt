@@ -118,21 +118,37 @@ actual fun MapViewComposable(
         }
     ) {
         path?.let { p ->
+            val gmsPoints = p.map { GmsLatLng(it.latitude, it.longitude) }
+            // White border gives the "road" inset effect
             com.google.maps.android.compose.Polyline(
-                points    = p.map { GmsLatLng(it.latitude, it.longitude) },
-                color     = androidx.compose.ui.graphics.Color(0x4D6200EE),
-                width     = 22f,
+                points    = gmsPoints,
+                color     = androidx.compose.ui.graphics.Color(0xCCFFFFFF),
+                width     = 18f,
                 jointType = com.google.android.gms.maps.model.JointType.ROUND,
                 startCap  = com.google.android.gms.maps.model.RoundCap(),
                 endCap    = com.google.android.gms.maps.model.RoundCap(),
             )
+            // UNAB purple fill
             com.google.maps.android.compose.Polyline(
-                points    = p.map { GmsLatLng(it.latitude, it.longitude) },
-                color     = androidx.compose.ui.graphics.Color(0xFF6200EE),
-                width     = 12f,
+                points    = gmsPoints,
+                color     = androidx.compose.ui.graphics.Color(0xFF5B2C8C),
+                width     = 10f,
                 jointType = com.google.android.gms.maps.model.JointType.ROUND,
                 startCap  = com.google.android.gms.maps.model.RoundCap(),
                 endCap    = com.google.android.gms.maps.model.RoundCap(),
+            )
+            // Orange center dash accent (UNAB secondary)
+            com.google.maps.android.compose.Polyline(
+                points    = gmsPoints,
+                color     = androidx.compose.ui.graphics.Color(0xFFE9A427),
+                width     = 3f,
+                jointType = com.google.android.gms.maps.model.JointType.ROUND,
+                startCap  = com.google.android.gms.maps.model.RoundCap(),
+                endCap    = com.google.android.gms.maps.model.RoundCap(),
+                pattern   = listOf(
+                    com.google.android.gms.maps.model.Dash(16f),
+                    com.google.android.gms.maps.model.Gap(12f),
+                ),
             )
         }
 
