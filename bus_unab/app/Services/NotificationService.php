@@ -3,14 +3,18 @@
 namespace App\Services;
 
 use App\Models\Bus;
+use App\Models\BusRequest;
 use App\Models\DeviceToken;
 use App\Models\Stop;
 use App\Models\User;
+use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
+    private const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
+
     public function notifyBusArrival(User $user, Bus $bus, Stop $stop): void
     {
         $this->sendToUser($user,
@@ -22,7 +26,7 @@ class NotificationService
 
     public function notifyBusApproaching(Bus $bus, Stop $stop): void
     {
-        $userIds = \App\Models\BusRequest::where('bus_id', $bus->id)
+        $userIds = BusRequest::where('bus_id', $bus->id)
             ->where('stop_id', $stop->id)
             ->where('status', 'pending')
             ->pluck('user_id');
@@ -38,13 +42,13 @@ class NotificationService
 
     public function notifyBusAlmostFull(Bus $bus): void
     {
-        $userIds = \App\Models\BusRequest::where('bus_id', $bus->id)
+        $userIds = BusRequest::where('bus_id', $bus->id)
             ->where('status', 'pending')
             ->pluck('user_id');
 
         $tokens = DeviceToken::whereIn('user_id', $userIds)->pluck('token')->toArray();
 
-        $pending = \App\Models\BusRequest::where('bus_id', $bus->id)->where('status', 'pending')->count();
+        $pending = BusRequest::where('bus_id', $bus->id)->where('status', 'pending')->count();
         $pct     = $bus->capacity > 0 ? round(min(($pending / $bus->capacity) * 100, 100), 1) : 0;
 
         $this->sendToTokens($tokens,
@@ -54,9 +58,6 @@ class NotificationService
         );
     }
 
-    /**
-     * Broadcast global desde el panel admin.
-     */
     public function broadcast(string $title, string $body, array $data = [], string $role = 'all'): void
     {
         $tokens = DeviceToken::when($role !== 'all', fn ($q) =>
@@ -67,8 +68,6 @@ class NotificationService
     }
 
     // -------------------------------------------------------------------------
-    // Métodos privados
-    // -------------------------------------------------------------------------
 
     private function sendToUser(User $user, string $title, string $body, array $data = []): void
     {
@@ -78,45 +77,64 @@ class NotificationService
 
     private function sendToTokens(array $tokens, string $title, string $body, array $data = []): void
     {
-        if (empty($tokens)) {
-            return;
-        }
+        if (empty($tokens)) return;
 
-        $serverKey = config('services.fcm.server_key');
+        $accessToken = $this->getAccessToken();
+        if (! $accessToken) return;
 
-        if (! $serverKey || $serverKey === 'your-fcm-server-key') {
-            Log::warning('NotificationService: FCM_SERVER_KEY no configurado. Notificación no enviada.');
-            return;
-        }
+        $projectId = $this->getProjectId();
+        $endpoint  = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
 
-        foreach (array_chunk($tokens, 500) as $chunk) {
+        // FCM v1 no admite multicast nativo → enviar de uno en uno (máx 500/s)
+        foreach ($tokens as $token) {
             try {
-                $response = Http::withHeaders([
-                    'Authorization' => "key={$serverKey}",
-                    'Content-Type'  => 'application/json',
-                ])->post('https://fcm.googleapis.com/fcm/send', [
-                    'registration_ids' => $chunk,
-                    'notification'     => [
-                        'title' => $title,
-                        'body'  => $body,
-                        'sound' => 'default',
-                    ],
-                    'data' => $data,
-                ]);
+                $response = Http::withToken($accessToken)
+                    ->post($endpoint, [
+                        'message' => [
+                            'token'        => $token,
+                            'notification' => ['title' => $title, 'body' => $body],
+                            'data'         => array_map('strval', $data),
+                            'android'      => ['notification' => ['sound' => 'default']],
+                        ],
+                    ]);
 
                 if (! $response->successful()) {
-                    // Solo loguear el status code, no el body completo (puede tener info sensible)
-                    Log::error('NotificationService: FCM respondió con error', [
-                        'status'      => $response->status(),
-                        'token_count' => count($chunk),
+                    Log::warning('NotificationService FCM v1 error', [
+                        'status' => $response->status(),
+                        'body'   => $response->json('error.message'),
                     ]);
                 }
-
             } catch (\Exception $e) {
-                Log::error('NotificationService: excepción al enviar FCM', [
-                    'error' => $e->getMessage(),
-                ]);
+                Log::error('NotificationService exception', ['error' => $e->getMessage()]);
             }
         }
+    }
+
+    private function getAccessToken(): ?string
+    {
+        try {
+            $b64 = config('services.fcm.credentials_b64');
+
+            if (! $b64) {
+                Log::warning('NotificationService: FIREBASE_CREDENTIALS_B64 no configurado.');
+                return null;
+            }
+
+            $json = base64_decode($b64);
+            $credentials = new ServiceAccountCredentials(self::SCOPE, json_decode($json, true));
+            $token = $credentials->fetchAuthToken();
+            return $token['access_token'] ?? null;
+
+        } catch (\Exception $e) {
+            Log::error('NotificationService: error obteniendo access token', ['error' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    private function getProjectId(): string
+    {
+        $b64  = config('services.fcm.credentials_b64', '');
+        $json = json_decode(base64_decode($b64), true);
+        return $json['project_id'] ?? '';
     }
 }
