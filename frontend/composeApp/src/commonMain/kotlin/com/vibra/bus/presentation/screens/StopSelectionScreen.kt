@@ -280,9 +280,11 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     val isLoading = requestState is UiState.Loading
                     Button(
                         onClick = {
-                            val stop = selectedStop ?: return@Button
-                            val bus  = busDetail    ?: return@Button
-                            viewModel.confirmStop(bus.id, stop.id)
+                            selectedStop?.let { stop ->
+                                busDetail?.let { bus ->
+                                    viewModel.confirmStop(bus.id, stop.id)
+                                }
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()

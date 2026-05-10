@@ -4,22 +4,23 @@ import android.graphics.Point
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng as GmsLatLng
@@ -36,14 +37,8 @@ import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.util.LatLng
 import com.vibra.bus.util.MapStyle
-import io.github.sceneview.SceneView
-import io.github.sceneview.node.ModelNode
-import dev.romainguy.kotlin.math.Float3
-import dev.romainguy.kotlin.math.Quaternion
-import kotlin.math.PI
 
-private const val BUS_MODEL_PATH = "models/bus_unab_3d.glb"
-private val MODEL_SIZE_DP = 90.dp
+private val MODEL_SIZE_DP = 53.dp
 
 @OptIn(MapsComposeExperimentalApi::class)
 @Composable
@@ -183,78 +178,168 @@ actual fun MapViewComposable(
             }
         }
 
-        // ── Overlay 3D ───────────────────────────────────────────────────────
+        // ── Overlay buses (Canvas Compose — sin SurfaceView) ─────────────────
         buses.forEach { bus ->
-            val screenPos = busScreenPositions[bus.plate] ?: return@forEach
-            val animatedHeading by animateFloatAsState(
-                targetValue   = bus.heading.toFloat(),
-                animationSpec = tween(800, easing = LinearEasing),
-                label         = "hdg_${bus.plate}",
-            )
+            key(bus.plate) {
+                busScreenPositions[bus.plate]?.let { screenPos ->
+                    val animatedHeading by animateFloatAsState(
+                        targetValue   = bus.heading.toFloat(),
+                        animationSpec = tween(800, easing = LinearEasing),
+                        label         = "hdg_${bus.plate}",
+                    )
 
-            Bus3DOverlay(
-                heading  = animatedHeading,
-                modifier = Modifier
-                    .size(MODEL_SIZE_DP)
-                    .offset {
-                        IntOffset(
-                            screenPos.x - modelHalfPx,
-                            screenPos.y - modelHalfPx,
-                        )
-                    },
-            )
+                    BusIconOverlay(
+                        heading  = animatedHeading,
+                        modifier = Modifier
+                            .size(MODEL_SIZE_DP)
+                            .offset {
+                                IntOffset(
+                                    screenPos.x - modelHalfPx,
+                                    screenPos.y - modelHalfPx,
+                                )
+                            },
+                    )
+                }
+            }
         }
     }
 }
 
-// ── Bus 3D con SceneView (API view-based de 0.10.0) ──────────────────────────
-
 @Composable
-private fun Bus3DOverlay(heading: Float, modifier: Modifier) {
-    // Referencia al ModelNode para actualizar la rotación desde fuera del factory
-    val modelNodeRef = remember { mutableStateOf<ModelNode?>(null) }
+private fun BusIconOverlay(heading: Float, modifier: Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val cx = size.width  / 2f
+            val cy = size.height / 2f
+            val s  = minOf(size.width, size.height)
 
-    AndroidView(
-        modifier = modifier,
-        factory  = { ctx ->
-            SceneView(ctx).also { sv ->
-                // Fondo transparente para que se vea el mapa debajo
-                sv.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                sv.setZOrderOnTop(true)
+            rotate(degrees = heading, pivot = Offset(cx, cy)) {
 
-                // Carga el GLB directamente desde assets — el engine lo gestiona SceneView
-                val node = ModelNode(
-                    engine               = sv.engine,
-                    modelGlbFileLocation = BUS_MODEL_PATH,
-                    autoAnimate          = false,
-                    scaleUnits           = 1.4f,
-                ).also { n ->
-                    // -90° en X = modelo "tumbado" visto desde arriba
-                    n.quaternion = headingToQuaternion(-90f, 0f)
+                // Dimensiones del bus dentro del canvas cuadrado
+                val bW = s * 0.48f          // ancho carrocería
+                val bH = s * 0.78f          // largo carrocería
+                val bL = cx - bW / 2f       // borde izquierdo
+                val bT = cy - bH / 2f       // borde frontal
+                val bR = bL + bW            // borde derecho
+                val bB = bT + bH            // borde trasero
+                val cr = s * 0.09f          // radio esquinas cuerpo
+
+                // — Sombra —
+                drawRoundRect(
+                    color        = Color(0x40000000),
+                    topLeft      = Offset(bL + 2.5f, bT + 2.5f),
+                    size         = Size(bW, bH),
+                    cornerRadius = CornerRadius(cr),
+                )
+
+                // — Borde blanco: contraste sobre cualquier fondo de mapa —
+                drawRoundRect(
+                    color        = Color(0xFFFFFFFF),
+                    topLeft      = Offset(bL - 2f, bT - 2f),
+                    size         = Size(bW + 4f, bH + 4f),
+                    cornerRadius = CornerRadius(cr + 1.5f),
+                )
+
+                // — Carrocería base (morado UNAB) —
+                drawRoundRect(
+                    color        = Color(0xFF5B2C8C),
+                    topLeft      = Offset(bL, bT),
+                    size         = Size(bW, bH),
+                    cornerRadius = CornerRadius(cr),
+                )
+
+                // — Panel de techo (ligeramente más oscuro, da profundidad) —
+                drawRoundRect(
+                    color        = Color(0xFF4A2275),
+                    topLeft      = Offset(bL + bW * 0.13f, bT + bH * 0.11f),
+                    size         = Size(bW * 0.74f, bH * 0.78f),
+                    cornerRadius = CornerRadius(cr * 0.55f),
+                )
+
+                // — Franja lateral UNAB (amarilla, horizontal) —
+                drawRect(
+                    color   = Color(0xFFE9A427),
+                    topLeft = Offset(bL, cy - s * 0.052f),
+                    size    = Size(bW, s * 0.104f),
+                )
+
+                // — Parabrisas delantero —
+                drawRoundRect(
+                    color        = Color(0xCCADD8FF),
+                    topLeft      = Offset(bL + bW * 0.10f, bT + bH * 0.025f),
+                    size         = Size(bW * 0.80f, bH * 0.115f),
+                    cornerRadius = CornerRadius(s * 0.03f),
+                )
+                // Reflejo sutil en el parabrisas
+                drawRoundRect(
+                    color        = Color(0x55FFFFFF),
+                    topLeft      = Offset(bL + bW * 0.12f, bT + bH * 0.03f),
+                    size         = Size(bW * 0.28f, bH * 0.06f),
+                    cornerRadius = CornerRadius(s * 0.02f),
+                )
+
+                // — Ventana trasera —
+                drawRoundRect(
+                    color        = Color(0x88ADD8FF),
+                    topLeft      = Offset(bL + bW * 0.14f, bT + bH * 0.855f),
+                    size         = Size(bW * 0.72f, bH * 0.09f),
+                    cornerRadius = CornerRadius(s * 0.02f),
+                )
+
+                // — Ventanas laterales (4 por lado) —
+                val winW  = bW * 0.115f
+                val winH  = bH * 0.085f
+                val winXL = bL + bW * 0.045f
+                val winXR = bR - bW * 0.045f - winW
+                listOf(0.225f, 0.360f, 0.510f, 0.645f).forEach { yRel ->
+                    val winY = bT + bH * yRel
+                    drawRoundRect(
+                        color        = Color(0x99A8D4FF),
+                        topLeft      = Offset(winXL, winY),
+                        size         = Size(winW, winH),
+                        cornerRadius = CornerRadius(s * 0.015f),
+                    )
+                    drawRoundRect(
+                        color        = Color(0x99A8D4FF),
+                        topLeft      = Offset(winXR, winY),
+                        size         = Size(winW, winH),
+                        cornerRadius = CornerRadius(s * 0.015f),
+                    )
                 }
-                sv.addChildNode(node)
-                modelNodeRef.value = node
 
-                // Cámara cenital: por encima del modelo mirando hacia abajo
-                sv.camera.position  = Float3(0f, 3f, 0f)
-                sv.camera.quaternion = headingToQuaternion(90f, 0f)
+                // — Ruedas (4 arcos, dos ejes) —
+                val wR  = s * 0.052f
+                val wYf = bT + bH * 0.245f   // eje delantero
+                val wYr = bT + bH * 0.720f   // eje trasero
+                listOf(bL - wR * 0.45f, bR - wR * 0.55f).forEach { wX ->
+                    // llanta exterior (negro)
+                    drawCircle(Color(0xFF1C0D33), radius = wR,           center = Offset(wX, wYf))
+                    drawCircle(Color(0xFF1C0D33), radius = wR,           center = Offset(wX, wYr))
+                    // rin interior (gris plata)
+                    drawCircle(Color(0xFFBBBBBB), radius = wR * 0.52f,  center = Offset(wX, wYf))
+                    drawCircle(Color(0xFFBBBBBB), radius = wR * 0.52f,  center = Offset(wX, wYr))
+                }
+
+                // — Faros delanteros —
+                val headY  = bT + bH * 0.038f
+                val headR  = s * 0.04f
+                drawCircle(Color(0xFFFFE680), radius = headR, center = Offset(bL + bW * 0.18f, headY))
+                drawCircle(Color(0xFFFFE680), radius = headR, center = Offset(bR - bW * 0.18f, headY))
+
+                // — Flecha de dirección (frente) —
+                val aHalf = bW * 0.20f
+                val aTip  = bT - s * 0.025f
+                val aBase = bT + bH * 0.015f
+                drawPath(
+                    path = Path().apply {
+                        moveTo(cx, aTip)
+                        lineTo(cx - aHalf, aBase)
+                        lineTo(cx + aHalf, aBase)
+                        close()
+                    },
+                    color = Color(0xFFE9A427),
+                )
             }
-        },
-        update = { _ ->
-            modelNodeRef.value?.quaternion = headingToQuaternion(-90f, heading)
-        },
-    )
-
-    DisposableEffect(Unit) {
-        onDispose { modelNodeRef.value = null }
+        }
     }
-}
-
-// Convierte ángulos Euler (pitch en X, yaw en Y) a quaternion
-private fun headingToQuaternion(pitchDeg: Float, yawDeg: Float): Quaternion {
-    val pitch = (pitchDeg * PI / 180.0).toFloat()
-    val yaw   = (yawDeg   * PI / 180.0).toFloat()
-    val qPitch = Quaternion(Float3(1f, 0f, 0f), pitch)
-    val qYaw   = Quaternion(Float3(0f, 1f, 0f), yaw)
-    return qYaw * qPitch
 }

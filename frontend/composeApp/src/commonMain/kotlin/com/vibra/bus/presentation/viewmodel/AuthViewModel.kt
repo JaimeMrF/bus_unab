@@ -101,42 +101,40 @@ class AuthViewModel(
             _uiState.value = UiState.Loading
             try {
                 val idToken = googleSignInManager.signIn()
-                if (idToken == null) {
-                    _uiState.value = UiState.Idle
-                    return@launch
-                }
-
-                val email = extractEmailFromJwt(idToken)
-                if (email == null || !email.lowercase().endsWith("@unab.edu.co")) {
-                    googleSignInManager.signOut()
-                    val errorMsg = "Solo puedes ingresar con una cuenta @unab.edu.co"
-                    _uiState.value = UiState.Error(errorMsg)
-                    _event.value = AuthEvent.ShowError(errorMsg)
-                    return@launch
-                }
-
-                when (val result = authRepository.loginWithGoogle(idToken)) {
-                    is ApiResult.Success -> {
-                        val response = result.data
-                        val userData = response.data?.user
-                        if (response.success && userData != null) {
-                            registerFcmToken()
-                            _uiState.value = UiState.Success(userData)
-                            _event.value = AuthEvent.NavigateToHome
-                        } else {
-                            val errorMsg = response.message ?: "Error con Google"
-                            _uiState.value = UiState.Error(errorMsg)
-                            _event.value = AuthEvent.ShowError(errorMsg)
+                if (idToken != null) {
+                    val email = extractEmailFromJwt(idToken)
+                    if (email != null && email.lowercase().endsWith("@unab.edu.co")) {
+                        when (val result = authRepository.loginWithGoogle(idToken)) {
+                            is ApiResult.Success -> {
+                                val response = result.data
+                                val userData = response.data?.user
+                                if (response.success && userData != null) {
+                                    registerFcmToken()
+                                    _uiState.value = UiState.Success(userData)
+                                    _event.value = AuthEvent.NavigateToHome
+                                } else {
+                                    val errorMsg = response.message ?: "Error con Google"
+                                    _uiState.value = UiState.Error(errorMsg)
+                                    _event.value = AuthEvent.ShowError(errorMsg)
+                                }
+                            }
+                            is ApiResult.HttpError -> {
+                                _uiState.value = UiState.Error(result.message)
+                                _event.value = AuthEvent.ShowError(result.message)
+                            }
+                            is ApiResult.NetworkError -> {
+                                _uiState.value = UiState.Error("Sin conexión a internet")
+                                _event.value = AuthEvent.ShowError("Sin conexión a internet")
+                            }
                         }
+                    } else {
+                        googleSignInManager.signOut()
+                        val errorMsg = "Solo puedes ingresar con una cuenta @unab.edu.co"
+                        _uiState.value = UiState.Error(errorMsg)
+                        _event.value = AuthEvent.ShowError(errorMsg)
                     }
-                    is ApiResult.HttpError -> {
-                        _uiState.value = UiState.Error(result.message)
-                        _event.value = AuthEvent.ShowError(result.message)
-                    }
-                    is ApiResult.NetworkError -> {
-                        _uiState.value = UiState.Error("Sin conexión a internet")
-                        _event.value = AuthEvent.ShowError("Sin conexión a internet")
-                    }
+                } else {
+                    _uiState.value = UiState.Idle
                 }
             } catch (e: Exception) {
                 val errorMsg = e.message ?: "Error desconocido con Google"

@@ -122,15 +122,15 @@ class DriverModeViewModel(
         lastKnownLocation = null
         locationManager.startLocationUpdates { location ->
             val plate = _activePlate.value
-            if (plate.isEmpty()) return@startLocationUpdates
+            if (plate.isNotEmpty()) {
+                val heading = lastKnownLocation?.let {
+                    calculateBearing(it.latitude, it.longitude, location.latitude, location.longitude)
+                } ?: 0
+                lastKnownLocation = location
 
-            val heading = lastKnownLocation?.let {
-                calculateBearing(it.latitude, it.longitude, location.latitude, location.longitude)
-            } ?: 0
-            lastKnownLocation = location
-
-            viewModelScope.launch {
-                busRepository.updateDriverLocation(plate, location.latitude, location.longitude, heading)
+                viewModelScope.launch {
+                    busRepository.updateDriverLocation(plate, location.latitude, location.longitude, heading)
+                }
             }
         }
         _snackbarMessage.value = "Usando ubicación del teléfono"
