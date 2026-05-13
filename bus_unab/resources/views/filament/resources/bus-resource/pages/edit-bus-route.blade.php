@@ -294,8 +294,8 @@
 
     {{-- Cargar Google Maps API --}}
     <script
-        src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places&callback=initGoogleRouteEditor"
-        async defer></script>
+        src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places,marker&callback=initGoogleRouteEditor&loading=async"
+        async></script>
 
     <script>
         window.initGoogleRouteEditor = () => {

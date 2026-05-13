@@ -15,16 +15,7 @@
 
 <div wire:ignore x-data="googleStopMapPicker(@js($initLat), @js($initLng), @js($initRad), @js($others))" class="col-span-full space-y-3">
     {{-- Buscador de Google Places --}}
-    <div class="relative w-full">
-        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-        </div>
-        <input type="text" id="map-search-input" placeholder="Buscar lugar o dirección en Bucaramanga..."
-            class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm focus:ring-primary-500 focus:border-primary-500 shadow-sm">
-    </div>
+    <div id="stop-search-container" class="w-full"></div>
 
     {{-- Leyenda y estado --}}
     <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-1">
@@ -49,8 +40,8 @@
 
     {{-- Cargar Google Maps API --}}
     <script
-        src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places&callback=initGoogleMapPicker"
-        async defer></script>
+        src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places,marker&callback=initGoogleMapPicker&loading=async"
+        async></script>
 
     <script>
         // Callback global para la API de Google
@@ -65,7 +56,6 @@
                 circle: null,
                 geocoder: null,
                 geocoding: false,
-                autocomplete: null,
 
                 init() {
                     if (window.google && window.google.maps) {
@@ -96,24 +86,22 @@
 
                     this.geocoder = new google.maps.Geocoder();
 
-                    // Setup Autocomplete
-                    const input = document.getElementById('map-search-input');
-                    this.autocomplete = new google.maps.places.Autocomplete(input, {
-                        componentRestrictions: {
-                            country: "co"
-                        },
-                        fields: ["address_components", "geometry", "name"],
-                        strictBounds: false,
+                    // Setup PlaceAutocompleteElement (nuevo API desde marzo 2025)
+                    const searchContainer = document.getElementById('stop-search-container');
+                    const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement({
+                        componentRestrictions: { country: 'co' },
                     });
+                    placeAutocomplete.style.cssText = 'width:100%;display:block;';
+                    searchContainer.appendChild(placeAutocomplete);
 
-                    this.autocomplete.addListener("place_changed", () => {
-                        const place = this.autocomplete.getPlace();
-                        if (!place.geometry || !place.geometry.location) return;
-
-                        const pos = place.geometry.location;
-                        this.map.setCenter(pos);
+                    placeAutocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
+                        await place.fetchFields({ fields: ['location'] });
+                        if (!place.location) return;
+                        const lat = place.location.lat();
+                        const lng = place.location.lng();
+                        this.map.setCenter({ lat, lng });
                         this.map.setZoom(17);
-                        this.placeMarker(pos.lat(), pos.lng(), true);
+                        this.placeMarker(lat, lng, true);
                     });
 
                     // Marcadores de referencia: otras paradas (azul)
