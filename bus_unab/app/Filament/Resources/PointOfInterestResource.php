@@ -34,6 +34,9 @@ class PointOfInterestResource extends Resource
                     ->rows(3)
                     ->columnSpanFull(),
 
+                Forms\Components\View::make('filament.forms.components.poi-map-picker')
+                    ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('latitude')
                     ->label('Latitud')
                     ->required()

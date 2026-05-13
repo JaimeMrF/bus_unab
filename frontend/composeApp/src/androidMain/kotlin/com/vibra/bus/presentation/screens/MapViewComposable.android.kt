@@ -147,11 +147,29 @@ actual fun MapViewComposable(
 
             // Paradas
             if (showStops) {
+                val context = androidx.compose.ui.platform.LocalContext.current
                 stops.forEach { stop ->
                     MarkerComposable(
                         state   = MarkerState(GmsLatLng(stop.latitude, stop.longitude)),
                         title   = stop.name,
-                        onClick = { onStopSelected(stop); true },
+                        snippet = "Toca para ver en Google Maps",
+                        onClick = { 
+                            onStopSelected(stop)
+                            false // Retornar false para mostrar el InfoWindow nativo
+                        },
+                        onInfoWindowClick = {
+                            val uri = android.net.Uri.parse("geo:0,0?q=${stop.latitude},${stop.longitude}(${android.net.Uri.encode(stop.name)})")
+                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                            intent.setPackage("com.google.android.apps.maps")
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                // Fallback a navegador web si Maps no está instalado
+                                val fallbackUri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${stop.latitude},${stop.longitude}")
+                                val fallbackIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, fallbackUri)
+                                context.startActivity(fallbackIntent)
+                            }
+                        }
                     ) { StopMarker(isSelected = selectedStop?.id == stop.id) }
                 }
             }
