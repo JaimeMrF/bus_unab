@@ -1,4 +1,6 @@
 @php
+    $apiKey = env('GOOGLE_MAPS_API_KEY');
+
     // Todas las paradas activas
     $allStops = \App\Models\Stop::active()
         ->whereNotNull('latitude')
@@ -13,7 +15,7 @@
         ])
         ->values();
 
-    // Paradas ya asignadas a este bus, en orden (filtra stops eliminados)
+    // Paradas ya asignadas a este bus
     $assignedStops = $record->routeStops
         ->sortBy('order')
         ->filter(fn ($rs) => $rs->stop !== null && $rs->stop->latitude !== null && $rs->stop->longitude !== null)
@@ -38,27 +40,23 @@
 
 <x-filament-panels::page>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
 <style>
-    #route-map .leaflet-pane,
-    #route-map .leaflet-tile         { z-index: 1 !important; }
-    #route-map .leaflet-overlay-pane { z-index: 2 !important; }
-    #route-map .leaflet-shadow-pane  { z-index: 3 !important; }
-    #route-map .leaflet-marker-pane  { z-index: 4 !important; }
-    #route-map .leaflet-tooltip-pane { z-index: 5 !important; }
-    #route-map .leaflet-popup-pane   { z-index: 6 !important; }
-    #route-map .leaflet-top,
-    #route-map .leaflet-bottom       { z-index: 7 !important; }
-
     .stop-list-item { transition: background .15s; }
     .stop-list-item:hover { background: rgba(99,102,241,.07); }
     .stop-list-item.dragging { opacity: .5; }
+    
+    /* Estilos para los pines personalizados de Google */
+    .custom-pin-label {
+        font-weight: bold;
+        color: white;
+        font-size: 12px;
+        font-family: sans-serif;
+    }
 </style>
 
 <div
     wire:ignore
-    x-data="busRouteEditor(@js($allStops), @js($assignedStops), @js($existingWaypoints))"
+    x-data="googleBusRouteEditor(@js($allStops), @js($assignedStops), @js($existingWaypoints))"
     class="space-y-3"
 >
 
@@ -100,14 +98,14 @@
 
         {{-- Hint según modo --}}
         <div class="hidden sm:flex items-center text-xs text-gray-400 dark:text-gray-500 italic">
-            <span x-show="mode === 'stop'" style="display:none">Clic en parada gris → agregar a ruta &nbsp;·&nbsp; Clic en parada numerada → quitar</span>
+            <span x-show="mode === 'stop'" style="display:none">Clic en parada gris → agregar &nbsp;·&nbsp; Clic en número → quitar</span>
             <span x-show="mode === 'waypoint'" style="display:none">Clic en el mapa → añadir punto intermedio entre paradas</span>
-            <span x-show="mode === 'delete'" style="display:none">Clic en waypoint naranja → eliminarlo</span>
+            <span x-show="mode === 'delete'" style="display:none">Clic en punto naranja → eliminar</span>
         </div>
 
         {{-- Acciones --}}
         <div class="flex items-center gap-2">
-            <button @click="loadOsrmPreview()" :disabled="previewLoading || route.length < 2"
+            <button @click="loadGoogleDirections()" :disabled="previewLoading || route.length < 2"
                 class="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 ring-1 ring-gray-200 dark:ring-gray-600 transition hover:bg-gray-100 disabled:opacity-40">
                 <svg x-show="!previewLoading" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"/>
@@ -116,7 +114,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
-                Vista previa (OSRM)
+                Vista previa (Google)
             </button>
 
             <button @click="clearWaypoints()"
@@ -142,10 +140,10 @@
     </div>
 
     {{-- ══ CUERPO: lista de paradas + mapa ════════════════════════════════ --}}
-    <div class="flex gap-3" style="height: 600px;">
+    <div class="flex flex-col lg:flex-row gap-3" style="height: 650px;">
 
         {{-- ── Panel lateral: paradas en orden ── --}}
-        <div class="w-64 flex-shrink-0 flex flex-col rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+        <div class="w-full lg:w-72 flex-shrink-0 flex flex-col rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
             <div class="px-3 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                 <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">
                     Orden de paradas
@@ -211,14 +209,23 @@
                     <span class="w-3 h-3 rounded-full bg-gray-400 flex-shrink-0"></span> Parada disponible
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0"></span> Waypoint intermedio
+                    <span class="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0"></span> Waypoint (ajuste de ruta)
                 </div>
             </div>
         </div>
 
         {{-- ── Mapa ── --}}
-        <div class="flex-1 rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 shadow-sm overflow-hidden">
-            <div id="route-map" style="width:100%;height:100%;"></div>
+        <div class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden relative">
+            <div id="route-map-google" style="width:100%;height:100%;"></div>
+            
+            {{-- Badge de carga --}}
+            <div x-show="previewLoading" class="absolute top-4 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-primary-500 flex items-center gap-2 z-10">
+                <svg class="w-4 h-4 animate-spin text-primary-500" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-200">Calculando ruta con Google...</span>
+            </div>
         </div>
     </div>
 
@@ -227,25 +234,33 @@
         <span><span class="font-semibold text-indigo-500" x-text="route.length"></span> paradas</span>
         <span>·</span>
         <span><span class="font-semibold text-orange-500" x-text="waypoints.length"></span> waypoints</span>
-        <span x-show="osrmLines.length > 0" style="display:none">
-            · <span class="text-green-500 font-semibold">Ruta OSRM activa</span>
+        <span x-show="directionsActive" style="display:none" class="flex items-center gap-1">
+            · <span class="text-green-500 font-semibold">Trazado inteligente activo</span>
+            <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg>
         </span>
     </div>
 
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{{-- Cargar Google Maps API --}}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places&callback=initGoogleRouteEditor" async defer></script>
 
 <script>
-function busRouteEditor(allStops, assignedStops, existingWaypoints) {
+window.initGoogleRouteEditor = () => {
+    window.dispatchEvent(new CustomEvent('google-maps-loaded'));
+};
+
+function googleBusRouteEditor(allStops, assignedStops, existingWaypoints) {
     return {
         allStops,
         route:           [],   // [{stop_id, name, lat, lng, estimated_minutes}]
-        waypoints:       [],   // [{lat, lng, label, _seg, _t}] – siempre ordenado por _seg luego _t
-        waypointMarkers: [],   // array paralelo a waypoints: instancias Leaflet marker
-        stopMarkers:     {},   // stop_id → leaflet marker
-        guideLine:       null,
-        osrmLines:       [],
+        waypoints:       [],   // [{lat, lng, label, _seg, _t}]
+        waypointMarkers: [],   // AdvancedMarkerElement[]
+        stopMarkers:     {},   // stop_id → AdvancedMarkerElement
+        guideLine:       null, // Polyline punteada
+        directionsRenderer: null,
+        directionsService: null,
+        directionsActive: false,
         map:             null,
         mode:            'stop',
         saving:          false,
@@ -260,31 +275,43 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
                 estimated_minutes: s.estimated_minutes ?? 0,
             }));
 
-            this.waitForLeaflet(() => this.setupMap());
+            if (window.google && window.google.maps) {
+                this.setupMap();
+            } else {
+                window.addEventListener('google-maps-loaded', () => this.setupMap());
+            }
 
             this.$watch('route', () => {
                 this.refreshStopMarkers();
                 this.refreshWaypointSegments();
                 this.drawGuideLine();
+                if (this.directionsActive) this.loadGoogleDirections();
             });
-        },
-
-        waitForLeaflet(cb) {
-            if (window.L) { cb(); return; }
-            const t = setInterval(() => { if (window.L) { clearInterval(t); cb(); } }, 50);
         },
 
         setupMap() {
             const center = this.route.length
-                ? [this.route[0].lat, this.route[0].lng]
-                : (allStops.length ? [allStops[0].lat, allStops[0].lng] : [7.1193, -73.1227]);
+                ? { lat: this.route[0].lat, lng: this.route[0].lng }
+                : (allStops.length ? { lat: allStops[0].lat, lng: allStops[0].lng } : { lat: 7.1193, lng: -73.1227 });
 
-            this.map = L.map('route-map', { center, zoom: 14 });
+            this.map = new google.maps.Map(document.getElementById('route-map-google'), {
+                center,
+                zoom: 14,
+                mapId: 'ROUTE_EDITOR_MAP',
+                mapTypeControl: false,
+                streetViewControl: false,
+            });
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-                maxZoom: 19,
-            }).addTo(this.map);
+            this.directionsService = new google.maps.DirectionsService();
+            this.directionsRenderer = new google.maps.DirectionsRenderer({
+                map: this.map,
+                suppressMarkers: true, // No queremos los globos A, B, C... de Google
+                polylineOptions: {
+                    strokeColor: "#22c55e",
+                    strokeWeight: 6,
+                    strokeOpacity: 0.8
+                }
+            });
 
             allStops.forEach(s => this.createStopMarker(s));
             this.refreshStopMarkers();
@@ -292,39 +319,72 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
             existingWaypoints.forEach(wp => this.addWaypointAt(wp.lat, wp.lng, wp.label || ''));
             this.drawGuideLine();
 
-            const pts = allStops.map(s => [s.lat, s.lng]);
-            if (pts.length > 1) this.map.fitBounds(L.latLngBounds(pts), { padding: [40, 40] });
+            const bounds = new google.maps.LatLngBounds();
+            allStops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }));
+            if (allStops.length > 0) this.map.fitBounds(bounds, 40);
 
-            this.map.on('click', e => {
+            this.map.addListener('click', e => {
                 if (this.mode === 'waypoint') {
-                    this.addWaypointAt(e.latlng.lat, e.latlng.lng, '');
+                    this.addWaypointAt(e.latLng.lat(), e.latLng.lng(), '');
                     this.drawGuideLine();
+                    if (this.directionsActive) this.loadGoogleDirections();
                 }
             });
         },
 
         // ── Marcadores de paradas ────────────────────────────────────────────
         createStopMarker(stop) {
-            const mkr = L.marker([stop.lat, stop.lng], {
-                icon: this.grayIcon(),
-                zIndexOffset: 100,
-            }).addTo(this.map);
-            mkr.bindTooltip(this.esc(stop.name), { direction: 'top', opacity: .9 });
-            mkr.on('click', () => { if (this.mode === 'stop') this.toggleStop(stop); });
-            this.stopMarkers[stop.id] = mkr;
+            const pinView = this.getGrayPin();
+            
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                map: this.map,
+                position: { lat: stop.lat, lng: stop.lng },
+                title: stop.name,
+                content: pinView.element,
+                zIndex: 100
+            });
+
+            marker.addListener('click', () => {
+                if (this.mode === 'stop') this.toggleStop(stop);
+            });
+
+            this.stopMarkers[stop.id] = marker;
+        },
+
+        getGrayPin() {
+            return new google.maps.marker.PinElement({
+                background: "#9ca3af",
+                borderColor: "white",
+                glyphColor: "white",
+                scale: 0.7
+            });
+        },
+
+        getNumberedPin(n) {
+            const div = document.createElement("div");
+            div.className = "custom-pin-label";
+            div.innerText = n;
+
+            return new google.maps.marker.PinElement({
+                background: "#4f46e5",
+                borderColor: "white",
+                glyph: div,
+                scale: 1.0
+            });
         },
 
         refreshStopMarkers() {
             allStops.forEach(stop => {
-                const mkr = this.stopMarkers[stop.id];
-                if (!mkr) return;
+                const marker = this.stopMarkers[stop.id];
+                if (!marker) return;
+                
                 const idx = this.route.findIndex(r => r.stop_id === stop.id);
                 if (idx >= 0) {
-                    mkr.setIcon(this.numberedIcon(idx + 1));
-                    mkr.setZIndexOffset(500 + idx);
+                    marker.content = this.getNumberedPin(idx + 1).element;
+                    marker.zIndex = 500 + idx;
                 } else {
-                    mkr.setIcon(this.grayIcon());
-                    mkr.setZIndexOffset(100);
+                    marker.content = this.getGrayPin().element;
+                    marker.zIndex = 100;
                 }
             });
         },
@@ -346,81 +406,67 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
         moveStop(idx, dir) {
             const newIdx = idx + dir;
             if (newIdx < 0 || newIdx >= this.route.length) return;
-            [this.route[idx], this.route[newIdx]] = [this.route[newIdx], this.route[idx]];
+            const temp = this.route[idx];
+            this.route[idx] = this.route[newIdx];
+            this.route[newIdx] = temp;
             this.route = [...this.route];
         },
 
         // ── Waypoints ─────────────────────────────────────────────────────────
-
-        // Devuelve el segmento más cercano {seg, t} para un punto dado.
-        findBestSegment(lat, lng) {
-            const N = this.route.length;
-            if (N < 2) return { seg: 0, t: 0 };
-            let best = { seg: 0, dist: Infinity, t: 0 };
-            for (let i = 0; i < N - 1; i++) {
-                const { dist, t } = this.ptSegDist(
-                    lat, lng,
-                    this.route[i].lat,   this.route[i].lng,
-                    this.route[i+1].lat, this.route[i+1].lng,
-                );
-                if (dist < best.dist) best = { seg: i, dist, t };
-            }
-            return best;
-        },
-
-        // Índice de inserción para mantener waypoints ordenados por _seg, _t.
-        findInsertIndex(seg, t) {
-            for (let i = 0; i < this.waypoints.length; i++) {
-                const w = this.waypoints[i];
-                if (w._seg > seg || (w._seg === seg && w._t > t)) return i;
-            }
-            return this.waypoints.length;
-        },
-
-        // Crea un waypoint y lo inserta en la posición correcta de la secuencia.
         addWaypointAt(lat, lng, label) {
             const { seg, t } = this.findBestSegment(lat, lng);
             const insertIdx  = this.findInsertIndex(seg, t);
 
-            const mkr = L.marker([lat, lng], {
-                draggable: true,
-                icon: this.waypointIcon(),
-                zIndexOffset: 200,
-            }).addTo(this.map);
-
-            this.waypoints.splice(insertIdx, 0, { lat, lng, label, _seg: seg, _t: t });
-            this.waypointMarkers.splice(insertIdx, 0, mkr);
-
-            mkr.on('dragend', e => {
-                const i = this.waypointMarkers.indexOf(mkr);
-                if (i === -1) return;
-                const p = e.target.getLatLng();
-                const { seg: newSeg, t: newT } = this.findBestSegment(p.lat, p.lng);
-                const savedLabel = this.waypoints[i].label;
-                // Quitar de posición actual
-                this.waypoints.splice(i, 1);
-                this.waypointMarkers.splice(i, 1);
-                // Insertar en nueva posición ordenada
-                const newIdx = this.findInsertIndex(newSeg, newT);
-                this.waypoints.splice(newIdx, 0, { lat: p.lat, lng: p.lng, label: savedLabel, _seg: newSeg, _t: newT });
-                this.waypointMarkers.splice(newIdx, 0, mkr);
-                this.drawGuideLine();
+            const pinView = new google.maps.marker.PinElement({
+                background: "#f97316",
+                borderColor: "white",
+                glyphColor: "white",
+                scale: 0.7
             });
 
-            mkr.on('click', () => {
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                map: this.map,
+                position: { lat, lng },
+                gmpDraggable: true,
+                content: pinView.element,
+                zIndex: 200
+            });
+
+            this.waypoints.splice(insertIdx, 0, { lat, lng, label, _seg: seg, _t: t });
+            this.waypointMarkers.splice(insertIdx, 0, marker);
+
+            marker.addListener('dragend', () => {
+                const i = this.waypointMarkers.indexOf(marker);
+                if (i === -1) return;
+                const pos = marker.position;
+                const { seg: newSeg, t: newT } = this.findBestSegment(pos.lat, pos.lng);
+                const savedLabel = this.waypoints[i].label;
+
+                // Quitar y reinsertar ordenado
+                this.waypoints.splice(i, 1);
+                this.waypointMarkers.splice(i, 1);
+                const newIdx = this.findInsertIndex(newSeg, newT);
+                this.waypoints.splice(newIdx, 0, { lat: pos.lat, lng: pos.lng, label: savedLabel, _seg: newSeg, _t: newT });
+                this.waypointMarkers.splice(newIdx, 0, marker);
+
+                this.drawGuideLine();
+                if (this.directionsActive) this.loadGoogleDirections();
+            });
+
+            marker.addListener('click', () => {
                 if (this.mode === 'delete') {
-                    const i = this.waypointMarkers.indexOf(mkr);
+                    const i = this.waypointMarkers.indexOf(marker);
                     if (i !== -1) {
-                        mkr.remove();
+                        marker.map = null;
                         this.waypoints.splice(i, 1);
                         this.waypointMarkers.splice(i, 1);
                         this.drawGuideLine();
+                        if (this.directionsActive) this.loadGoogleDirections();
                     }
                 }
             });
         },
 
-        // Recomputa _seg y _t de todos los waypoints cuando cambian las paradas.
         refreshWaypointSegments() {
             if (this.waypoints.length === 0) return;
             this.waypoints.forEach(wp => {
@@ -428,7 +474,6 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
                 wp._seg = seg;
                 wp._t   = t;
             });
-            // Ordenar ambos arrays usando la misma permutación de índices.
             const indices = Array.from({ length: this.waypoints.length }, (_, i) => i);
             indices.sort((a, b) => {
                 const wa = this.waypoints[a], wb = this.waypoints[b];
@@ -439,31 +484,38 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
         },
 
         clearWaypoints() {
-            this.waypointMarkers.forEach(m => m.remove());
+            this.waypointMarkers.forEach(m => m.map = null);
             this.waypoints       = [];
             this.waypointMarkers = [];
-            this.osrmLines.forEach(l => l.remove());
-            this.osrmLines = [];
+            this.directionsRenderer.setDirections({routes: []});
+            this.directionsActive = false;
             this.drawGuideLine();
         },
 
-        // ── Línea guía ────────────────────────────────────────────────────────
+        // ── Línea guía y Dibujo ─────────────────────────────────────────────
         drawGuideLine() {
-            if (this.guideLine) { this.guideLine.remove(); this.guideLine = null; }
+            if (this.guideLine) { this.guideLine.setMap(null); this.guideLine = null; }
             const path = this.buildOrderedPath();
             if (path.length < 2) return;
-            this.guideLine = L.polyline(path.map(p => [p.lat, p.lng]), {
-                color: '#6366f1', weight: 3, opacity: 0.5, dashArray: '7 6',
-            }).addTo(this.map);
+            
+            this.guideLine = new google.maps.Polyline({
+                path: path.map(p => ({ lat: p.lat, lng: p.lng })),
+                geodesic: true,
+                strokeColor: "#6366f1",
+                strokeOpacity: 0.4,
+                strokeWeight: 3,
+                map: this.map,
+                icons: [{
+                    icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2 },
+                    offset: '0',
+                    repeat: '12px'
+                }]
+            });
         },
 
-        // Ruta completa en orden: stops intercalados con sus waypoints.
         buildOrderedPath() {
             const N = this.route.length;
             if (N === 0) return this.waypoints.map(w => ({ lat: w.lat, lng: w.lng }));
-            if (N === 1) return [this.route[0], ...this.waypoints];
-
-            // waypoints ya están ordenados por _seg luego _t
             const path = [];
             let wi = 0;
             for (let i = 0; i < N; i++) {
@@ -476,30 +528,40 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
             return path;
         },
 
-        // ── OSRM ─────────────────────────────────────────────────────────────
-        async loadOsrmPreview() {
+        // ── Google Directions API ──────────────────────────────────────────
+        async loadGoogleDirections() {
             if (this.route.length < 2 || this.previewLoading) return;
             this.previewLoading = true;
+            this.directionsActive = true;
+            
             const path = this.buildOrderedPath();
-            const coords = path.map(p => `${p.lng},${p.lat}`).join(';');
+            const origin = { lat: path[0].lat, lng: path[0].lng };
+            const destination = { lat: path[path.length - 1].lat, lng: path[path.length - 1].lng };
+            
+            // Google permite máx 25 waypoints
+            const waypts = path.slice(1, -1).map(p => ({
+                location: new google.maps.LatLng(p.lat, p.lng),
+                stopover: true
+            }));
+
             try {
-                const res  = await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=polyline`);
-                const data = await res.json();
-                if (data.code !== 'Ok' || !data.routes?.[0]?.geometry) throw new Error();
-                const pts = this.decodePolyline(data.routes[0].geometry);
-                this.osrmLines.forEach(l => l.remove()); this.osrmLines = [];
-                this.osrmLines.push(
-                    L.polyline(pts, { color: '#22c55e', weight: 10, opacity: 0.18 }).addTo(this.map),
-                    L.polyline(pts, { color: '#22c55e', weight:  5, opacity: 0.9  }).addTo(this.map),
-                );
-            } catch {
-                alert('No se pudo obtener la ruta de OSRM.');
+                const result = await this.directionsService.route({
+                    origin,
+                    destination,
+                    waypoints: waypts,
+                    travelMode: google.maps.TravelMode.DRIVING,
+                    optimizeWaypoints: false
+                });
+                this.directionsRenderer.setDirections(result);
+            } catch (e) {
+                console.error("Directions request failed: " + e);
+                alert("No se pudo trazar la ruta. Verifica que Directions API esté activa.");
             } finally {
                 this.previewLoading = false;
             }
         },
 
-        // ── Guardar ───────────────────────────────────────────────────────────
+        // ── Lógica de guardado ─────────────────────────────────────────────
         async saveAll() {
             if (this.saving) return;
             this.saving = true;
@@ -516,25 +578,20 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
             }
         },
 
-        // Asigna órdenes numéricos a los waypoints respetando el orden de segmentos.
         prepareWaypoints(routeStops) {
             if (this.waypoints.length === 0 || routeStops.length < 2) return [];
-
             const result = [];
             let i = 0;
             while (i < this.waypoints.length) {
                 const seg = this.waypoints[i]._seg;
                 if (seg >= routeStops.length - 1) { i++; continue; }
-
                 const group = [];
                 while (i < this.waypoints.length && this.waypoints[i]._seg === seg) {
                     group.push(this.waypoints[i++]);
                 }
-
                 const orderA = routeStops[seg].order;
                 const orderB = routeStops[seg + 1].order;
                 const step   = (orderB - orderA) / (group.length + 1);
-
                 group.forEach((wp, j) => result.push({
                     lat:   wp.lat,
                     lng:   wp.lng,
@@ -545,55 +602,32 @@ function busRouteEditor(allStops, assignedStops, existingWaypoints) {
             return result;
         },
 
-        // ── Geometría ─────────────────────────────────────────────────────────
+        // Geometría
+        findBestSegment(lat, lng) {
+            const N = this.route.length;
+            if (N < 2) return { seg: 0, t: 0 };
+            let best = { seg: 0, dist: Infinity, t: 0 };
+            for (let i = 0; i < N - 1; i++) {
+                const { dist, t } = this.ptSegDist(lat, lng, this.route[i].lat, this.route[i].lng, this.route[i+1].lat, this.route[i+1].lng);
+                if (dist < best.dist) best = { seg: i, dist, t };
+            }
+            return best;
+        },
+
+        findInsertIndex(seg, t) {
+            for (let i = 0; i < this.waypoints.length; i++) {
+                const w = this.waypoints[i];
+                if (w._seg > seg || (w._seg === seg && w._t > t)) return i;
+            }
+            return this.waypoints.length;
+        },
+
         ptSegDist(px, py, ax, ay, bx, by) {
             const dx = bx - ax, dy = by - ay;
             const lenSq = dx*dx + dy*dy;
             const t = lenSq > 0 ? Math.max(0, Math.min(1, ((px-ax)*dx + (py-ay)*dy) / lenSq)) : 0;
             return { dist: Math.hypot(px - ax - t*dx, py - ay - t*dy), t };
-        },
-
-        decodePolyline(enc) {
-            const pts = []; let idx = 0, lat = 0, lng = 0;
-            while (idx < enc.length) {
-                let b, s = 0, r = 0;
-                do { b = enc.charCodeAt(idx++) - 63; r |= (b & 0x1f) << s; s += 5; } while (b >= 0x20);
-                lat += (r & 1) ? ~(r >> 1) : r >> 1; s = r = 0;
-                do { b = enc.charCodeAt(idx++) - 63; r |= (b & 0x1f) << s; s += 5; } while (b >= 0x20);
-                lng += (r & 1) ? ~(r >> 1) : r >> 1;
-                pts.push([lat / 1e5, lng / 1e5]);
-            }
-            return pts;
-        },
-
-        // ── Iconos ──────────────────────────────────────────────────────────────
-        grayIcon() {
-            return L.divIcon({
-                className: '',
-                html: `<div style="width:22px;height:22px;background:#9ca3af;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,.3);cursor:pointer;"></div>`,
-                iconSize: [22,22], iconAnchor: [11,11],
-            });
-        },
-
-        numberedIcon(n) {
-            return L.divIcon({
-                className: '',
-                html: `<div style="width:28px;height:28px;background:#4f46e5;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 7px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;font-family:system-ui,sans-serif;cursor:pointer;">${n}</div>`,
-                iconSize: [28,28], iconAnchor: [14,14],
-            });
-        },
-
-        waypointIcon() {
-            return L.divIcon({
-                className: '',
-                html: `<div style="width:20px;height:20px;background:#f97316;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,.3);cursor:grab;"></div>`,
-                iconSize: [20,20], iconAnchor: [10,10],
-            });
-        },
-
-        esc(s) {
-            return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
-        },
+        }
     };
 }
 </script>

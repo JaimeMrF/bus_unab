@@ -2,20 +2,19 @@
     $record  = $getRecord();
     $initLat = $record?->latitude  ? (float) $record->latitude  : null;
     $initLng = $record?->longitude ? (float) $record->longitude : null;
-    $initRad = (int) ($record?->radius_meters ?? 100);
     $apiKey  = env('GOOGLE_MAPS_API_KEY');
 
-    $others = \App\Models\Stop::active()
+    $others = \App\Models\PointOfInterest::active()
         ->whereNotNull('latitude')
         ->whereNotNull('longitude')
         ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
-        ->get(['id', 'name', 'latitude', 'longitude', 'radius_meters'])
+        ->get(['id', 'name', 'latitude', 'longitude', 'category'])
         ->toArray();
 @endphp
 
 <div
     wire:ignore
-    x-data="googleStopMapPicker(@js($initLat), @js($initLng), @js($initRad), @js($others))"
+    x-data="googlePoiMapPicker(@js($initLat), @js($initLng), @js($others))"
     class="col-span-full space-y-3"
 >
     {{-- Buscador de Google Places --}}
@@ -27,50 +26,47 @@
         </div>
         <input 
             type="text" 
-            id="map-search-input" 
+            id="poi-map-search-input" 
             placeholder="Buscar lugar o dirección en Bucaramanga..."
             class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm focus:ring-primary-500 focus:border-primary-500 shadow-sm"
         >
     </div>
 
-    {{-- Leyenda y estado --}}
+    {{-- Leyenda --}}
     <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-1">
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-1.5">
-                <span class="inline-block w-3 h-3 rounded-full bg-red-500 border-2 border-white shadow-sm"></span>
-                <span>Parada actual</span>
+                <span class="inline-block w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm"></span>
+                <span>Punto de Interés actual</span>
             </div>
             <div class="flex items-center gap-1.5">
                 <span class="inline-block w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-sm"></span>
-                <span>Otras paradas</span>
+                <span>Otros puntos</span>
             </div>
         </div>
-        <span x-show="geocoding" class="text-primary-500 animate-pulse" style="display:none;">Buscando dirección...</span>
     </div>
 
     {{-- Contenedor del mapa --}}
     <div
-        id="google-stop-map"
+        id="google-poi-map"
         class="w-full rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
         style="height: 480px;"
     ></div>
 
-    {{-- Cargar Google Maps API --}}
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places&callback=initGoogleMapPicker" async defer></script>
+    {{-- Cargar Google Maps API si no está cargada --}}
+    @if (!request()->hasCookie('google_maps_loaded'))
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places&callback=initGoogleMapPoiPicker" async defer></script>
+    @endif
 
     <script>
-        // Callback global para la API de Google
-        window.initGoogleMapPicker = () => {
+        window.initGoogleMapPoiPicker = () => {
             window.dispatchEvent(new CustomEvent('google-maps-loaded'));
         };
 
-        function googleStopMapPicker(initLat, initLng, initRadius, otherStops) {
+        function googlePoiMapPicker(initLat, initLng, otherPois) {
             return {
                 map: null,
                 marker: null,
-                circle: null,
-                geocoder: null,
-                geocoding: false,
                 autocomplete: null,
 
                 init() {
@@ -85,22 +81,20 @@
                     const hasPos = initLat != null && initLng != null;
                     const center = hasPos ? { lat: initLat, lng: initLng } : { lat: 7.1193, lng: -73.1227 };
 
-                    this.map = new google.maps.Map(document.getElementById('google-stop-map'), {
+                    this.map = new google.maps.Map(document.getElementById('google-poi-map'), {
                         center: center,
                         zoom: hasPos ? 17 : 14,
-                        mapId: 'STOP_PICKER_MAP', // Requerido para marcadores avanzados
+                        mapId: 'POI_PICKER_MAP', // Requerido para marcadores avanzados
                         mapTypeControl: false,
                         streetViewControl: false,
                         fullscreenControl: true,
                     });
 
-                    this.geocoder = new google.maps.Geocoder();
-                    
                     // Setup Autocomplete
-                    const input = document.getElementById('map-search-input');
+                    const input = document.getElementById('poi-map-search-input');
                     this.autocomplete = new google.maps.places.Autocomplete(input, {
                         componentRestrictions: { country: "co" },
-                        fields: ["address_components", "geometry", "name"],
+                        fields: ["geometry", "name"],
                         strictBounds: false,
                     });
 
@@ -112,10 +106,16 @@
                         this.map.setCenter(pos);
                         this.map.setZoom(17);
                         this.placeMarker(pos.lat(), pos.lng(), true);
+                        
+                        // Opcional: Podríamos autocompletar el nombre si está vacío
+                        const nameEl = document.getElementById('data.name');
+                        if (nameEl && nameEl.value.trim() === '') {
+                            this.$wire.$set('data.name', place.name);
+                        }
                     });
 
-                    // Marcadores de referencia: otras paradas (azul)
-                    otherStops.forEach(s => {
+                    // Marcadores de referencia: otros puntos (azul)
+                    otherPois.forEach(s => {
                         if (!s.latitude || !s.longitude) return;
                         
                         const pinView = new google.maps.marker.PinElement({
@@ -151,7 +151,7 @@
                         this.marker.position = position;
                     } else {
                         const pinView = new google.maps.marker.PinElement({
-                            background: "#ef4444",
+                            background: "#f59e0b", // Amber 500
                             borderColor: "white",
                             glyphColor: "white",
                         });
@@ -165,69 +165,18 @@
 
                         this.marker.addListener('dragend', (e) => {
                             const pos = this.marker.position;
-                            this.updateCirclePos(pos.lat, pos.lng);
                             this.pushCoords(pos.lat, pos.lng);
-                            this.reverseGeocode(pos.lat, pos.lng);
                         });
                     }
-
-                    this.updateCirclePos(lat, lng);
 
                     if (updateForm) {
                         this.pushCoords(lat, lng);
-                        this.reverseGeocode(lat, lng);
                     }
-                },
-
-                updateCirclePos(lat, lng) {
-                    const r = this.currentRadius();
-                    const center = { lat, lng };
-
-                    if (this.circle) {
-                        this.circle.setCenter(center);
-                        this.circle.setRadius(r);
-                    } else {
-                        this.circle = new google.maps.Circle({
-                            strokeColor: "#ef4444",
-                            strokeOpacity: 0.8,
-                            strokeWeight: 2,
-                            fillColor: "#ef4444",
-                            fillOpacity: 0.15,
-                            map: this.map,
-                            center: center,
-                            radius: r,
-                            clickable: false
-                        });
-                    }
-                },
-
-                currentRadius() {
-                    const el = document.getElementById('data.radius_meters');
-                    return el ? (parseInt(el.value) || initRadius) : initRadius;
                 },
 
                 pushCoords(lat, lng) {
                     this.$wire.$set('data.latitude', parseFloat(lat).toFixed(7));
                     this.$wire.$set('data.longitude', parseFloat(lng).toFixed(7));
-                },
-
-                async reverseGeocode(lat, lng) {
-                    const addrEl = document.getElementById('data.address');
-                    // Solo autocompletar dirección si está vacía
-                    if (addrEl && addrEl.value.trim() !== '') return;
-
-                    this.geocoding = true;
-                    try {
-                        const response = await this.geocoder.geocode({ location: { lat, lng } });
-                        if (response.results[0]) {
-                            const address = response.results[0].formatted_address;
-                            this.$wire.$set('data.address', address);
-                        }
-                    } catch (e) {
-                        console.error("Geocode failed: " + e);
-                    } finally {
-                        this.geocoding = false;
-                    }
                 }
             };
         }
