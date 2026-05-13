@@ -38,13 +38,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Encryption
+    | Session Encryption                                                      |  
     |--------------------------------------------------------------------------
-    |
-    | This option allows you to easily specify that all of your session data
-    | should be encrypted before it's stored. All encryption is performed
-    | automatically by Laravel and you may use the session like normal.
-    |
+    |                                                                         |
+    | This option allows you to easily specify that all of your session data  |
+    | should be encrypted before it's stored. All encryption is performed     |
+    | automatically by Laravel and you may use the session like normal.       |
+    |--------------------------------------------------------------------------
     */
 
     'encrypt' => env('SESSION_ENCRYPT', false),
@@ -53,11 +53,11 @@ return [
     |--------------------------------------------------------------------------
     | Session File Location
     |--------------------------------------------------------------------------
-    |
-    | When utilizing the "file" session driver, the session files are placed
-    | on disk. The default storage location is defined here; however, you
-    | are free to provide another location where they should be stored.
-    |
+    |                                                                         |
+    | When utilizing the "file" session driver, the session files are placed  |
+    | on disk. The default storage location is defined here; however, you     |
+    | are free to provide another location where they should be stored.       |
+    |-------------------------------------------------------------------------|
     */
 
     'files' => storage_path('framework/sessions'),
@@ -129,7 +129,7 @@ return [
 
     'cookie' => env(
         'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
+        Str::slug((string) env('APP_NAME', 'laravel')) . '-session'
     ),
 
     /*

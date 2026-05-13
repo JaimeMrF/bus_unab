@@ -1,35 +1,28 @@
 @php
-    $record  = $getRecord();
-    $initLat = $record?->latitude  ? (float) $record->latitude  : null;
+    $record = $getRecord();
+    $initLat = $record?->latitude ? (float) $record->latitude : null;
     $initLng = $record?->longitude ? (float) $record->longitude : null;
-    $apiKey  = env('GOOGLE_MAPS_API_KEY');
+    $apiKey = config('services.maps.key');
 
     $others = \App\Models\PointOfInterest::active()
         ->whereNotNull('latitude')
         ->whereNotNull('longitude')
-        ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
+        ->when($record, fn($q) => $q->where('id', '!=', $record->id))
         ->get(['id', 'name', 'latitude', 'longitude', 'category'])
         ->toArray();
 @endphp
 
-<div
-    wire:ignore
-    x-data="googlePoiMapPicker(@js($initLat), @js($initLng), @js($others))"
-    class="col-span-full space-y-3"
->
+<div wire:ignore x-data="googlePoiMapPicker(@js($initLat), @js($initLng), @js($others))" class="col-span-full space-y-3">
     {{-- Buscador de Google Places --}}
     <div class="relative w-full">
         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
             <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
         </div>
-        <input 
-            type="text" 
-            id="poi-map-search-input" 
-            placeholder="Buscar lugar o dirección en Bucaramanga..."
-            class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm focus:ring-primary-500 focus:border-primary-500 shadow-sm"
-        >
+        <input type="text" id="poi-map-search-input" placeholder="Buscar lugar o dirección en Bucaramanga..."
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm focus:ring-primary-500 focus:border-primary-500 shadow-sm">
     </div>
 
     {{-- Leyenda --}}
@@ -47,15 +40,15 @@
     </div>
 
     {{-- Contenedor del mapa --}}
-    <div
-        id="google-poi-map"
+    <div id="google-poi-map"
         class="w-full rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
-        style="height: 480px;"
-    ></div>
+        style="height: 480px;"></div>
 
     {{-- Cargar Google Maps API si no está cargada --}}
     @if (!request()->hasCookie('google_maps_loaded'))
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places&callback=initGoogleMapPoiPicker" async defer></script>
+        <script
+            src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places&callback=initGoogleMapPoiPicker"
+            async defer></script>
     @endif
 
     <script>
@@ -79,7 +72,13 @@
 
                 setupMap() {
                     const hasPos = initLat != null && initLng != null;
-                    const center = hasPos ? { lat: initLat, lng: initLng } : { lat: 7.1193, lng: -73.1227 };
+                    const center = hasPos ? {
+                        lat: initLat,
+                        lng: initLng
+                    } : {
+                        lat: 7.1193,
+                        lng: -73.1227
+                    };
 
                     this.map = new google.maps.Map(document.getElementById('google-poi-map'), {
                         center: center,
@@ -93,7 +92,9 @@
                     // Setup Autocomplete
                     const input = document.getElementById('poi-map-search-input');
                     this.autocomplete = new google.maps.places.Autocomplete(input, {
-                        componentRestrictions: { country: "co" },
+                        componentRestrictions: {
+                            country: "co"
+                        },
                         fields: ["geometry", "name"],
                         strictBounds: false,
                     });
@@ -106,7 +107,7 @@
                         this.map.setCenter(pos);
                         this.map.setZoom(17);
                         this.placeMarker(pos.lat(), pos.lng(), true);
-                        
+
                         // Opcional: Podríamos autocompletar el nombre si está vacío
                         const nameEl = document.getElementById('data.name');
                         if (nameEl && nameEl.value.trim() === '') {
@@ -117,7 +118,7 @@
                     // Marcadores de referencia: otros puntos (azul)
                     otherPois.forEach(s => {
                         if (!s.latitude || !s.longitude) return;
-                        
+
                         const pinView = new google.maps.marker.PinElement({
                             background: "#3b82f6",
                             borderColor: "white",
@@ -127,7 +128,10 @@
 
                         new google.maps.marker.AdvancedMarkerElement({
                             map: this.map,
-                            position: { lat: parseFloat(s.latitude), lng: parseFloat(s.longitude) },
+                            position: {
+                                lat: parseFloat(s.latitude),
+                                lng: parseFloat(s.longitude)
+                            },
                             title: s.name,
                             content: pinView.element
                         });
@@ -145,7 +149,10 @@
                 },
 
                 placeMarker(lat, lng, updateForm) {
-                    const position = { lat, lng };
+                    const position = {
+                        lat,
+                        lng
+                    };
 
                     if (this.marker) {
                         this.marker.position = position;

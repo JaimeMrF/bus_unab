@@ -27,7 +27,8 @@
       "Bash(Select-Object -ExpandProperty Count)",
       "Bash(Get-ChildItem -Path \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\frontend\" -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "PowerShell(Get-Content *)"
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\USUARIO\\\\Desktop\\\\backend_bus\\\\bus_unab\" -Depth 1 | Where-Object { $_.PSIsContainer -or $_.Extension -match '\\\\.\\(env|html|blade\\\\.php\\)' } | Select-Object FullName)"
     ]
   }
 }
