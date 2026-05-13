@@ -547,14 +547,19 @@
                     });
 
                     marker.addListener('click', () => {
+                        const i = this.waypointMarkers.indexOf(marker);
+                        if (i === -1) return;
+
                         if (this.mode === 'delete') {
-                            const i = this.waypointMarkers.indexOf(marker);
-                            if (i !== -1) {
-                                marker.map = null;
-                                this.waypoints.splice(i, 1);
-                                this.waypointMarkers.splice(i, 1);
-                                this.drawGuideLine();
-                                if (this.directionsActive) this.loadGoogleDirections();
+                            marker.map = null;
+                            this.waypoints.splice(i, 1);
+                            this.waypointMarkers.splice(i, 1);
+                            this.drawGuideLine();
+                            if (this.directionsActive) this.loadGoogleDirections();
+                        } else if (this.mode === 'waypoint') {
+                            const newLabel = prompt("Nombre del waypoint (opcional):", this.waypoints[i].label || "");
+                            if (newLabel !== null) {
+                                this.waypoints[i].label = newLabel;
                             }
                         }
                     });

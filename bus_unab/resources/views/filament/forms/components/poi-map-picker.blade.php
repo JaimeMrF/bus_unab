@@ -14,7 +14,11 @@
 
 <div wire:ignore x-data="googlePoiMapPicker(@js($initLat), @js($initLng), @js($others))" class="col-span-full space-y-3">
     {{-- Buscador de Google Places --}}
-    <div id="poi-search-container" class="w-full"></div>
+    <div class="w-full relative">
+        <input id="poi-search-input" type="text" placeholder="Buscar lugar en Google Maps..." 
+            class="w-full transition duration-75 rounded-lg shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 bg-white dark:bg-white/5 border-gray-300 dark:border-white/10"
+            style="padding: 0.5rem 0.75rem;">
+    </div>
 
     {{-- Leyenda --}}
     <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-1">
@@ -77,28 +81,39 @@
                         fullscreenControl: true,
                     });
 
-                    // Setup PlaceAutocompleteElement (nuevo API desde marzo 2025)
-                    const searchContainer = document.getElementById('poi-search-container');
-                    const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement({
-                        componentRestrictions: { country: 'co' },
-                    });
-                    placeAutocomplete.style.cssText = 'width:100%;display:block;';
-                    searchContainer.appendChild(placeAutocomplete);
+                    // Configurar el Autocomplete clásico de Google Maps en nuestro input
+                    const searchInput = document.getElementById('poi-search-input');
+                    if (searchInput) {
+                        const autocomplete = new google.maps.places.Autocomplete(searchInput, {
+                            componentRestrictions: { country: 'co' },
+                            fields: ['geometry', 'name']
+                        });
 
-                    placeAutocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
-                        await place.fetchFields({ fields: ['location', 'displayName'] });
-                        if (!place.location) return;
-                        const lat = place.location.lat();
-                        const lng = place.location.lng();
-                        this.map.setCenter({ lat, lng });
-                        this.map.setZoom(17);
-                        this.placeMarker(lat, lng, true);
+                        autocomplete.addListener('place_changed', () => {
+                            const place = autocomplete.getPlace();
+                            if (!place.geometry || !place.geometry.location) return;
+                            
+                            const lat = place.geometry.location.lat();
+                            const lng = place.geometry.location.lng();
+                            
+                            this.map.setCenter({ lat, lng });
+                            this.map.setZoom(17);
+                            this.placeMarker(lat, lng, true);
 
-                        const nameEl = document.getElementById('data.name');
-                        if (nameEl && nameEl.value.trim() === '') {
-                            this.$wire.$set('data.name', place.displayName ?? '');
-                        }
-                    });
+                            // Opcional: setear el nombre del punto si está vacío
+                            const nameEl = document.getElementById('data.name');
+                            if (nameEl && nameEl.value.trim() === '') {
+                                this.$wire.$set('data.name', place.name ?? '');
+                            }
+                        });
+
+                        // Evitar submit del formulario con Enter
+                        searchInput.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                            }
+                        });
+                    }
 
                     // Marcadores de referencia: otros puntos (azul)
                     otherPois.forEach(s => {

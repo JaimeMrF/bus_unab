@@ -14,8 +14,7 @@
 @endphp
 
 <div wire:ignore x-data="googleStopMapPicker(@js($initLat), @js($initLng), @js($initRad), @js($others))" class="col-span-full space-y-3">
-    {{-- Buscador de Google Places --}}
-    <div id="stop-search-container" class="w-full"></div>
+    {{-- El buscador de Google Places ahora está enlazado directamente al campo 'Dirección' de Filament --}}
 
     {{-- Leyenda y estado --}}
     <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-1">
@@ -86,23 +85,43 @@
 
                     this.geocoder = new google.maps.Geocoder();
 
-                    // Setup PlaceAutocompleteElement (nuevo API desde marzo 2025)
-                    const searchContainer = document.getElementById('stop-search-container');
-                    const placeAutocomplete = new google.maps.places.PlaceAutocompleteElement({
-                        componentRestrictions: { country: 'co' },
-                    });
-                    placeAutocomplete.style.cssText = 'width:100%;display:block;';
-                    searchContainer.appendChild(placeAutocomplete);
+                    // Configurar el Autocomplete en el input de Dirección de Filament
+                    const addressInput = document.getElementById('stop-address-input');
+                    if (addressInput) {
+                        const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+                            componentRestrictions: { country: 'co' },
+                            fields: ['geometry', 'name', 'formatted_address']
+                        });
 
-                    placeAutocomplete.addEventListener('gmp-placeselect', async ({ place }) => {
-                        await place.fetchFields({ fields: ['location'] });
-                        if (!place.location) return;
-                        const lat = place.location.lat();
-                        const lng = place.location.lng();
-                        this.map.setCenter({ lat, lng });
-                        this.map.setZoom(17);
-                        this.placeMarker(lat, lng, true);
-                    });
+                        autocomplete.addListener('place_changed', () => {
+                            const place = autocomplete.getPlace();
+                            if (!place.geometry || !place.geometry.location) return;
+                            
+                            const lat = place.geometry.location.lat();
+                            const lng = place.geometry.location.lng();
+                            
+                            this.map.setCenter({ lat, lng });
+                            this.map.setZoom(17);
+                            this.placeMarker(lat, lng, true);
+                            
+                            if (place.formatted_address) {
+                                this.$wire.$set('data.address', place.formatted_address);
+                            }
+
+                            // Autocompletar nombre si está vacío
+                            const nameEl = document.getElementById('data.name');
+                            if (nameEl && (nameEl.value || '').trim() === '') {
+                                this.$wire.$set('data.name', place.name || '');
+                            }
+                        });
+
+                        // Prevenir que la tecla Enter envíe el formulario al seleccionar una sugerencia
+                        addressInput.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                            }
+                        });
+                    }
 
                     // Marcadores de referencia: otras paradas (azul)
                     otherStops.forEach(s => {
@@ -211,9 +230,9 @@
                 },
 
                 async reverseGeocode(lat, lng) {
-                    const addrEl = document.getElementById('data.address');
+                    const addrEl = document.getElementById('stop-address-input');
                     // Solo autocompletar dirección si está vacía
-                    if (addrEl && addrEl.value.trim() !== '') return;
+                    if (addrEl && (addrEl.value || '').trim() !== '') return;
 
                     this.geocoding = true;
                     try {

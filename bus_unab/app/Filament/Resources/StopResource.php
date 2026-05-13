@@ -30,8 +30,9 @@ class StopResource extends Resource
                     ->columnSpanFull(),
 
                 Forms\Components\TextInput::make('address')
-                    ->label('Dirección')
+                    ->label('Dirección (Buscar en Google Maps)')
                     ->maxLength(255)
+                    ->id('stop-address-input')
                     ->columnSpanFull(),
 
                 Forms\Components\View::make('filament.forms.components.map-picker')
