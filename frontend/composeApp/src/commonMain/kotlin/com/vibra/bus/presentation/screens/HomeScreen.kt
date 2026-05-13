@@ -1,11 +1,14 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
@@ -269,47 +272,59 @@ class HomeScreen : Screen {
                                 }
                             }
 
-                            // Acciones
-                            if (profile.role == "driver") {
-                                Button(
-                                    onClick  = { navigator.push(DriverModeScreen()) },
-                                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                                    shape    = VibraBusShapes.ButtonPrimary,
-                                ) {
-                                    Text("Entrar a Modo Conductor", fontWeight = FontWeight.SemiBold)
-                                }
-                            } else if (selectedBus != null) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                                ) {
-                                    OutlinedButton(
-                                        onClick  = { navigator.push(BusRouteScreen(selectedBus!!.plate)) },
-                                        modifier = Modifier.weight(1f).height(50.dp),
-                                        shape    = VibraBusShapes.ButtonPrimary,
-                                        border   = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                                    ) {
-                                        Icon(Icons.Default.Map, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                                        Spacer(Modifier.width(6.dp))
-                                        Text("Ver Ruta", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                                    }
-                                    Button(
-                                        onClick  = { navigator.push(StopSelectionScreen(selectedBus!!.plate)) },
-                                        modifier = Modifier.weight(1f).height(50.dp),
+                            // Acciones — AnimatedContent hace slide entre los 3 estados
+                            val actionState = when {
+                                profile.role == "driver" -> "driver"
+                                selectedBus != null      -> "bus"
+                                else                     -> "default"
+                            }
+                            AnimatedContent(
+                                targetState  = actionState,
+                                transitionSpec = {
+                                    (fadeIn(tween(220)) + slideInVertically { it / 3 })
+                                        .togetherWith(fadeOut(tween(150)) + slideOutVertically { -it / 3 })
+                                },
+                                label = "home_action",
+                            ) { state ->
+                                when (state) {
+                                    "driver" -> Button(
+                                        onClick  = { navigator.push(DriverModeScreen()) },
+                                        modifier = Modifier.fillMaxWidth().height(50.dp),
                                         shape    = VibraBusShapes.ButtonPrimary,
                                     ) {
-                                        Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
-                                        Spacer(Modifier.width(6.dp))
-                                        Text("Seguir Bus", fontWeight = FontWeight.SemiBold)
+                                        Text("Entrar a Modo Conductor", fontWeight = FontWeight.SemiBold)
                                     }
-                                }
-                            } else {
-                                Button(
-                                    onClick  = { showBusSheet = true },
-                                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                                    shape    = VibraBusShapes.ButtonPrimary,
-                                ) {
-                                    Text("Buscar Rutas", fontWeight = FontWeight.SemiBold)
+                                    "bus" -> Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    ) {
+                                        OutlinedButton(
+                                            onClick  = { navigator.push(BusRouteScreen(selectedBus!!.plate)) },
+                                            modifier = Modifier.weight(1f).height(50.dp),
+                                            shape    = VibraBusShapes.ButtonPrimary,
+                                            border   = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                                        ) {
+                                            Icon(Icons.Default.Map, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                                            Spacer(Modifier.width(6.dp))
+                                            Text("Ver Ruta", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                                        }
+                                        Button(
+                                            onClick  = { navigator.push(StopSelectionScreen(selectedBus!!.plate)) },
+                                            modifier = Modifier.weight(1f).height(50.dp),
+                                            shape    = VibraBusShapes.ButtonPrimary,
+                                        ) {
+                                            Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                                            Spacer(Modifier.width(6.dp))
+                                            Text("Seguir Bus", fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
+                                    else -> Button(
+                                        onClick  = { showBusSheet = true },
+                                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                                        shape    = VibraBusShapes.ButtonPrimary,
+                                    ) {
+                                        Text("Buscar Rutas", fontWeight = FontWeight.SemiBold)
+                                    }
                                 }
                             }
                         }
@@ -427,10 +442,11 @@ class HomeScreen : Screen {
                     } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(bottom = 12.dp)
+                            contentPadding = PaddingValues(bottom = 12.dp),
                         ) {
                             items(busList, key = { it.plate }) { bus ->
                                 BusCard(
+                                    modifier = Modifier.animateItem(fadeInSpec = tween(300), fadeOutSpec = tween(200)),
                                     bus = bus,
                                     occupancy = occupancyMap[bus.plate],
                                     onClick = {

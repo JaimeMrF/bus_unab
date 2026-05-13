@@ -98,7 +98,15 @@ fun RouteDetailBottomSheet(
             Spacer(Modifier.height(8.dp))
 
             if (isLoadingStops) {
-                repeat(3) { ShimmerBox(height = 56.dp) }
+                Box(
+                    modifier         = Modifier.fillMaxWidth().height(140.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        color       = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 2.5.dp,
+                    )
+                }
             } else {
                 LazyColumn(modifier = Modifier.height(220.dp)) {
                     itemsIndexed(stops) { _, stop ->

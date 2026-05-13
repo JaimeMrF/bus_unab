@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,7 +51,6 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.RequestInfo
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.MyTripsViewModel
 import com.vibra.bus.util.UiState
@@ -124,18 +124,14 @@ class MyTripsScreen : Screen {
                         Box(modifier = Modifier.fillMaxSize()) {
                             when (val state = tripsState) {
                                 is UiState.Loading -> {
-                                    LazyColumn(
-                                        contentPadding = PaddingValues(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    Box(
+                                        modifier         = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center,
                                     ) {
-                                        items(5) {
-                                            ShimmerBox(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(120.dp)
-                                                    .clip(VibraBusShapes.Card)
-                                            )
-                                        }
+                                        CircularProgressIndicator(
+                                            color       = MaterialTheme.colorScheme.primary,
+                                            strokeWidth = 2.5.dp,
+                                        )
                                     }
                                 }
                                 is UiState.Success -> {

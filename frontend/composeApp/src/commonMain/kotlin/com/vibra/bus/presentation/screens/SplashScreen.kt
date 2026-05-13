@@ -21,8 +21,11 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
+import com.vibra.bus.util.AppSettings
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 class SplashScreen : Screen {
@@ -31,7 +34,8 @@ class SplashScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel = koinViewModel<AuthViewModel>()
-        val event by viewModel.event.collectAsState()
+        val settings  = koinInject<AppSettings>()
+        val event     by viewModel.event.collectAsState()
 
         LaunchedEffect(Unit) { viewModel.checkSession() }
 
@@ -39,6 +43,17 @@ class SplashScreen : Screen {
             when (event) {
                 is AuthEvent.NavigateToHome -> {
                     navigator.replaceAll(MainScreen())
+                    if (settings.hasActiveTracking()) {
+                        val stop = StopDto(
+                            id           = settings.trackingStopId,
+                            name         = settings.trackingStopName,
+                            address      = settings.trackingStopAddress,
+                            latitude     = settings.trackingStopLat,
+                            longitude    = settings.trackingStopLng,
+                            radiusMeters = 50,
+                        )
+                        navigator.push(WaitingBusScreen(settings.trackingPlate, stop))
+                    }
                     viewModel.consumeEvent()
                 }
                 is AuthEvent.NavigateToLogin -> {

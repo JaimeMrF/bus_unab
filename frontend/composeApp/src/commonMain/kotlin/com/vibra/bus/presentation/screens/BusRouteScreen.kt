@@ -1,8 +1,11 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -61,7 +64,6 @@ import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.data.model.StopWithPivotDto
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
 import vibrabus.composeapp.generated.resources.Res
@@ -242,20 +244,21 @@ data class BusRouteScreen(val plate: String) : Screen {
 
                     Spacer(Modifier.height(10.dp))
 
-                    when (stopsState) {
+                    AnimatedContent(
+                        targetState  = stopsState,
+                        transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) },
+                        label        = "stops_state",
+                    ) { state ->
+                    when (state) {
                         is UiState.Loading -> {
-                            LazyColumn(
-                                contentPadding = PaddingValues(vertical = 4.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            Box(
+                                modifier         = Modifier.fillMaxWidth().height(160.dp),
+                                contentAlignment = Alignment.Center,
                             ) {
-                                items(4) {
-                                    ShimmerBox(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(60.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                    )
-                                }
+                                CircularProgressIndicator(
+                                    color       = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 2.5.dp,
+                                )
                             }
                         }
                         is UiState.Success -> {
@@ -283,12 +286,13 @@ data class BusRouteScreen(val plate: String) : Screen {
                         is UiState.Error -> {
                             EmptyState(
                                 message  = "Error al cargar paradas",
-                                subtitle = (stopsState as UiState.Error).message,
+                                subtitle = (state as UiState.Error).message,
                                 image    = Res.drawable.buho_muy_triste,
                             )
                         }
                         else -> {}
                     }
+                    } // AnimatedContent
 
                     Spacer(Modifier.height(16.dp))
 

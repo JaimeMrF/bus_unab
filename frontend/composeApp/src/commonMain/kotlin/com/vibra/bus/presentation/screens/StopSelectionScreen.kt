@@ -67,7 +67,6 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.data.model.StopWithPivotDto
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
 import vibrabus.composeapp.generated.resources.Res
@@ -212,19 +211,14 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     // Lista de paradas con altura máxima — nunca empuja el botón fuera
                     when (val state = stopsState) {
                         is UiState.Loading -> {
-                            LazyColumn(
-                                modifier = Modifier.heightIn(max = 280.dp),
-                                contentPadding = PaddingValues(vertical = 4.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            Box(
+                                modifier         = Modifier.fillMaxWidth().height(160.dp),
+                                contentAlignment = Alignment.Center,
                             ) {
-                                items(4) {
-                                    ShimmerBox(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(64.dp)
-                                            .clip(VibraBusShapes.ListItem)
-                                    )
-                                }
+                                CircularProgressIndicator(
+                                    color       = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 2.5.dp,
+                                )
                             }
                         }
                         is UiState.Success -> {

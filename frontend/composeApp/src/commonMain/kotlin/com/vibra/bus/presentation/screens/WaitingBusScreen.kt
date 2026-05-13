@@ -28,7 +28,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.WaitingBusViewModel
+import com.vibra.bus.util.AppSettings
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
 import vibrabus.composeapp.generated.resources.buho_viendo_mapa
@@ -42,22 +44,20 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val viewModel = koinViewModel<WaitingBusViewModel>()
-        val bus by viewModel.bus.collectAsState()
-        val eta by viewModel.etaMinutes.collectAsState()
-        val distance by viewModel.distanceMeters.collectAsState()
+        val viewModel  = koinViewModel<WaitingBusViewModel>()
+        val settings   = koinInject<AppSettings>()
+        val bus        by viewModel.bus.collectAsState()
+        val eta        by viewModel.etaMinutes.collectAsState()
+        val distance   by viewModel.distanceMeters.collectAsState()
         val isArriving by viewModel.isArriving.collectAsState()
-        val routePath by viewModel.routePath.collectAsState()
-        var isVisible by remember { mutableStateOf(false) }
+        val routePath  by viewModel.routePath.collectAsState()
+        var isVisible  by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
+            settings.saveTracking(plate, stop.id, stop.name, stop.address, stop.latitude, stop.longitude)
             viewModel.startTracking(plate, stop)
             startBusTracking(plate, stop.latitude, stop.longitude, stop.name)
             isVisible = true
-        }
-
-        DisposableEffect(Unit) {
-            onDispose { stopBusTracking() }
         }
 
         Scaffold(
@@ -65,7 +65,11 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                 TopAppBar(
                     title = { Text("Siguiendo bus", fontWeight = FontWeight.SemiBold) },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
+                        IconButton(onClick = {
+                            settings.clearTracking()
+                            stopBusTracking()
+                            navigator.pop()
+                        }) {
                             Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver")
                         }
                     },
@@ -213,7 +217,11 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                         )
 
                         Button(
-                            onClick = { navigator.push(MyQRScreen()) },
+                            onClick = {
+                                settings.clearTracking()
+                                stopBusTracking()
+                                navigator.push(MyQRScreen())
+                            },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
                             shape = VibraBusShapes.ButtonPrimary,
                         ) {

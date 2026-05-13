@@ -1,14 +1,19 @@
 package com.vibra.bus.presentation.screens
 
 import android.graphics.Point
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,6 +82,7 @@ actual fun MapViewComposable(
     }
 
     var busScreenPositions by remember { mutableStateOf(emptyMap<String, Point>()) }
+    var mapLoaded          by remember { mutableStateOf(false) }
 
     val density     = LocalDensity.current
     val modelHalfPx = with(density) { (MODEL_SIZE_DP / 2).roundToPx() }
@@ -94,6 +100,7 @@ actual fun MapViewComposable(
             properties = MapProperties(
                 mapStyleOptions = if (isDark) MapStyleOptions(MapStyle.json) else null,
             ),
+            onMapLoaded = { mapLoaded = true },
         ) {
             // Polilínea de ruta
             path?.let { p ->
@@ -207,6 +214,22 @@ actual fun MapViewComposable(
                             },
                     )
                 }
+            }
+        }
+
+        // ── Loading overlay — fades out once map tiles are ready ─────────────
+        AnimatedVisibility(
+            visible = !mapLoaded,
+            exit    = fadeOut(animationSpec = tween(400)),
+        ) {
+            Box(
+                modifier         = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(
+                    color       = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.5.dp,
+                )
             }
         }
     }

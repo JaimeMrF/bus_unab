@@ -34,6 +34,7 @@ class WaitingBusViewModel(
     val routePath: StateFlow<List<LatLng>> = _routePath
 
     private var pollingJob: Job? = null
+    private var routeJob: Job? = null
 
     fun startTracking(plate: String, stop: StopDto) {
         pollingJob?.cancel()
@@ -46,23 +47,50 @@ class WaitingBusViewModel(
     }
 
     private fun fetchRealRoute(plate: String, busLat: Double, busLng: Double, stop: StopDto) {
-        viewModelScope.launch {
+        routeJob?.cancel()
+        routeJob = viewModelScope.launch {
             when (val result = busRepository.getBusRoute(plate)) {
                 is ApiResult.Success -> {
                     val points = result.data.routes.firstOrNull()?.overviewPolyline?.points
                     if (points != null) {
-                        _routePath.value = com.vibra.bus.util.decodePolyline(points)
+                        val full = com.vibra.bus.util.decodePolyline(points)
+                        _routePath.value = sliceToSegment(full, busLat, busLng, stop.latitude, stop.longitude)
+                    } else {
+                        _routePath.value = listOf(LatLng(busLat, busLng), LatLng(stop.latitude, stop.longitude))
                     }
                 }
                 else -> {
-                    // Fallback a línea recta si falla la API
-                    _routePath.value = listOf(
-                        LatLng(busLat, busLng),
-                        LatLng(stop.latitude, stop.longitude)
-                    )
+                    _routePath.value = listOf(LatLng(busLat, busLng), LatLng(stop.latitude, stop.longitude))
                 }
             }
         }
+    }
+
+    /**
+     * Extracts the sub-path of [path] between the point closest to the bus and
+     * the point closest to the stop, then clamps both endpoints to exact coordinates.
+     * This prevents drawing the full circular route and eliminates interleaving
+     * from stale concurrent fetches (each fetch produces its own clean slice).
+     */
+    private fun sliceToSegment(
+        path: List<LatLng>,
+        busLat: Double, busLng: Double,
+        stopLat: Double, stopLng: Double,
+    ): List<LatLng> {
+        if (path.size < 2) return listOf(LatLng(busLat, busLng), LatLng(stopLat, stopLng))
+
+        val busIdx  = path.indices.minByOrNull { calculateDistance(path[it].latitude, path[it].longitude, busLat,  busLng)  } ?: 0
+        val stopIdx = path.indices.minByOrNull { calculateDistance(path[it].latitude, path[it].longitude, stopLat, stopLng) } ?: path.lastIndex
+
+        val (from, to) = if (busIdx <= stopIdx) busIdx to stopIdx else stopIdx to busIdx
+
+        val slice = path.subList(from, to + 1).toMutableList()
+        if (slice.isEmpty()) return listOf(LatLng(busLat, busLng), LatLng(stopLat, stopLng))
+
+        // Clamp first point to exact bus position, last point to exact stop position
+        slice[0]             = LatLng(busLat, busLng)
+        slice[slice.lastIndex] = LatLng(stopLat, stopLng)
+        return slice
     }
 
     private suspend fun updateBusInfo(plate: String, stop: StopDto) {

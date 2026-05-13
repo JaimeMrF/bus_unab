@@ -4,15 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.vibra.bus.BusTrackingService
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
+import org.koin.core.context.GlobalContext
 
-private object BusTrackingStarter : KoinComponent {
-    val context: Context by inject()
-}
+private fun appContext(): Context =
+    GlobalContext.get().get()
 
 actual fun startBusTracking(plate: String, stopLat: Double, stopLng: Double, stopName: String) {
-    val ctx = BusTrackingStarter.context
+    val ctx = appContext()
     val intent = Intent(ctx, BusTrackingService::class.java).apply {
         putExtra(BusTrackingService.EXTRA_PLATE,     plate)
         putExtra(BusTrackingService.EXTRA_STOP_LAT,  stopLat)
@@ -27,6 +25,6 @@ actual fun startBusTracking(plate: String, stopLat: Double, stopLng: Double, sto
 }
 
 actual fun stopBusTracking() {
-    val ctx = BusTrackingStarter.context
+    val ctx = appContext()
     ctx.stopService(Intent(ctx, BusTrackingService::class.java))
 }

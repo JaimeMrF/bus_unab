@@ -36,6 +36,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Group
@@ -80,7 +81,6 @@ import com.vibra.bus.data.model.BusCatalogItem
 import com.vibra.bus.data.model.StopWithPivotDto
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
-import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.DriverModeViewModel
 import com.vibra.bus.presentation.viewmodel.LocationSource
@@ -421,8 +421,16 @@ class DriverModeScreen : Screen {
                 // ── Lista de paradas ──────────────────────────────────────────
                 when (val state = stopsState) {
                     is UiState.Loading -> {
-                        items(5) {
-                            ShimmerBox(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp).height(80.dp).clip(VibraBusShapes.ListItem))
+                        item {
+                            Box(
+                                modifier         = Modifier.fillMaxWidth().height(160.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    color       = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 2.5.dp,
+                                )
+                            }
                         }
                     }
                     is UiState.Success -> {
@@ -510,8 +518,14 @@ private fun BusSelectorSheet(
 
             when (val state = catalogState) {
                 is UiState.Loading -> {
-                    repeat(3) {
-                        ShimmerBox(modifier = Modifier.fillMaxWidth().height(80.dp).padding(vertical = 6.dp).clip(RoundedCornerShape(14.dp)))
+                    Box(
+                        modifier         = Modifier.fillMaxWidth().height(160.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(
+                            color       = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 2.5.dp,
+                        )
                     }
                 }
                 is UiState.Success -> {

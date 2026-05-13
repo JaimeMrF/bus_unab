@@ -1,7 +1,9 @@
 package com.vibra.bus.presentation.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,9 +58,12 @@ fun BusCard(
     
     // Animation states
     val pressedScale by animateFloatAsState(
-        targetValue = if (interactionSource.collectIsPressedAsState().value) 0.98f else 1f,
-        animationSpec = tween(durationMillis = 150),
-        label = "bus_card_scale"
+        targetValue = if (interactionSource.collectIsPressedAsState().value) 0.95f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness    = Spring.StiffnessHigh,
+        ),
+        label = "bus_card_scale",
     )
 
     // Use Material 3 theme utilities for colors

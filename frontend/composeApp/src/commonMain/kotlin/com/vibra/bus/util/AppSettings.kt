@@ -56,6 +56,52 @@ class AppSettings(private val settings: Settings) {
         get() = settings.getString("driver_active_plate", "")
         set(value) = settings.putString("driver_active_plate", value)
 
+    // ── Active bus tracking session ───────────────────────────────────────────
+
+    var trackingPlate: String
+        get() = settings.getString("tracking_plate", "")
+        set(value) = settings.putString("tracking_plate", value)
+
+    var trackingStopId: Int
+        get() = settings.getInt("tracking_stop_id", -1)
+        set(value) = settings.putInt("tracking_stop_id", value)
+
+    var trackingStopName: String
+        get() = settings.getString("tracking_stop_name", "")
+        set(value) = settings.putString("tracking_stop_name", value)
+
+    var trackingStopAddress: String
+        get() = settings.getString("tracking_stop_address", "")
+        set(value) = settings.putString("tracking_stop_address", value)
+
+    var trackingStopLat: Double
+        get() = settings.getDouble("tracking_stop_lat", 0.0)
+        set(value) = settings.putDouble("tracking_stop_lat", value)
+
+    var trackingStopLng: Double
+        get() = settings.getDouble("tracking_stop_lng", 0.0)
+        set(value) = settings.putDouble("tracking_stop_lng", value)
+
+    fun hasActiveTracking(): Boolean = trackingPlate.isNotEmpty()
+
+    fun saveTracking(plate: String, stopId: Int, stopName: String, stopAddress: String, stopLat: Double, stopLng: Double) {
+        trackingPlate      = plate
+        trackingStopId     = stopId
+        trackingStopName   = stopName
+        trackingStopAddress = stopAddress
+        trackingStopLat    = stopLat
+        trackingStopLng    = stopLng
+    }
+
+    fun clearTracking() {
+        settings.remove("tracking_plate")
+        settings.remove("tracking_stop_id")
+        settings.remove("tracking_stop_name")
+        settings.remove("tracking_stop_address")
+        settings.remove("tracking_stop_lat")
+        settings.remove("tracking_stop_lng")
+    }
+
     fun isLoggedIn(): Boolean = token.isNotEmpty()
 
     fun clearSession() {
@@ -69,5 +115,6 @@ class AppSettings(private val settings: Settings) {
         settings.remove("active_request_bus_id")
         settings.remove("active_request_stop_id")
         settings.remove("driver_active_plate")
+        clearTracking()
     }
 }

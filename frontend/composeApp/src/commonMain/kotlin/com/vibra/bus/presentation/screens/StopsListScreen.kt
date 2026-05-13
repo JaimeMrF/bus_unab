@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -37,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -48,7 +51,6 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.StopWithPivotDto
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.components.ShimmerBox
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
 import vibrabus.composeapp.generated.resources.Res
@@ -120,18 +122,14 @@ data class StopsListScreen(val plate: String) : Screen {
                 ) {
                     when (val state = stopsState) {
                         is UiState.Loading -> {
-                            LazyColumn(
-                                contentPadding = PaddingValues(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            Box(
+                                modifier         = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
                             ) {
-                                items(5) {
-                                    ShimmerBox(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(70.dp)
-                                            .clip(VibraBusShapes.ListItem)
-                                    )
-                                }
+                                CircularProgressIndicator(
+                                    color       = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 2.5.dp,
+                                )
                             }
                         }
                         is UiState.Success -> {

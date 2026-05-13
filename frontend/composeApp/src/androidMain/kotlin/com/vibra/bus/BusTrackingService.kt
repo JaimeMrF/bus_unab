@@ -9,6 +9,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.vibra.bus.data.repository.BusRepository
 import com.vibra.bus.util.ApiResult
+import com.vibra.bus.util.AppSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,10 +31,12 @@ import kotlin.math.sqrt
 class BusTrackingService : Service(), KoinComponent {
 
     private val busRepository: BusRepository by inject()
+    private val appSettings: AppSettings by inject()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var pollingJob: Job? = null
 
     companion object {
+        const val ACTION_STOP     = "com.vibra.bus.STOP_TRACKING"
         const val EXTRA_PLATE     = "plate"
         const val EXTRA_STOP_LAT  = "stop_lat"
         const val EXTRA_STOP_LNG  = "stop_lng"
@@ -46,6 +49,12 @@ class BusTrackingService : Service(), KoinComponent {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_STOP) {
+            appSettings.clearTracking()
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         val plate    = intent?.getStringExtra(EXTRA_PLATE)    ?: return START_NOT_STICKY
         val stopLat  = intent.getDoubleExtra(EXTRA_STOP_LAT, 0.0)
         val stopLng  = intent.getDoubleExtra(EXTRA_STOP_LNG, 0.0)
@@ -107,7 +116,7 @@ class BusTrackingService : Service(), KoinComponent {
         )
 
         val stopIntent = Intent(this, BusTrackingService::class.java).also {
-            it.action = "STOP"
+            it.action = ACTION_STOP
         }
         val stopPi = PendingIntent.getService(
             this, 1, stopIntent,
