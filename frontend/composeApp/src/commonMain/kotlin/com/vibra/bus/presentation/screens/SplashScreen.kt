@@ -52,6 +52,12 @@ class SplashScreen : Screen {
                             longitude    = settings.trackingStopLng,
                             radiusMeters = 50,
                         )
+                        startBusTracking(
+                            settings.trackingPlate,
+                            settings.trackingStopLat,
+                            settings.trackingStopLng,
+                            settings.trackingStopName,
+                        )
                         navigator.push(WaitingBusScreen(settings.trackingPlate, stop))
                     }
                     viewModel.consumeEvent()

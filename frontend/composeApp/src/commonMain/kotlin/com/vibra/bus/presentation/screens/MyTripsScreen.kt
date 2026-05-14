@@ -12,11 +12,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -50,7 +55,10 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.RequestInfo
+import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.components.EmptyState
+import com.vibra.bus.util.AppSettings
+import org.koin.compose.koinInject
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.MyTripsViewModel
 import com.vibra.bus.util.UiState
@@ -66,6 +74,7 @@ class MyTripsScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel = koinViewModel<MyTripsViewModel>()
+        val settings  = koinInject<AppSettings>()
         val tripsState by viewModel.tripsState.collectAsState()
         val isRefreshing by viewModel.isRefreshing.collectAsState()
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
@@ -144,9 +153,26 @@ class MyTripsScreen : Screen {
                                     } else {
                                         LazyColumn(contentPadding = PaddingValues(16.dp)) {
                                             items(state.data, key = { it.id }) { trip ->
+                                                val canResume = trip.status == "pending" &&
+                                                    settings.hasActiveTracking() &&
+                                                    settings.trackingPlate == trip.bus.plate
                                                 TripCard(
                                                     trip = trip,
                                                     onCancel = { viewModel.cancelTrip(trip.bus.id) },
+                                                    onResume = if (canResume) {
+                                                        {
+                                                            val stop = StopDto(
+                                                                id           = settings.trackingStopId,
+                                                                name         = settings.trackingStopName,
+                                                                address      = settings.trackingStopAddress,
+                                                                latitude     = settings.trackingStopLat,
+                                                                longitude    = settings.trackingStopLng,
+                                                                radiusMeters = 50,
+                                                            )
+                                                            startBusTracking(trip.bus.plate, stop.latitude, stop.longitude, stop.name)
+                                                            navigator.push(WaitingBusScreen(trip.bus.plate, stop))
+                                                        }
+                                                    } else null,
                                                 )
                                             }
                                         }
@@ -163,7 +189,7 @@ class MyTripsScreen : Screen {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun TripCard(trip: RequestInfo, onCancel: () -> Unit) {
+    private fun TripCard(trip: RequestInfo, onCancel: () -> Unit, onResume: (() -> Unit)? = null) {
         val dismissState = rememberSwipeToDismissBoxState(
             confirmValueChange = { value ->
                 if (value == SwipeToDismissBoxValue.EndToStart && trip.status == "pending") {
@@ -228,7 +254,32 @@ class MyTripsScreen : Screen {
                         fontSize = 12.sp
                     )
                     if (trip.status == "pending") {
-                        Spacer(Modifier.height(4.dp))
+                        if (onResume != null) {
+                            Spacer(Modifier.height(10.dp))
+                            Button(
+                                onClick = onResume,
+                                modifier = Modifier.fillMaxWidth().height(42.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                ),
+                            ) {
+                                Icon(
+                                    Icons.Default.DirectionsBus,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(15.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    "Ver en mapa",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onPrimary,
+                                )
+                            }
+                            Spacer(Modifier.height(4.dp))
+                        }
                         Text(
                             text = "← Desliza para cancelar",
                             fontSize = 11.sp,

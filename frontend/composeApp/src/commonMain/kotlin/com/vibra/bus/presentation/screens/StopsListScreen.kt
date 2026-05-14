@@ -215,8 +215,8 @@ private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boole
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "~${stop.estimatedMinutes} min",
-                    color = MaterialTheme.colorScheme.secondary, 
+                    text = if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min",
+                    color = MaterialTheme.colorScheme.secondary,
                     fontSize = 12.sp
                 )
             }

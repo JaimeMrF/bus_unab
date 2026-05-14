@@ -1,12 +1,12 @@
 package com.vibra.bus.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
@@ -42,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -53,7 +51,6 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
-import com.vibra.bus.presentation.screens.QRCodeImage
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.MyQRViewModel
 import com.vibra.bus.util.AppSettings
@@ -70,28 +67,22 @@ class MyQRScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel = koinViewModel<MyQRViewModel>()
-        val settings = koinInject<AppSettings>()
+        val settings  = koinInject<AppSettings>()
         val qrContent by viewModel.qrContent.collectAsState()
         val countdown by viewModel.countdown.collectAsState()
 
         var isVisible by remember { mutableStateOf(false) }
 
-        // Animation states
         val qrScale by animateFloatAsState(
-            targetValue = if (isVisible) 1f else 0.8f,
-            animationSpec = tween(durationMillis = 800),
-            label = "qr_scale"
+            targetValue   = if (isVisible) 1f else 0.55f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness    = Spring.StiffnessMediumLow,
+            ),
+            label = "qr_scale",
         )
 
-        val containerScale by animateFloatAsState(
-            targetValue = if (isVisible) 1f else 0.9f,
-            animationSpec = tween(durationMillis = 600),
-            label = "container_scale"
-        )
-
-        LaunchedEffect(Unit) {
-            isVisible = true
-        }
+        LaunchedEffect(Unit) { isVisible = true }
 
         Scaffold(
             topBar = {
@@ -99,8 +90,8 @@ class MyQRScreen : Screen {
                     title = {
                         Text(
                             "Mi QR",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.SemiBold
+                            color      = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.SemiBold,
                         )
                     },
                     navigationIcon = {
@@ -108,58 +99,45 @@ class MyQRScreen : Screen {
                             IconButton(onClick = { navigator.pop() }) {
                                 Icon(
                                     Icons.AutoMirrored.Default.ArrowBack,
-                                    "Volver",
-                                    tint = MaterialTheme.colorScheme.onPrimary
+                                    contentDescription = "Volver",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
                                 )
                             }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = MaterialTheme.colorScheme.primary,
                     ),
                 )
             },
             containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top,
+            AnimatedVisibility(
+                visible = isVisible,
+                enter   = fadeIn(tween(300)) + slideInVertically(
+                    initialOffsetY = { it / 6 },
+                    animationSpec  = tween(400),
+                ),
             ) {
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { -it },
-                        animationSpec = tween(durationMillis = 600)
-                    ) + fadeIn(
-                        animationSpec = tween(durationMillis = 600)
-                    )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top,
                 ) {
                     Text(
-                        text = "Presenta este código para abordar el bus",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text      = "Presenta este código para abordar el bus",
+                        fontSize  = 14.sp,
+                        color     = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyMedium
+                        style     = MaterialTheme.typography.bodyMedium,
                     )
-                }
 
-                Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(24.dp))
 
-                // Avatar con la identidad del Búho UNAB
-                val avatarUrl = settings.userAvatar
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 800, delayMillis = 200)
-                    ) + fadeIn(
-                        animationSpec = tween(durationMillis = 800, delayMillis = 200)
-                    )
-                ) {
+                    val avatarUrl = settings.userAvatar
                     Box(
                         modifier = Modifier
                             .size(100.dp)
@@ -168,83 +146,56 @@ class MyQRScreen : Screen {
                             .border(
                                 width = 2.dp,
                                 color = MaterialTheme.colorScheme.primary,
-                                shape = VibraBusShapes.OwlAvatar
+                                shape = VibraBusShapes.OwlAvatar,
                             ),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         if (avatarUrl.isNotEmpty()) {
                             AsyncImage(
-                                model = avatarUrl,
+                                model              = avatarUrl,
                                 contentDescription = "Avatar",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
+                                modifier           = Modifier.fillMaxSize(),
+                                contentScale       = ContentScale.Crop,
                             )
                         } else {
                             Image(
-                                painter = painterResource(Res.drawable.buhosaludologin),
+                                painter            = painterResource(Res.drawable.buhosaludologin),
                                 contentDescription = "Búho UNAB",
-                                modifier = Modifier.fillMaxSize().padding(8.dp),
-                                contentScale = ContentScale.Fit
+                                modifier           = Modifier.fillMaxSize().padding(8.dp),
+                                contentScale       = ContentScale.Fit,
                             )
                         }
                     }
-                }
 
-                Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(12.dp))
 
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(
-                        animationSpec = tween(durationMillis = 1000, delayMillis = 400)
-                    )
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = settings.userName,
+                            text       = settings.userName,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.titleMedium
+                            fontSize   = 18.sp,
+                            color      = MaterialTheme.colorScheme.onSurface,
+                            style      = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            text = "ID: ${settings.userId}",
+                            text  = "ID: ${settings.userId}",
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
-                }
 
-                Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(24.dp))
 
-                // QR Card con contenedor blanco puro y diseño limpio
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 1200, delayMillis = 600)
-                    ) + fadeIn(
-                        animationSpec = tween(durationMillis = 1200, delayMillis = 600)
-                    )
-                ) {
+                    // QR card — spring bounce al entrar
                     Card(
-                        modifier = Modifier
-                            .size(240.dp)
-                            .scale(qrScale),
-                        shape = VibraBusShapes.QRContainer,
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White // Contenedor blanco puro
-                        ),
-                        elevation = CardDefaults.cardElevation(
-                            defaultElevation = 8.dp
-                        ),
+                        modifier  = Modifier.size(240.dp).scale(qrScale),
+                        shape     = VibraBusShapes.QRContainer,
+                        colors    = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
                     ) {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
+                            modifier         = Modifier.fillMaxSize().padding(16.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (qrContent.isNotEmpty()) {
@@ -252,23 +203,11 @@ class MyQRScreen : Screen {
                             }
                         }
                     }
-                }
 
-                Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                // Countdown badge optimizado
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 1400, delayMillis = 800)
-                    ) + fadeIn(
-                        animationSpec = tween(durationMillis = 1400, delayMillis = 800)
-                    )
-                ) {
                     Box(
                         modifier = Modifier
-                            .scale(containerScale)
                             .background(
                                 color = if (countdown > 10)
                                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
@@ -282,34 +221,24 @@ class MyQRScreen : Screen {
                                     MaterialTheme.colorScheme.primary
                                 else
                                     MaterialTheme.colorScheme.error,
-                                shape = VibraBusShapes.StatusBadge
+                                shape = VibraBusShapes.StatusBadge,
                             )
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                     ) {
                         Text(
-                            text = "Expira en ${countdown}s",
-                            color = if (countdown > 10)
-                                MaterialTheme.colorScheme.primary
-                            else
-                                MaterialTheme.colorScheme.error,
+                            text       = "Expira en ${countdown}s",
+                            color      = if (countdown > 10) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.labelMedium
+                            style      = MaterialTheme.typography.labelMedium,
                         )
                     }
-                }
 
-                Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(20.dp))
 
-                AnimatedVisibility(
-                    visible = isVisible,
-                    enter = fadeIn(
-                        animationSpec = tween(durationMillis = 1600, delayMillis = 1000)
-                    )
-                ) {
                     Text(
-                        text = "ⓘ Este código es personal e intransferible",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text      = "ⓘ Este código es personal e intransferible",
+                        fontSize  = 12.sp,
+                        color     = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                     )
                 }

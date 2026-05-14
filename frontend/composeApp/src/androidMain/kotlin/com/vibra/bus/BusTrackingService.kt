@@ -1,11 +1,13 @@
 package com.vibra.bus
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import com.vibra.bus.data.repository.BusRepository
 import com.vibra.bus.util.ApiResult
@@ -42,7 +44,7 @@ class BusTrackingService : Service(), KoinComponent {
         const val EXTRA_STOP_LNG  = "stop_lng"
         const val EXTRA_STOP_NAME = "stop_name"
         const val NOTIF_ID = 200
-        private const val POLL_INTERVAL_MS = 15_000L
+        private const val POLL_INTERVAL_MS    = 15_000L
         private const val ARRIVAL_THRESHOLD_M = 200.0
     }
 
@@ -51,14 +53,23 @@ class BusTrackingService : Service(), KoinComponent {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             appSettings.clearTracking()
+            stopForeground(Service.STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY
         }
 
-        val plate    = intent?.getStringExtra(EXTRA_PLATE)    ?: return START_NOT_STICKY
-        val stopLat  = intent.getDoubleExtra(EXTRA_STOP_LAT, 0.0)
-        val stopLng  = intent.getDoubleExtra(EXTRA_STOP_LNG, 0.0)
-        val stopName = intent.getStringExtra(EXTRA_STOP_NAME) ?: "tu parada"
+        // Cuando Android reinicia el servicio con START_STICKY el intent es null —
+        // leemos los datos guardados en AppSettings como respaldo.
+        val plate    = intent?.getStringExtra(EXTRA_PLATE)
+                       ?: appSettings.trackingPlate.ifEmpty { null }
+                       ?: run { stopSelf(); return START_NOT_STICKY }
+
+        val stopLat  = intent?.getDoubleExtra(EXTRA_STOP_LAT, appSettings.trackingStopLat)
+                       ?: appSettings.trackingStopLat
+        val stopLng  = intent?.getDoubleExtra(EXTRA_STOP_LNG, appSettings.trackingStopLng)
+                       ?: appSettings.trackingStopLng
+        val stopName = intent?.getStringExtra(EXTRA_STOP_NAME)
+                       ?: appSettings.trackingStopName.ifEmpty { "tu parada" }
 
         NotificationHelper.createChannels(this)
         startForeground(NOTIF_ID, buildTrackingNotif("Buscando tu bus...", null))
@@ -95,13 +106,43 @@ class BusTrackingService : Service(), KoinComponent {
             }
         }
 
-        return START_REDELIVER_INTENT
+        // START_STICKY: si Android mata el proceso, lo reinicia automáticamente.
+        // El intent puede ser null en el reinicio, pero leemos de AppSettings.
+        return START_STICKY
+    }
+
+    // Cuando el usuario cierra la app desde el panel de recientes, Android llama
+    // onTaskRemoved(). Si hay tracking activo, programamos un reinicio del servicio.
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        if (!appSettings.hasActiveTracking()) return
+
+        val restartIntent = Intent(this, BusTrackingService::class.java).apply {
+            putExtra(EXTRA_PLATE,     appSettings.trackingPlate)
+            putExtra(EXTRA_STOP_LAT,  appSettings.trackingStopLat)
+            putExtra(EXTRA_STOP_LNG,  appSettings.trackingStopLng)
+            putExtra(EXTRA_STOP_NAME, appSettings.trackingStopName)
+        }
+        val pi = PendingIntent.getService(
+            this, 2, restartIntent,
+            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val alarmManager = getSystemService(ALARM_SERVICE) as? AlarmManager
+        // Reinicio no exacto: funciona sin permisos adicionales en Android 12+
+        alarmManager?.set(
+            AlarmManager.ELAPSED_REALTIME,
+            SystemClock.elapsedRealtime() + 2_000L,
+            pi,
+        )
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         pollingJob?.cancel()
         scope.cancel()
+        stopForeground(Service.STOP_FOREGROUND_REMOVE)
+        getSystemService(NotificationManager::class.java)?.cancel(NOTIF_ID)
+        NotificationHelper.cancelTrackingNotifications(this)
+        super.onDestroy()
     }
 
     // ── Notification builders ─────────────────────────────────────────────────
@@ -112,7 +153,7 @@ class BusTrackingService : Service(), KoinComponent {
             ?: Intent()
         val tapPi = PendingIntent.getActivity(
             this, 0, tapIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
         val stopIntent = Intent(this, BusTrackingService::class.java).also {
@@ -120,10 +161,12 @@ class BusTrackingService : Service(), KoinComponent {
         }
         val stopPi = PendingIntent.getService(
             this, 1, stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        return NotificationCompat.Builder(this, NotificationHelper.CHANNEL_BUS)
+        // Usamos CHANNEL_FOREGROUND (IMPORTANCE_LOW) para que la notificación
+        // sea silenciosa y permanente, sin interrumpir al usuario.
+        return NotificationCompat.Builder(this, NotificationHelper.CHANNEL_FOREGROUND)
             .setSmallIcon(R.mipmap.ic_notification)
             .setContentTitle("VibraBus — Siguiendo tu bus")
             .setContentText(contentText)

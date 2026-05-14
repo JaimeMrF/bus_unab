@@ -2,6 +2,7 @@ package com.vibra.bus.presentation.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,10 +34,13 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.buho_con_celular
 import vibrabus.composeapp.generated.resources.buho_viendo_mapa
 
 expect fun startBusTracking(plate: String, stopLat: Double, stopLng: Double, stopName: String)
 expect fun stopBusTracking()
+expect fun isIgnoringBatteryOptimizations(): Boolean
+expect fun openBatteryOptimizationSettings()
 
 data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
 
@@ -51,13 +55,68 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
         val distance   by viewModel.distanceMeters.collectAsState()
         val isArriving by viewModel.isArriving.collectAsState()
         val routePath  by viewModel.routePath.collectAsState()
-        var isVisible  by remember { mutableStateOf(false) }
+        var isVisible        by remember { mutableStateOf(false) }
+        var showBatteryDialog by remember { mutableStateOf(false) }
 
         LaunchedEffect(Unit) {
             settings.saveTracking(plate, stop.id, stop.name, stop.address, stop.latitude, stop.longitude)
             viewModel.startTracking(plate, stop)
             startBusTracking(plate, stop.latitude, stop.longitude, stop.name)
             isVisible = true
+            if (!settings.batteryPromptShown && !isIgnoringBatteryOptimizations()) {
+                showBatteryDialog = true
+            }
+        }
+
+        if (showBatteryDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    settings.batteryPromptShown = true
+                    showBatteryDialog = false
+                },
+                icon = {
+                    Image(
+                        painter = painterResource(Res.drawable.buho_con_celular),
+                        contentDescription = null,
+                        modifier = Modifier.size(96.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                },
+                title = {
+                    Text(
+                        "Mantén el seguimiento activo",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                text = {
+                    Text(
+                        "Para que la notificación del bus siga visible aunque cierres la app, " +
+                        "necesitamos que desactives la optimización de batería para VibraBus. " +
+                        "Toca \"Activar\" y selecciona \"No restringir\".",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        settings.batteryPromptShown = true
+                        showBatteryDialog = false
+                        openBatteryOptimizationSettings()
+                    }) {
+                        Text("Activar →")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        settings.batteryPromptShown = true
+                        showBatteryDialog = false
+                    }) {
+                        Text("Ahora no")
+                    }
+                },
+                containerColor = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(20.dp),
+            )
         }
 
         Scaffold(
@@ -236,6 +295,28 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 "Mostrar mi QR",
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = {
+                                settings.clearTracking()
+                                stopBusTracking()
+                                navigator.pop()
+                            },
+                            modifier = Modifier.fillMaxWidth().height(48.dp),
+                            shape = VibraBusShapes.ButtonPrimary,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
+                        ) {
+                            Text(
+                                "Cancelar seguimiento",
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.error,
                             )
                         }
                     }

@@ -11,7 +11,8 @@ import androidx.core.app.NotificationManagerCompat
 
 internal object NotificationHelper {
 
-    const val CHANNEL_BUS   = "vibra_bus_tracking"
+    const val CHANNEL_FOREGROUND = "vibra_bus_foreground"  // notificación persistente (silenciosa)
+    const val CHANNEL_BUS   = "vibra_bus_tracking"         // alertas de llegada (con sonido)
     const val CHANNEL_ALERT = "vibra_bus_alerts"
     const val CHANNEL_INFO  = "vibra_general"
 
@@ -29,10 +30,23 @@ internal object NotificationHelper {
     fun createChannels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
 
+        // Canal silencioso para la notificación fija del servicio en primer plano
+        nm.createNotificationChannel(
+            NotificationChannel(
+                CHANNEL_FOREGROUND,
+                "Bus en seguimiento",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Notificación permanente mientras se sigue el bus"
+                setShowBadge(false)
+            }
+        )
+
+        // Canal con alerta para cuando el bus llega o se acerca
         nm.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_BUS,
-                "Seguimiento de bus",
+                "Alertas de bus",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description      = "Alertas en tiempo real cuando tu bus se acerca o llega"
@@ -159,6 +173,14 @@ internal object NotificationHelper {
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
         )
+    }
+
+    // ── Cancelar todas las notificaciones de seguimiento ─────────────────────
+
+    fun cancelTrackingNotifications(context: Context) {
+        val nm = NotificationManagerCompat.from(context)
+        nm.cancel(ID_APPROACHING)
+        nm.cancel(ID_ARRIVED)
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

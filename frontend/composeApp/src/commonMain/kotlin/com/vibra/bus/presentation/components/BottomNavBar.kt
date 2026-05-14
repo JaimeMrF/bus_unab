@@ -1,5 +1,16 @@
 package com.vibra.bus.presentation.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
@@ -8,15 +19,16 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -32,37 +44,59 @@ fun BottomNavBar(
     selectedRoute: String,
     onTabSelected: (NavItem) -> Unit,
 ) {
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor   = MaterialTheme.colorScheme.primary,
-        tonalElevation = 0.dp,
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .navigationBarsPadding(),
     ) {
-        items.forEach { item ->
-            val selected = item.route == selectedRoute
-            NavigationBarItem(
-                selected  = selected,
-                onClick   = { onTabSelected(item) },
-                icon      = {
+        HorizontalDivider(
+            color     = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f),
+            thickness = 0.5.dp,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment     = Alignment.CenterVertically,
+        ) {
+            items.forEach { item ->
+                val selected = item.route == selectedRoute
+                val interactionSource = remember { MutableInteractionSource() }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication        = null,
+                            onClick           = { onTabSelected(item) },
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Icon(
-                        imageVector     = item.icon,
+                        imageVector        = item.icon,
                         contentDescription = item.label,
-                        modifier        = Modifier.size(22.dp),
+                        modifier           = Modifier.size(if (selected) 23.dp else 21.dp),
+                        tint               = if (selected)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                },
-                label     = {
-                    Text(
-                        text     = item.label,
-                        fontSize = 10.sp,
-                    )
-                },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor   = MaterialTheme.colorScheme.primary,
-                    selectedTextColor   = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    indicatorColor      = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                ),
-            )
+                    if (selected) {
+                        Spacer(Modifier.height(3.dp))
+                        Text(
+                            text       = item.label,
+                            fontSize   = 9.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color      = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
         }
     }
 }

@@ -42,7 +42,8 @@ class StopSelectionViewModel(
             loadRoutePath(plate)
             when (val result = busRepository.getBusStops(plate)) {
                 is ApiResult.Success -> {
-                    val stops = result.data.data.sortedBy { it.order }
+                    val sorted = result.data.data.sortedBy { it.order }
+                    val stops = if (sorted.all { it.estimatedMinutes == 0 }) computeEstimatedMinutes(sorted) else sorted
                     _stopsState.value = UiState.Success(stops)
                     if (stops.isNotEmpty() && _selectedStop.value == null) {
                         _selectedStop.value = stops.first()
@@ -119,4 +120,28 @@ class StopSelectionViewModel(
 
     fun consumeSnackbar() { _snackbarMessage.value = null }
     fun consumeRequestState() { _requestState.value = UiState.Idle }
+
+    private fun computeEstimatedMinutes(stops: List<StopWithPivotDto>): List<StopWithPivotDto> {
+        val avgSpeedKmH = 22.0
+        var cumulativeKm = 0.0
+        return stops.mapIndexed { index, stop ->
+            if (index > 0) {
+                val prev = stops[index - 1]
+                cumulativeKm += haversineKm(prev.latitude, prev.longitude, stop.latitude, stop.longitude)
+            }
+            stop.copy(estimatedMinutes = kotlin.math.round(cumulativeKm / avgSpeedKmH * 60.0).toInt())
+        }
+    }
+
+    private fun haversineKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val dLat = kotlin.math.PI / 180.0 * (lat2 - lat1)
+        val dLon = kotlin.math.PI / 180.0 * (lon2 - lon1)
+        val sinDLat = kotlin.math.sin(dLat / 2)
+        val sinDLon = kotlin.math.sin(dLon / 2)
+        val a = sinDLat * sinDLat +
+            kotlin.math.cos(kotlin.math.PI / 180.0 * lat1) *
+            kotlin.math.cos(kotlin.math.PI / 180.0 * lat2) *
+            sinDLon * sinDLon
+        return 6371.0 * 2.0 * kotlin.math.asin(kotlin.math.sqrt(a))
+    }
 }

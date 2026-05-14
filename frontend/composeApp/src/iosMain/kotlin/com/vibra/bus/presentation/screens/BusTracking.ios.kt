@@ -7,3 +7,9 @@ actual fun startBusTracking(plate: String, stopLat: Double, stopLng: Double, sto
 actual fun stopBusTracking() {
     // no-op
 }
+
+actual fun isIgnoringBatteryOptimizations(): Boolean = true
+
+actual fun openBatteryOptimizationSettings() {
+    // no-op on iOS
+}

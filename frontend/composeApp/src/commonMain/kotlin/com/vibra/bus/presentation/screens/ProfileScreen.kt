@@ -54,11 +54,11 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
-import com.vibra.bus.presentation.theme.LocalIsDarkTheme
-import com.vibra.bus.presentation.theme.LocalThemeToggle
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
+import com.vibra.bus.util.AppSettings
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 class ProfileScreen : Screen {
@@ -68,11 +68,11 @@ class ProfileScreen : Screen {
         val navigator     = LocalNavigator.currentOrThrow
         val viewModel     = koinViewModel<ProfileViewModel>()
         val authViewModel = koinViewModel<AuthViewModel>()
+        val settings      = koinInject<AppSettings>()
         val profile       by viewModel.profile.collectAsState()
         val authEvent     by authViewModel.event.collectAsState()
         var showLogout    by remember { mutableStateOf(false) }
-        val isDark        = LocalIsDarkTheme.current
-        val toggleTheme   = LocalThemeToggle.current
+        val isDark        by settings.isDarkThemeFlow.collectAsState()
 
         LaunchedEffect(authEvent) {
             if (authEvent is AuthEvent.NavigateToLogin) {
@@ -290,7 +290,7 @@ class ProfileScreen : Screen {
                     }
                     Switch(
                         checked         = !isDark,
-                        onCheckedChange = { checked -> toggleTheme(!checked) },
+                        onCheckedChange = { checked -> settings.isDarkTheme = !checked },
                     )
                 }
 

@@ -426,7 +426,7 @@ private fun StopSelectionRow(
                 )
             }
             Text(
-                "~${stop.estimatedMinutes} min",
+                if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min",
                 color      = MaterialTheme.colorScheme.secondary,
                 fontSize   = 12.sp,
                 fontWeight = FontWeight.Medium,

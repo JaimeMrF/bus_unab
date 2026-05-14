@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -79,8 +80,10 @@ import vibrabus.composeapp.generated.resources.Res
 import vibrabus.composeapp.generated.resources.buho_curioso
 import com.vibra.bus.presentation.viewmodel.HomeViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
+import com.vibra.bus.util.AppSettings
 import com.vibra.bus.util.UiState
 import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 class HomeScreen : Screen {
@@ -88,10 +91,12 @@ class HomeScreen : Screen {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-        val viewModel = koinViewModel<HomeViewModel>()
+        val navigator        = LocalNavigator.currentOrThrow
+        val viewModel        = koinViewModel<HomeViewModel>()
         val profileViewModel = koinViewModel<ProfileViewModel>()
-        val profile by profileViewModel.profile.collectAsState()
+        val settings         = koinInject<AppSettings>()
+        val profile          by profileViewModel.profile.collectAsState()
+        val hasTracking      by settings.hasActiveTrackingFlow.collectAsState()
 
         val busesState by viewModel.busesState.collectAsState()
         val stopsState by viewModel.stopsState.collectAsState()
@@ -107,7 +112,7 @@ class HomeScreen : Screen {
 
         var selectedBus by remember { mutableStateOf<BusSummaryDto?>(null) }
         var selectedStop by remember { mutableStateOf<StopDto?>(null) }
-        var showStops by remember { mutableStateOf(true) }
+        var showStops by remember { mutableStateOf(false) }
         var isCardVisible by remember { mutableStateOf(false) }
         var showBusSheet by remember { mutableStateOf(false) }
         val busSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -126,8 +131,13 @@ class HomeScreen : Screen {
             isCardVisible = true
         }
         LaunchedEffect(selectedBus) {
-            if (selectedBus != null) viewModel.loadBusStops(selectedBus!!.plate)
-            else viewModel.clearBusStops()
+            if (selectedBus != null) {
+                viewModel.loadBusStops(selectedBus!!.plate)
+                showStops = true
+            } else {
+                viewModel.clearBusStops()
+                showStops = false
+            }
         }
         LaunchedEffect(snackbarMsg) {
             snackbarMsg?.let {
@@ -147,6 +157,7 @@ class HomeScreen : Screen {
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets(0),
             floatingActionButton = {
                 AnimatedVisibility(
                     visible = true,
@@ -238,6 +249,7 @@ class HomeScreen : Screen {
                                             selectedBus != null && busStopsLoading -> "Cargando paradas..."
                                             selectedBus != null && routeStops.isNotEmpty() -> "${routeStops.size} paradas en esta ruta"
                                             selectedBus != null -> "Sin paradas asignadas"
+                                            hasTracking -> "Siguiendo ${settings.trackingPlate} · ${settings.trackingStopName}"
                                             busList.isNotEmpty() -> "${busList.size} buses activos cerca"
                                             else -> "Buscando buses cercanos..."
                                         },
@@ -246,8 +258,8 @@ class HomeScreen : Screen {
                                     )
                                 }
 
-                                // Indicador live cuando hay buses
-                                if (busList.isNotEmpty() && selectedBus == null) {
+                                // Indicador live cuando hay buses (no mostrar si hay tracking activo)
+                                if (busList.isNotEmpty() && selectedBus == null && !hasTracking) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier
@@ -272,10 +284,11 @@ class HomeScreen : Screen {
                                 }
                             }
 
-                            // Acciones — AnimatedContent hace slide entre los 3 estados
+                            // Acciones — AnimatedContent hace slide entre los 4 estados
                             val actionState = when {
                                 profile.role == "driver" -> "driver"
                                 selectedBus != null      -> "bus"
+                                hasTracking              -> "tracking"
                                 else                     -> "default"
                             }
                             AnimatedContent(
@@ -316,6 +329,42 @@ class HomeScreen : Screen {
                                             Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
                                             Spacer(Modifier.width(6.dp))
                                             Text("Seguir Bus", fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
+                                    "tracking" -> Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    ) {
+                                        OutlinedButton(
+                                            onClick  = {
+                                                settings.clearTracking()
+                                                stopBusTracking()
+                                            },
+                                            modifier = Modifier.weight(1f).height(50.dp),
+                                            shape    = VibraBusShapes.ButtonPrimary,
+                                            border   = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                                        ) {
+                                            Text("Cancelar", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold)
+                                        }
+                                        Button(
+                                            onClick  = {
+                                                val stop = StopDto(
+                                                    id           = settings.trackingStopId,
+                                                    name         = settings.trackingStopName,
+                                                    address      = settings.trackingStopAddress,
+                                                    latitude     = settings.trackingStopLat,
+                                                    longitude    = settings.trackingStopLng,
+                                                    radiusMeters = 50,
+                                                )
+                                                startBusTracking(settings.trackingPlate, stop.latitude, stop.longitude, stop.name)
+                                                navigator.push(WaitingBusScreen(settings.trackingPlate, stop))
+                                            },
+                                            modifier = Modifier.weight(1f).height(50.dp),
+                                            shape    = VibraBusShapes.ButtonPrimary,
+                                        ) {
+                                            Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
+                                            Spacer(Modifier.width(6.dp))
+                                            Text("Ver bus", fontWeight = FontWeight.SemiBold)
                                         }
                                     }
                                     else -> Button(
