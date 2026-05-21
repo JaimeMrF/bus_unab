@@ -14,6 +14,62 @@ class BusController extends BaseController
 {
     public function __construct(private readonly GpsMobileService $gpsService) {}
 
+    /**
+     * Catálogo de buses activos para la selección del conductor (sin GPS).
+     */
+    public function catalog(): JsonResponse
+    {
+        $buses = Bus::active()
+            ->select('id', 'name', 'plate', 'capacity')
+            ->orderBy('name')
+            ->get()
+            ->map(fn($b) => [
+                'id'       => $b->id,
+                'name'     => $b->name,
+                'plate'    => $b->plate,
+                'capacity' => $b->capacity,
+            ]);
+
+        return $this->success($buses);
+    }
+
+    /**
+     * Almacena la ubicación enviada desde el teléfono del conductor.
+     *
+     * @urlParam plate string required  Placa del bus. Example: RUTA1
+     */
+    public function updateDriverLocation(Request $request, string $plate): JsonResponse
+    {
+        $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
+
+        $validated = $request->validate([
+            'lat'     => 'required|numeric|between:-90,90',
+            'lng'     => 'required|numeric|between:-180,180',
+            'heading' => 'required|integer|between:0,360',
+        ]);
+
+        Cache::put("driver_location_{$plate}", [
+            'latitude'  => (float) $validated['lat'],
+            'longitude' => (float) $validated['lng'],
+            'heading'   => (int)   $validated['heading'],
+        ], 60);
+
+        return $this->success();
+    }
+
+    /**
+     * Elimina la ubicación del conductor del caché.
+     *
+     * @urlParam plate string required  Placa del bus. Example: RUTA1
+     */
+    public function clearDriverLocation(string $plate): JsonResponse
+    {
+        $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
+
+        Cache::forget("driver_location_{$plate}");
+
+        return $this->success();
+    }
 
     public function index(Request $request): JsonResponse
     {

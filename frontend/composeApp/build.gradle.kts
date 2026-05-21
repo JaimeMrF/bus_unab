@@ -168,9 +168,24 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val properties = Properties()
+            val localPropertiesFile = rootProject.file("local.properties")
+            if (localPropertiesFile.exists()) {
+                properties.load(localPropertiesFile.inputStream())
+            }
+            storeFile = rootProject.file(properties.getProperty("KEYSTORE_FILE", "vibra-bus.jks"))
+            storePassword = properties.getProperty("KEYSTORE_PASSWORD", "")
+            keyAlias = properties.getProperty("KEY_ALIAS", "")
+            keyPassword = properties.getProperty("KEY_PASSWORD", "")
+        }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
