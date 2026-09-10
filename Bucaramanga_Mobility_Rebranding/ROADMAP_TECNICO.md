@@ -12,8 +12,24 @@ F0 Foundations multi-tenant
  └─▶ F1 Wallet + QR de pago (backend)
       └─▶ F2 mPOS Conductor (app actual + endpoints)
            └─▶ F3 Paneles Filament por tenant + Super Admin
-                └─▶ F4 NFC + recarga con proveedor real  [BLOQUEADO: API keys — fuera del scope]
+                 └─▶ F4 NFC + recarga con proveedor real  [BLOQUEADO: API keys — fuera del scope]
 ```
+
+> **NOMENCLATURA CANONICA** (unica vigente desde 2026-09-09; coincide con el
+> plan de mision `.opencode/todo.md`). El diagrama de arriba conservo la
+> numeracion antigua de escritura; la tabla manda:
+>
+> | Fase | Contenido | Estado (2026-09-09) |
+> |------|-----------|------------------------|
+> | F0 | Foundations multi-tenant (transportadoras, scopes, migraciones) | HECHA |
+> | F1 | Paneles con datos reales: /admin SaaS + /empresa tenant (el backend de wallet/QR/roles tambien cayo aqui) | HECHA |
+> | F2 | Wallet + QR dinamico EN LA APP del pasajero (UI Kotlin sobre endpoints existentes) | PENDIENTE |
+> | F3 | mPOS conductor en la app (cobro camara -> POST /qr/pay, endpoint ya operativo) | PENDIENTE |
+> | F4 | NFC + recarga con proveedor real de pagos | BLOQUEADA (API keys + marca final) |
+> | F5 | Lanzamiento piloto: 1-2 transportadoras reales + deploy (bus.finsik.site corre codigo viejo) | PENDIENTE |
+>
+> Total: **6 fases, F0 a F5**. F2 y F3 pueden ir en paralelo (misma pantalla
+> compartida de scan) y no dependen de ninguna API externa.
 
 ---
 
