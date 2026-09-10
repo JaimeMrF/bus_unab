@@ -1,6 +1,8 @@
-# 🚌 Bus UNAB — VibraBus
+# 🚍 Bucaramanga Mobility — Plataforma de Movilidad para Bucaramanga (antes Bus UNAB — VibraBus)
 
-Sistema de transporte universitario compuesto por un **backend Laravel (API REST)** y una **app móvil Kotlin Multiplatform (Android/iOS)**.
+> **Antes Bus UNAB — VibraBus.** El proyecto está en pivote hacia un **SaaS de movilidad urbana multi-tenant** para Bucaramanga; el nombre visible actual es un *nombre de trabajo* (decisión de marca definitiva pendiente — ver [NAMING_DECISION.md](Bucaramanga_Mobility_Rebranding/NAMING_DECISION.md)).
+
+Plataforma de movilidad compuesta por un **backend Laravel (API REST + paneles Filament multi-tenant)** y una **app móvil Kotlin Multiplatform (Android/iOS)**: unificación de transportadoras con wallet prepago, QR dinámico de pago y cobro a bordo (mPOS conductor).
 
 ---
 
@@ -41,7 +43,7 @@ php artisan key:generate
 Edita `.env` con tus datos:
 
 ```dotenv
-APP_NAME="Bus UNAB"
+APP_NAME="Bucaramanga Mobility"
 APP_URL=http://localhost:8000
 
 # ── Base de datos (MySQL) ────────────────────────────────────────────────
@@ -183,13 +185,33 @@ Después de ejecutar `php artisan db:seed`:
 
 ## 🌐 Panel de Administración
 
-Disponible en `http://localhost:8000/admin` con las credenciales de administrador.
+- **Super Admin** (`http://localhost:8000/admin`) — panel maestro del equipo plataforma: transportadoras (tenants), usuarios, soporte, auditoría y modelo SaaS. Acceso con las credenciales de administrador.
+- **Panel de la Transportadora** (`/empresa`) — en construcción (M3 del plan): cada transportadora gestionará su flota, rutas, conductores, tarifas y recaudo, aislada de los demás tenants.
 
 Desde el panel puedes gestionar:
-- 👥 Usuarios y roles
-- 🚌 Buses y rutas
+- 👥 Usuarios y roles (Super Admin / Admin de transportadora / Conductor / Pasajero)
+- 🚌 Buses y rutas (scoped por tenant)
 - 📍 Paradas
-- 📊 Reportes
+- 📊 Reportes y recaudo
+
+---
+
+## 🧭 Documentación de pivote
+
+El rebranding y la migración a SaaS multi-tenant están documentados en [`Bucaramanga_Mobility_Rebranding/`](Bucaramanga_Mobility_Rebranding/README.md):
+
+| Doc | Contenido |
+|---|---|
+| [BRAND.md](Bucaramanga_Mobility_Rebranding/BRAND.md) | Matriz de marca: working name, posición, pilares, tono/voz, alcance, paleta |
+| [CONCEPTO.md](Bucaramanga_Mobility_Rebranding/CONCEPTO.md) | Concepto y pilares del producto (multi-tenant, wallet, QR/mPOS) |
+| [DISEÑO_DB.md](Bucaramanga_Mobility_Rebranding/DISEÑO_DB.md) | Diseño de base de datos multi-tenant (tablas, índices, migraciones) |
+| [GLOSSARY.md](Bucaramanga_Mobility_Rebranding/GLOSSARY.md) | Glosario canónico ES ↔ técnico (tenant, wallet, mPOS, ledger…) |
+| [NAMING_DECISION.md](Bucaramanga_Mobility_Rebranding/NAMING_DECISION.md) | Decisión de nombre final (PENDIENTE del usuario) y checklist de rename |
+| [MATRIZ_BRANDING.md](Bucaramanga_Mobility_Rebranding/MATRIZ_BRANDING.md) | Matriz archivo → cambio (qué se renombra, qué está congelado) |
+| [AUDIT.md](Bucaramanga_Mobility_Rebranding/AUDIT.md) · [ARCHITECTURE.md](Bucaramanga_Mobility_Rebranding/ARCHITECTURE.md) | Auditoría del código actual y arquitectura objetivo |
+| [ROADMAP_TECNICO.md](Bucaramanga_Mobility_Rebranding/ROADMAP_TECNICO.md) | Fases F0–F4 con criterios de salida |
+
+> ⚠️ El **package técnico de la app sigue siendo `com.vibra.bus`** (identificador congelado de Play Store; no es branding visible). Ver MATRIZ_BRANDING.md §2.
 
 ---
 
@@ -217,4 +239,4 @@ php artisan migrate:fresh --seed   # reinicia y repuebla la BD
 
 ## 📞 Contacto
 
-Proyecto desarrollado por el equipo **VIBRA+** — Universidad Autónoma de Bucaramanga (UNAB).
+Proyecto desarrollado originalmente por el equipo **VIBRA+** de la Universidad Autónoma de Bucaramanga (UNAB) — *origen académico del proyecto; hoy opera como plataforma independiente en pivote "Bucaramanga Mobility"*.

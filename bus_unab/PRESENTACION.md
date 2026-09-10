@@ -1,6 +1,8 @@
 # Script de Presentacion — Bus UNAB
 ## Arquitectura de Software — Pruebas de Resiliencia (Chaos Engineering)
 
+> 📜 **Documento histórico**: guion de la entrega universitaria original ("Bus UNAB", equipo VIBRA+ — UNAB). El proyecto hoy está en pivote a **Bucaramanga Mobility** (SaaS multi-tenant) — ver [`../Bucaramanga_Mobility_Rebranding/README.md`](../Bucaramanga_Mobility_Rebranding/README.md). Se conserva íntegro por trazabilidad.
+
 ---
 
 ## 1. APERTURA (1-2 min)

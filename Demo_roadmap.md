@@ -1,4 +1,6 @@
-# 🚀 Roadmap de Demostración: Bus UNAB Vibra+
+# 🚀 Roadmap de Demostración: Bucaramanga Mobility
+
+> **Proyecto en pivote a Bucaramanga Mobility** — ver README de [`Bucaramanga_Mobility_Rebranding/`](Bucaramanga_Mobility_Rebranding/README.md). El flujo descrito corresponde al sistema Bus UNAB anterior (incluidas sus credenciales de demo, conservadas como referencia histórica).
 
 Este documento detalla los pasos exactos para realizar una demostración impecable del prototipo mañana.
 
@@ -10,7 +12,7 @@ Para que el login funcione sin fricciones, tienes dos caminos:
 *   **Backend:** Asegúrate de que el servidor Laravel esté corriendo, ya que la app enviará el `idToken` al endpoint `/api/v1/auth/google`.
 *   **Ventaja:** Muestra la integración moderna con el Credential Manager de Android.
 
-### Opción B: Credenciales UNAB
+### Opción B: Credenciales de demo (histórico UNAB)
 *   **Qué usar:** Introduce correo y contraseña.
 *   **Credenciales de Prueba:**
     *   **Estudiante:** `estudiante@unab.edu.co` / `password123`
@@ -19,8 +21,8 @@ Para que el login funcione sin fricciones, tienes dos caminos:
 
 ---
 
-## 2. 🗺️ Flujo del Estudiante (El Corazón de VIBRA+)
-El objetivo es mostrar cómo un estudiante encuentra su ruta y ve el bus llegar.
+## 2. 🗺️ Flujo del Pasajero (El Corazón de la App)
+El objetivo es mostrar cómo un pasajero encuentra su ruta y ve el bus llegar.
 
 1.  **Home:** Al entrar, verás el mapa con estilo "Silver Premium".
 2.  **Selección de Parada:** Desliza la lista de paradas y selecciona una (ej. "Parada Campus Central").
@@ -58,7 +60,7 @@ Para mostrar esto, debes iniciar sesión con el rol de `driver`.
 ## 5. 🎨 El Factor "WOW"
 Destaque estos puntos durante la charla:
 *   **Glassmorphism:** Los paneles flotantes que permiten ver el mapa detrás.
-*   **Mascota UNAB:** El búho que da la bienvenida en el login.
+*   **Mascota (búho, arte histórico de UNAB):** El búho que da la bienvenida en el login.
 *   **Estética Uber:** El mapa minimalista que no satura al usuario.
 *   **Animaciones:** Todo entra con transiciones suaves, nada aparece de golpe.
 

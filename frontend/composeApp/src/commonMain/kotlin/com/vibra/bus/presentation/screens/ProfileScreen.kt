@@ -181,7 +181,7 @@ class ProfileScreen : Screen {
                                 .padding(horizontal = 18.dp, vertical = 5.dp),
                         ) {
                             Text(
-                                text       = if (profile.role == "driver") "Conductor" else "Estudiante",
+                                text       = if (profile.role == "driver") "Conductor" else "Pasajero",
                                 color      = MaterialTheme.colorScheme.secondary,
                                 fontSize   = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -199,7 +199,7 @@ class ProfileScreen : Screen {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    QuickStat(value = "UNAB", label = "Universidad")
+                    QuickStat(value = "BGA", label = "Ciudad")
                     Box(
                         Modifier
                             .width(1.dp)
@@ -207,7 +207,7 @@ class ProfileScreen : Screen {
                             .background(MaterialTheme.colorScheme.outlineVariant)
                     )
                     QuickStat(
-                        value = if (profile.role == "driver") "Conductor" else "Estudiante",
+                        value = if (profile.role == "driver") "Conductor" else "Pasajero",
                         label = "Rol"
                     )
                     Box(
@@ -329,7 +329,7 @@ class ProfileScreen : Screen {
                         modifier            = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text("VibraBus v1.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                        Text("Bucaramanga Mobility v1.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                         Spacer(Modifier.height(2.dp))
                         Text(
                             "Universidad Autónoma de Bucaramanga",

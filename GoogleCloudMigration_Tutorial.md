@@ -1,11 +1,13 @@
-# 🗺️ Plan Maestro: Migración Total a Google Cloud (Bus UNAB VIBRA+)
+# 🗺️ Plan Maestro: Migración Total a Google Cloud (Bucaramanga Mobility)
+
+> **Proyecto en pivote a Bucaramanga Mobility** — ver README de [`Bucaramanga_Mobility_Rebranding/`](Bucaramanga_Mobility_Rebranding/README.md). El flujo descrito corresponde al sistema Bus UNAB anterior; los nombres de recursos GCP citados son literales y están **pendientes de renombrar** (afectan OAuth/Firebase — tema de API keys pospuesto).
 
 Esta es la guía definitiva para mover todo tu ecosistema (Backend, Base de Datos, Mapas y Auth) a Google Cloud desde cero.
 
 ---
 
 ## 🏁 Fase 1: El Cimiento (Google Cloud Console)
-1.  **Crear Proyecto:** Entra a [GCP Console](https://console.cloud.google.com/) y crea `Bus-UNAB-Final`.
+1.  **Crear Proyecto:** Entra a [GCP Console](https://console.cloud.google.com/) y crea `Bus-UNAB-Final`. *(nombre de recurso histórico; renombrar pendiente tras decisión de marca)*
 2.  **Billing:** Vincula tu tarjeta en la sección **Facturación**. (Recuerda: 200 USD/mes gratis).
 3.  **Habilitar APIs:** Busca y activa:
     *   `Maps SDK for Android`
@@ -16,7 +18,7 @@ Esta es la guía definitiva para mover todo tu ecosistema (Backend, Base de Dato
 ---
 
 ## 🔑 Fase 2: Identidad y Seguridad (OAuth & SHA-1)
-1.  **Pantalla de Consentimiento:** Configúrala como "Externa" con el nombre `Bus UNAB`.
+1.  **Pantalla de Consentimiento:** Configúrala como "Externa" con el nombre `Bus UNAB`. *(nombre OAuth histórico; renombrar pendiente — afecta cuentas ya conectadas)*
 2.  **Credenciales:**
     *   **API Key:** Crea una "Clave de API" para los mapas. Restríngela a tu paquete `com.vibra.bus` y SHA-1: `CC:7B:3E:28:88:8F:70:5C:F2:1E:92:4C:BC:73:62:CE:4D:13:C6:90`.
     *   **ID Cliente OAuth (Web):** Crea uno para el **Backend**. Anota el ID.

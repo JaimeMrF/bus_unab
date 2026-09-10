@@ -160,7 +160,7 @@ class MyQRScreen : Screen {
                         } else {
                             Image(
                                 painter            = painterResource(Res.drawable.buhosaludologin),
-                                contentDescription = "Búho UNAB",
+                                contentDescription = "Mascota Bucaramanga Mobility",
                                 modifier           = Modifier.fillMaxSize().padding(8.dp),
                                 contentScale       = ContentScale.Fit,
                             )

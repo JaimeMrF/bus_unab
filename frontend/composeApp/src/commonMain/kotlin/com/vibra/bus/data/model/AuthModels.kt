@@ -9,7 +9,7 @@ data class UserDto(
     val name: String,
     val email: String,
     val avatar: String? = null,
-    val role: String = "student",
+    val role: String = "pasajero",
 )
 
 @Serializable

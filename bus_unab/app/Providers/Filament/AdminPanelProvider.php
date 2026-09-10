@@ -29,7 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('Bus UNAB — Admin')
+            ->brandName('Bucaramanga Mobility')
             ->colors([
                 'primary' => Color::Blue,
             ])

@@ -161,7 +161,7 @@ class LoginScreen : Screen {
 
                 Spacer(Modifier.height(4.dp)) // ← era 8dp
 
-                // ── Logo + Bus UNAB + VIBRA+ ──────────────────────────────────────
+                // ── Logo + Bucaramanga Mobility ───────────────────────────────────
                 AnimatedVisibility(
                     visible = isFormVisible,
                     enter = slideInVertically(
@@ -179,7 +179,7 @@ class LoginScreen : Screen {
                     ) {
                         Image(
                             painter = painterResource(Res.drawable.logo_unab_blanco_transparente),
-                            contentDescription = "Logo UNAB",
+                            contentDescription = "Logo Bucaramanga Mobility",
                             modifier = Modifier.size(80.dp),
                             contentScale = ContentScale.Fit
                         )
@@ -191,14 +191,14 @@ class LoginScreen : Screen {
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = "Bus UNAB",
+                                text = "Bucaramanga Mobility",
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 letterSpacing = 1.sp
                             )
                             Text(
-                                text = "VIBRA+",
+                                text = "Plataforma de Movilidad",
                                 fontSize = 48.sp,
                                 fontFamily = rubikGlitchFamily(),
                                 color = MaterialTheme.colorScheme.secondary,
@@ -250,7 +250,7 @@ class LoginScreen : Screen {
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = "⭐  ESTUDIANTES UNAB",
+                                text = "⭐  TODA BUCARAMANGA",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Color(0xFFF5A623),

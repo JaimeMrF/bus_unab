@@ -89,14 +89,14 @@ class SplashScreen : Screen {
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text          = "VIBRA+",
+                    text          = "BUCARAMANGA",
                     fontSize      = 44.sp,
                     fontWeight    = FontWeight.ExtraBold,
                     color         = MaterialTheme.colorScheme.primary,
                     letterSpacing = (-1).sp,
                 )
                 Text(
-                    text          = "Bus UNAB",
+                    text          = "Mobility",
                     fontSize      = 14.sp,
                     fontWeight    = FontWeight.Normal,
                     color         = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -18,7 +18,7 @@ class AppSettings(private val settings: Settings) {
         set(value) = settings.putString("token", value)
 
     var userRole: String
-        get() = settings.getString("user_role", "student")
+        get() = settings.getString("user_role", "pasajero")
         set(value) = settings.putString("user_role", value)
 
     var userId: Int
