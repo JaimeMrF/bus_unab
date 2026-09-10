@@ -1,0 +1,13 @@
+# ══════════════════════════════════════════════════════════════
+# Artefactos generados — NO versionar
+# ══════════════════════════════════════════════════════════════
+
+# Caché AST de graphify (229+ JSON con nombres hex = ruido de build)
+graphify-out/
+
+# Workflow interno de agentes (todo.md, work-log, docs cache)
+.opencode/
+
+# Python bytecode de los scripts graphify
+__pycache__/
+*.pyc
