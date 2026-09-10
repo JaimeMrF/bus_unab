@@ -34,15 +34,20 @@ class UserResource extends Resource
                     ->required()
                     ->unique(ignoreRecord: true),
 
+                // H1/H2 · Roles asignables SEGÚN PANEL (User::assignableRoles es
+                // la única fuente de verdad). Filament valida contra las opciones,
+                // así que un gerente de /empresa no puede crear admins ni por UI
+                // ni manipulando el payload.
                 Forms\Components\Select::make('role')
                     ->label('Rol')
-                    ->options([
-                        'student' => 'Estudiante',
-                        'driver'  => 'Conductor',
-                        'admin'   => 'Administrador',
-                    ])
-                    ->required()
-                    ->default('student'),
+                    ->options(fn () => User::assignableRoles(
+                        \Filament\Facades\Filament::getCurrentPanel()?->getId()
+                    ))
+                    ->default(fn () => User::defaultRoleForPanel(
+                        \Filament\Facades\Filament::getCurrentPanel()?->getId()
+                    ))
+                    ->disabled(fn (?User $record) => $record?->id === auth()->id())
+                    ->required(),
 
                 Forms\Components\TextInput::make('password')
                     ->label('Contraseña')
@@ -75,16 +80,20 @@ class UserResource extends Resource
                     ->label('Rol')
                     ->badge()
                     ->color(fn ($state) => match($state) {
-                        'admin'   => 'danger',
-                        'driver'  => 'warning',
-                        'student' => 'primary',
-                        default   => 'gray',
+                        'admin', 'super_admin'  => 'danger',
+                        'tenant_admin'          => 'primary',
+                        'driver'                => 'warning',
+                        'pasajero', 'student'   => 'gray',
+                        default                 => 'gray',
                     })
                     ->formatStateUsing(fn ($state) => match($state) {
-                        'admin'   => 'Administrador',
-                        'driver'  => 'Conductor',
-                        'student' => 'Estudiante',
-                        default   => $state,
+                        'admin'       => 'Super Admin (legado)',
+                        'super_admin' => 'Super Admin',
+                        'tenant_admin'=> 'Admin de Empresa',
+                        'driver'      => 'Conductor',
+                        'pasajero'    => 'Pasajero',
+                        'student'     => 'Pasajero (legado)',
+                        default       => $state,
                     }),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -96,9 +105,11 @@ class UserResource extends Resource
                 Tables\Filters\SelectFilter::make('role')
                     ->label('Rol')
                     ->options([
-                        'student' => 'Estudiante',
-                        'driver'  => 'Conductor',
-                        'admin'   => 'Administrador',
+                        'super_admin'  => 'Super Admin',
+                        'tenant_admin' => 'Admin de Empresa',
+                        'driver'       => 'Conductor',
+                        'pasajero'     => 'Pasajero',
+                        'admin'        => 'Super Admin (legado)',
                     ]),
             ])
             ->actions([

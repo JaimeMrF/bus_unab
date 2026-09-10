@@ -124,7 +124,7 @@ class AuthTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email'     => 'alumno@unab.edu.co',
             'google_id' => 'google-sub-123',
-            'role'      => 'student',
+            'role'      => 'pasajero',
         ]);
     }
 
@@ -178,7 +178,12 @@ class AuthTest extends TestCase
             ->assertStatus(401);
     }
 
-    public function test_google_login_rejects_non_unab_domain(): void
+    /**
+     * H1 (pivote): el candado institucional @unab.edu.co fue ELIMINADO en el
+     * login de Google — cualquier cuenta que entre a la app es pasajera.
+     * (Antes este caso esperaba 403; ver AuthController::googleLogin.)
+     */
+    public function test_google_login_accepts_non_unab_domain_as_pasajero(): void
     {
         config(['services.google.client_id' => 'test-client.apps.googleusercontent.com']);
 
@@ -193,10 +198,13 @@ class AuthTest extends TestCase
         ]);
 
         $this->postJson('/api/v1/auth/google', ['id_token' => 'valid-token'])
-            ->assertStatus(403)
-            ->assertJson(['success' => false]);
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
 
-        $this->assertDatabaseMissing('users', ['email' => 'externo@gmail.com']);
+        $this->assertDatabaseHas('users', [
+            'email' => 'externo@gmail.com',
+            'role'  => 'pasajero',
+        ]);
     }
 
     public function test_google_login_allows_unab_domain(): void

@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Alias para el middleware de roles
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            // M3 · S3.3.3 — activa el contexto de tenant en rutas de API
+            'tenant.scope' => \App\Http\Middleware\EnsureTenantScope::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

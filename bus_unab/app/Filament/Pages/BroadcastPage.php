@@ -53,9 +53,9 @@ class BroadcastPage extends Page implements HasForms
                 Select::make('role')
                     ->label('Destinatarios')
                     ->options([
-                        'all'     => 'Todos los usuarios',
-                        'student' => 'Solo estudiantes',
-                        'driver'  => 'Solo conductores',
+                        'all'      => 'Todos los usuarios',
+                        'pasajero' => 'Solo pasajeros',
+                        'driver'   => 'Solo conductores',
                     ])
                     ->default('all')
                     ->required(),

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class PointOfInterest extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'points_of_interest';
 
     protected $fillable = [
@@ -16,6 +19,7 @@ class PointOfInterest extends Model
         'category',
         'icon',
         'is_active',
+        'transportadora_id',
     ];
 
     protected function casts(): array

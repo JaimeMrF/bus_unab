@@ -114,13 +114,14 @@ class AuthService
             return $user;
         }
 
-        // Intento 3: crear nuevo usuario
+        // Intento 3: crear nuevo usuario — H1: quien llega por la app es PASAJERO
+        // (el antiguo 'student' quedó eliminado del producto; ver migration 130000).
         return User::create([
             'google_id' => $googleId,
             'name'      => $name,
             'email'     => $email,
             'avatar'    => $avatar,
-            'role'      => 'student',
+            'role'      => 'pasajero',
         ]);
     }
 

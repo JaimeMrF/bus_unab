@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\PointOfInterestController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\QrController;
 use App\Http\Controllers\Api\V1\StopController;
+use App\Http\Controllers\Api\V1\WalletController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,8 +19,10 @@ use Illuminate\Support\Facades\Route;
 | Convenciones:
 |   - throttle:60,1  → 60 requests por minuto por IP
 |   - throttle:10,1  → 10 requests por minuto (endpoints sensibles)
-|   - role:admin     → solo administradores
-|   - role:admin,driver → administradores o conductores
+ |   - role:admin     → solo administradores
+ |   - role:admin,driver → administradores o conductores
+ |   - tenant.scope   → activa contexto de transportadora (S3.3.3);
+ |                      usuarios con transportadora NULL ven todo (intencional)
 |
 */
 
@@ -33,6 +36,8 @@ Route::prefix('v1')->group(function () {
         Route::post('google', [AuthController::class, 'googleLogin']);
         // POST /api/v1/auth/login
         Route::post('login', [AuthController::class, 'login']);
+        // H3 · POST /api/v1/auth/register — solo pasajeros (autogestión app)
+        Route::post('register', [AuthController::class, 'register']);
     });
 
     // ------------------------------------------------------------------
@@ -53,7 +58,8 @@ Route::prefix('v1')->group(function () {
         });
 
         // Buses — Lectura: rate generoso. Escritura admin/driver: rate estricto
-        Route::prefix('buses')->group(function () {
+        // tenant.scope: miembros de una transportadora solo ven SU flota (S3.3.3)
+        Route::prefix('buses')->middleware('tenant.scope')->group(function () {
             Route::middleware('throttle:60,1')->group(function () {
                 Route::get('/',               [BusController::class, 'index']);              // GET  /api/v1/buses
                 Route::get('catalog',         [BusController::class, 'catalog']);           // GET  /api/v1/buses/catalog
@@ -78,10 +84,10 @@ Route::prefix('v1')->group(function () {
 
         // Paradas
         Route::get('stops', [StopController::class, 'index'])
-            ->middleware('throttle:60,1'); // GET /api/v1/stops
+            ->middleware(['throttle:60,1', 'tenant.scope']); // GET /api/v1/stops
 
         // Solicitudes de bus (aforo) — 20 solicitudes por minuto máximo
-        Route::prefix('requests')->middleware('throttle:20,1')->group(function () {
+        Route::prefix('requests')->middleware(['throttle:20,1', 'tenant.scope'])->group(function () {
             Route::get('/',        [BusRequestController::class, 'myRequests']); // GET    /api/v1/requests
             Route::post('/',       [BusRequestController::class, 'store']);      // POST   /api/v1/requests
             Route::delete('{bus}', [BusRequestController::class, 'cancel']);     // DELETE /api/v1/requests/{busId}
@@ -89,7 +95,19 @@ Route::prefix('v1')->group(function () {
 
         // Validación de QR — solo conductores y admins
         Route::post('qr/validate', [QrController::class, 'validate'])
-            ->middleware(['throttle:60,1', 'role:admin,driver']); // POST /api/v1/qr/validate
+            ->middleware(['throttle:60,1', 'tenant.scope', 'role:admin,driver']); // POST /api/v1/qr/validate
+
+        // Wallet prepago + QR dinámico de pago (M3) — NO toca /qr/validate
+        Route::prefix('wallet')->group(function () {
+            Route::get('/', [WalletController::class, 'show'])
+                ->middleware('throttle:60,1'); // GET  /api/v1/wallet
+            Route::post('recharge-mock', [WalletController::class, 'rechargeMock'])
+                ->middleware('throttle:10,1'); // POST /api/v1/wallet/recharge-mock (local|testing)
+            Route::post('qr/issue', [WalletController::class, 'issueQr'])
+                ->middleware('throttle:20,1'); // POST /api/v1/wallet/qr/issue
+        });
+        Route::post('qr/pay', [WalletController::class, 'pay'])
+            ->middleware(['throttle:60,1', 'tenant.scope', 'role:admin,driver']); // POST /api/v1/qr/pay
 
         // Broadcast global — solo admin
         Route::post('admin/broadcast', [NotificationController::class, 'broadcast'])

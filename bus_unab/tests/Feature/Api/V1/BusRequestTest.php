@@ -22,7 +22,7 @@ class BusRequestTest extends TestCase
     {
         parent::setUp();
 
-        $this->student = User::factory()->create(['role' => 'student']);
+        $this->student = User::factory()->create(['role' => 'pasajero']);
 
         $this->bus = Bus::create([
             'name'                => 'Ruta 1',

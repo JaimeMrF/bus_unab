@@ -23,8 +23,8 @@ class BusStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-truck')
                 ->color('success'),
 
-            Stat::make('Usuarios Registrados', User::where('role', 'student')->count())
-                ->description('Estudiantes')
+            Stat::make('Usuarios Registrados', User::whereIn('role', ['pasajero', 'student'])->count())
+                ->description('Pasajeros')
                 ->descriptionIcon('heroicon-m-users')
                 ->color('primary'),
 

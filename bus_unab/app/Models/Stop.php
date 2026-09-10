@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Stop extends Model
 {
     use SoftDeletes;
+    use BelongsToTenant;
 
     protected $fillable = [
         'name',
@@ -16,6 +18,7 @@ class Stop extends Model
         'longitude',
         'radius_meters',
         'is_active',
+        'transportadora_id',
     ];
 
     protected function casts(): array

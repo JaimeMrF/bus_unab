@@ -21,11 +21,14 @@ class GpsMobileService
 
     public function __construct()
     {
-        $this->baseUrl    = config('gpsmobile.base_url');
-        $this->codUserInc = config('gpsmobile.cod_user_inc');
-        $this->defaultLat = config('gpsmobile.default_lat');
-        $this->defaultLng = config('gpsmobile.default_lng');
-        $this->timeout    = config('gpsmobile.timeout');
+        // Casts defensivos: sin GPSMOBILE_* en .env, config() puede devolver
+        // string/null y rompe las propiedades estrictamente tipadas (TypeError 500).
+        // Defaults coinciden con config/gpsmobile.php.
+        $this->baseUrl    = (string) config('gpsmobile.base_url', 'http://gpsmobile.co:4000');
+        $this->codUserInc = (int) config('gpsmobile.cod_user_inc', 110571);
+        $this->defaultLat = (float) config('gpsmobile.default_lat', 7.1218);
+        $this->defaultLng = (float) config('gpsmobile.default_lng', -73.1158);
+        $this->timeout    = (int) config('gpsmobile.timeout', 10);
     }
 
     /**

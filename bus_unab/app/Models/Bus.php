@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Bus extends Model
 {
     use SoftDeletes;
+    use BelongsToTenant;
 
     protected $fillable = [
         'name',
@@ -15,6 +17,7 @@ class Bus extends Model
         'capacity',
         'external_vehicle_id',
         'is_active',
+        'transportadora_id',
     ];
 
     protected function casts(): array
