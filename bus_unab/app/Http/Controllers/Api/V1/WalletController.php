@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\InsufficientFundsException;
+use App\Models\Concerns\GlobalTenantScope;
+use App\Models\User;
 use App\Models\Wallet;
 use App\Services\QrPaymentService;
 use App\Services\WalletService;
@@ -129,7 +131,11 @@ class WalletController extends BaseController
             'contraparte'    => $asiento->contraparte,
             'reference'      => $asiento->reference,
             'saldo_restante' => (int) $token->wallet->fresh()->balance_centavos,
-            'pasajero'       => $token->user?->name,
+            // El pasajero suele ser dato compartido (transportadora_id NULL):
+            // se resuelve SIN el GlobalScope de tenant, que en esta ruta está
+            // puesto por tenant.scope con el tenant del CONDUCTOR.
+            'pasajero'       => User::withoutGlobalScope(GlobalTenantScope::class)
+                ->find($token->user_id)?->name,
         ], 'Abordaje cobrado');
     }
 }

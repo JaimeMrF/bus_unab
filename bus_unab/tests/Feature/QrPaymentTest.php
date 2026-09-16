@@ -89,6 +89,30 @@ class QrPaymentTest extends TestCase
             ->assertStatus(403);
     }
 
+    /**
+     * F3 · mPOS: con el contexto de tenant del CONDUCTOR activo (middleware
+     * tenant.scope), el nombre del pasajero —dato compartido con tenant NULL—
+     * debe resolverse igualmente en la respuesta de pay().
+     */
+    public function test_pay_reports_passenger_name_under_driver_tenant_context(): void
+    {
+        $tenant = \App\Models\Transportadora::create([
+            'nombre' => 'Coop BGA Región',
+            'slug'   => 'coop-bga-region',
+        ]);
+        $this->driver->transportadora_id = $tenant->id;
+        $this->driver->save();
+        // pasajero: transportadora_id NULL (viaja en cualquier empresa de la ciudad)
+
+        $this->fundWallet(500000);
+        [, $qr] = $this->issue();
+
+        $this->actingAs($this->driver, 'sanctum')
+            ->postJson('/api/v1/qr/pay', ['qr' => $qr])
+            ->assertStatus(200)
+            ->assertJsonPath('data.pasajero', $this->passenger->name);
+    }
+
     public function test_expired_token_rejected(): void
     {
         $this->fundWallet(500000);
