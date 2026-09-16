@@ -23,8 +23,8 @@ F0 Foundations multi-tenant
 > |------|-----------|------------------------|
 > | F0 | Foundations multi-tenant (transportadoras, scopes, migraciones) | HECHA |
 > | F1 | Paneles con datos reales: /admin SaaS + /empresa tenant (el backend de wallet/QR/roles tambien cayo aqui) | HECHA |
-> | F2 | Wallet + QR dinamico EN LA APP del pasajero (UI Kotlin sobre endpoints existentes) | HECHA (2026-09-14) |
-> | F3 | mPOS conductor en la app (cobro camara -> POST /qr/pay, endpoint ya operativo) | HECHA (2026-09-14) |
+> | F2 | Wallet + QR dinamico EN LA APP del pasajero (UI Kotlin sobre endpoints existentes) | HECHA (2026-09-14) — compila+smoke API OK; **falta E2E en dispositivo** |
+> | F3 | mPOS conductor en la app (cobro camara -> POST /qr/pay, endpoint ya operativo) | HECHA (2026-09-14) — compila+smoke API OK; **falta E2E camara en dispositivo** |
 > | F4 | NFC + recarga con proveedor real de pagos | BLOQUEADA (API keys + marca final) |
 > | F5 | Lanzamiento piloto: 1-2 transportadoras reales + deploy (bus.finsik.site corre codigo viejo) | PENDIENTE |
 >
