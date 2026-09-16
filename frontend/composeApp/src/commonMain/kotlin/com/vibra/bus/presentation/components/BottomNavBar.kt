@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.QrCode
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -104,7 +104,7 @@ fun BottomNavBar(
 fun studentNavItems(): List<NavItem> = listOf(
     NavItem("Inicio",     Icons.Default.Home,          "home"),
     NavItem("Mis Viajes", Icons.Default.DirectionsBus, "trips"),
-    NavItem("QR",         Icons.Default.QrCode,        "qr"),
+    NavItem("Wallet",     Icons.Default.Wallet,        "qr"),
     NavItem("Alertas",    Icons.Default.Notifications, "notifications"),
     NavItem("Perfil",     Icons.Default.Person,        "profile"),
 )

@@ -6,12 +6,14 @@ import com.vibra.bus.data.api.BusApi
 import com.vibra.bus.data.api.PoiApi
 import com.vibra.bus.data.api.RequestApi
 import com.vibra.bus.data.api.StopApi
+import com.vibra.bus.data.api.WalletApi
 import com.vibra.bus.data.api.createKtorClient
 import com.vibra.bus.data.repository.AuthRepository
 import com.vibra.bus.data.repository.BusRepository
 import com.vibra.bus.data.repository.PoiRepository
 import com.vibra.bus.data.repository.RequestRepository
 import com.vibra.bus.data.repository.StopRepository
+import com.vibra.bus.data.repository.WalletRepository
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.presentation.viewmodel.DriverModeViewModel
 import com.vibra.bus.presentation.viewmodel.HomeViewModel
@@ -20,6 +22,7 @@ import com.vibra.bus.presentation.viewmodel.MyTripsViewModel
 import com.vibra.bus.presentation.viewmodel.NotificationsViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
+import com.vibra.bus.presentation.viewmodel.WalletViewModel
 import com.vibra.bus.util.AppSettings
 import org.koin.compose.viewmodel.dsl.viewModel
 import org.koin.core.module.Module
@@ -42,6 +45,7 @@ val commonModule = module {
     single { RequestApi(get()) }
     single { PoiApi(get()) }
     single { com.vibra.bus.data.api.GoogleMapsApi(get()) }
+    single { WalletApi(get()) }
 
     // Repositories
     single { AuthRepository(get(), get()) }
@@ -49,6 +53,7 @@ val commonModule = module {
     single { StopRepository(get()) }
     single { RequestRepository(get(), get()) }
     single { PoiRepository(get()) }
+    single { WalletRepository(get()) }
 
     // ViewModels
     viewModel { AuthViewModel(get(), get(), get()) }
@@ -60,5 +65,6 @@ val commonModule = module {
     viewModel { ProfileViewModel(get()) }
     viewModel { DriverModeViewModel(get(), get(), get()) }
     viewModel { com.vibra.bus.presentation.viewmodel.WaitingBusViewModel(get()) }
-    viewModel { com.vibra.bus.presentation.viewmodel.QRScannerViewModel(get()) }
+    viewModel { com.vibra.bus.presentation.viewmodel.QRScannerViewModel(get(), get()) }
+    viewModel { WalletViewModel(get()) }
 }

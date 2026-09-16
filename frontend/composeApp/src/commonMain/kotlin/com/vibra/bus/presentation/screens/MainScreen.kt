@@ -53,7 +53,7 @@ class MainScreen : Screen {
                                            Navigator(DriverModeScreen()) { VibraBusTheme(isDark) { SlideTransition(it) } }
                                        else
                                            Navigator(MyTripsScreen())    { VibraBusTheme(isDark) { SlideTransition(it) } }
-                    "qr"            -> Navigator(MyQRScreen())           { VibraBusTheme(isDark) { SlideTransition(it) } }
+                    "qr"            -> Navigator(WalletScreen())         { VibraBusTheme(isDark) { SlideTransition(it) } }
                     "scanner"       -> Navigator(QRScannerScreen())      { VibraBusTheme(isDark) { SlideTransition(it) } }
                     "notifications" -> Navigator(NotificationsScreen())  { VibraBusTheme(isDark) { SlideTransition(it) } }
                     "profile"       -> Navigator(ProfileScreen())        { VibraBusTheme(isDark) { SlideTransition(it) } }

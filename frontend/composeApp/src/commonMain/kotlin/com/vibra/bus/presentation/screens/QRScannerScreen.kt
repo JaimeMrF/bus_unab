@@ -21,11 +21,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -45,8 +48,10 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.presentation.viewmodel.QRScannerViewModel
+import com.vibra.bus.presentation.viewmodel.ScanMode
 import com.vibra.bus.presentation.viewmodel.ScanResult
 import com.vibra.bus.presentation.viewmodel.ScanState
+import com.vibra.bus.presentation.viewmodel.formatCentavosCop
 import org.koin.compose.viewmodel.koinViewModel
 
 class QRScannerScreen : Screen {
@@ -58,11 +63,18 @@ class QRScannerScreen : Screen {
         val viewModel = koinViewModel<QRScannerViewModel>()
         val state by viewModel.state.collectAsState()
         val lastResult by viewModel.lastResult.collectAsState()
+        val mode by viewModel.mode.collectAsState()
+        val manualCode by viewModel.manualCode.collectAsState()
 
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Escanear QR", color = MaterialTheme.colorScheme.onPrimary) },
+                    title = {
+                        Text(
+                            if (mode == ScanMode.PAY) "Cobro a bordo (mPOS)" else "Escanear QR",
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    },
                     navigationIcon = {
                         if (navigator.canPop) {
                             IconButton(onClick = { navigator.pop() }) {
@@ -83,17 +95,59 @@ class QRScannerScreen : Screen {
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    // Toggle de modo: validación de acceso vs cobro de pasaje
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(
+                            selected = mode == ScanMode.ACCESS,
+                            onClick = { viewModel.setMode(ScanMode.ACCESS) },
+                            label = { Text("Acceso") },
+                        )
+                        FilterChip(
+                            selected = mode == ScanMode.PAY,
+                            onClick = { viewModel.setMode(ScanMode.PAY) },
+                            label = { Text("Cobro") },
+                        )
+                    }
                     Text(
-                        text = "Escanea el código QR del estudiante para validar su acceso",
+                        text = if (mode == ScanMode.PAY)
+                            "Escanea el QR de pago del pasajero, o digita su código manualmente"
+                        else
+                            "Escanea el código QR del pasajero para validar su acceso",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp),
                     )
                     QRScannerView(
-                        modifier = Modifier.fillMaxWidth().height(400.dp),
+                        modifier = Modifier.fillMaxWidth().height(320.dp),
                         onResult = { viewModel.onQrScanned(it) },
                     )
+
+                    // Entrada manual del código (fallback si la cámara no lee)
+                    if (mode == ScanMode.PAY) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            OutlinedTextField(
+                                value = manualCode,
+                                onValueChange = { viewModel.onManualCodeChange(it) },
+                                modifier = Modifier.weight(1f),
+                                placeholder = { Text("Pegar/escribir código del pasajero", fontSize = 12.sp) },
+                                singleLine = true,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Button(
+                                onClick = { viewModel.onManualSubmit() },
+                                enabled = manualCode.isNotBlank() && state !is ScanState.Validating,
+                            ) {
+                                Text("Cobrar")
+                            }
+                        }
+                    }
                 }
 
                 // Overlay de validando
@@ -122,7 +176,7 @@ class QRScannerScreen : Screen {
                             )
                             Spacer(Modifier.width(12.dp))
                             Text(
-                                text = "Validando acceso...",
+                                text = if (mode == ScanMode.PAY) "Cobrando pasaje..." else "Validando acceso...",
                                 color = Color.White,
                                 fontSize = 15.sp,
                             )
@@ -153,10 +207,16 @@ private fun ResultBanner(result: ScanResult) {
             subtitle = "${result.data.stop} · ${result.data.bus}",
             color = Color(0xFF2E7D32),
         )
+        is ScanResult.Charged -> BannerData(
+            icon = Icons.Default.CheckCircle,
+            title = "Cobrado ${formatCentavosCop(result.data.montoCentavos)} — ${result.data.pasajero ?: "pasajero"}",
+            subtitle = "Saldo restante: ${formatCentavosCop(result.data.saldoRestante)}",
+            color = Color(0xFF1B5E20),
+        )
         is ScanResult.Expired -> BannerData(
             icon = Icons.Default.HourglassEmpty,
             title = "QR expirado",
-            subtitle = "Pide al estudiante que genere un código nuevo",
+            subtitle = "Pide al pasajero que genere un código nuevo",
             color = Color(0xFFE65100),
         )
         is ScanResult.Invalid -> BannerData(
