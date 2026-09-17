@@ -329,7 +329,7 @@ class ProfileScreen : Screen {
                         modifier            = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text("Bucaramanga Mobility v1.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                        Text("BUCARATRANSIT v1.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                         Spacer(Modifier.height(2.dp))
                         Text(
                             "Universidad Autónoma de Bucaramanga",

@@ -1,4 +1,4 @@
-# Resumen del Pivote: de Bus UNAB a Bucaramanga Mobility
+# Resumen del Pivote: de Bus UNAB a BUCARATRANSIT
 
 Sintesis al 2026-09-09. Fuentes: .opencode/context.md, .opencode/work-log.md
 (sesiones cmd_recovery_s33, cmd_s33b_final, cmd_final y cmd_roles_h1h4),
@@ -18,7 +18,7 @@ Sintesis al 2026-09-09. Fuentes: .opencode/context.md, .opencode/work-log.md
 
 ## 2. Vision nueva
 
-"Bucaramanga Mobility" (nombre de trabajo; marca final aun por decidir): SaaS
+"BUCARATRANSIT" (marca definitiva confirmada por el usuario): SaaS
 de movilidad urbana para Bucaramanga que unifica transportadoras.
 
 - Multi-tenant: cada transportadora es un tenant aislado con panel propio

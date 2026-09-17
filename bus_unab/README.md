@@ -1,6 +1,6 @@
-# Backend — Bucaramanga Mobility (antes Bus UNAB)
+# Backend — BUCARATRANSIT (antes Bus UNAB)
 
-> Carpeta del **backend Laravel** del proyecto [Bucaramanga Mobility](../README.md) (antes "Bus UNAB — VibraBus"; pivote documentado en [`../Bucaramanga_Mobility_Rebranding/`](../Bucaramanga_Mobility_Rebranding/README.md)). El resto de este archivo es la documentación por defecto del framework Laravel.
+> Carpeta del **backend Laravel** del proyecto [BUCARATRANSIT](../README.md) (antes "Bus UNAB — VibraBus"; pivote documentado en [`../Bucaramanga_Mobility_Rebranding/`](../Bucaramanga_Mobility_Rebranding/README.md)). El resto de este archivo es la documentación por defecto del framework Laravel.
 
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 

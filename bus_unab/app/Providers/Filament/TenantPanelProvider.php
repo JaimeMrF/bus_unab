@@ -47,7 +47,7 @@ class TenantPanelProvider extends PanelProvider
             ->id('empresa')
             ->path('empresa')
             ->login()
-            ->brandName('Bucaramanga Mobility — Empresa')
+            ->brandName('BUCARATRANSIT — Empresa')
             ->colors([
                 'primary' => Color::Blue,
             ])

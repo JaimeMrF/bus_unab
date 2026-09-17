@@ -1,4 +1,4 @@
-# 📋 AUDITORÍA — Estado actual del código vs Visión "Bucaramanga Mobility"
+# 📋 AUDITORÍA — Estado actual del código vs Visión "BUCARATRANSIT"
 
 > **Misión:** SaaS multi-tenant de movilidad para Bucaramanga (transportadoras = tenants, wallet prepago, QR dinámico/NFC, conductor como mPOS, Super Admin).
 > **Fuente de verdad de la visión:** `Bucaramanga_Mobility_Rebranding/PROMPT_IA.md` y `README.md` de esta carpeta.
@@ -79,7 +79,7 @@ Confirmado por inspección exhaustiva de `bus_unab/database/migrations/` (16 arc
 
 ### 3.6 Config/branding
 - **Evidencia:** `.env.example:1` `APP_NAME=Laravel`; panel con `brandName('Bus UNAB — Admin')` (`AdminPanelProvider.php:32`).
-- **Refactor:** visible branding a nombre de trabajo "Bucaramanga Mobility" — gestionado por M4 del plan, **no** en este doc.
+- **Refactor:** visible branding a marca definitiva "BUCARATRANSIT" — gestionado por M4 del plan, **no** en este doc.
 
 ---
 

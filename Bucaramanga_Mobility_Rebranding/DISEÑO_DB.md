@@ -1,4 +1,4 @@
-# 🗄️ DISEÑO_DB — Esquema Multi-Tenant "Bucaramanga Mobility"
+# 🗄️ DISEÑO_DB — Esquema Multi-Tenant "BUCARATRANSIT"
 
 > Documento de diseño (M2 · S2.1.2). Baseline verificado: 16 migraciones en `bus_unab/database/migrations/` (de `0001_01_01_000000_create_users_table.php` a `2026_05_02_222457_create_bus_route_waypoints_table.php`), sin ninguna tabla de tenant/wallet/QR-pago.
 > Stack: **Laravel 12** + **Filament 3.3** + **Sanctum 4.3** (`bus_unab/composer.json:9-13`), **MySQL en producción** (`bus_unab/app.yaml:16-20`) y **SQLite en desarrollo** (patrón documentado en `2026_04_17_400000_add_driver_role_to_users.php:14-15`).

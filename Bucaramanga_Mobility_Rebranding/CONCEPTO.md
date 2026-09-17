@@ -1,4 +1,4 @@
-# CONCEPTO — Bucaramanga Mobility (Pivote de "Bus UNAB / VibraBus")
+# CONCEPTO — BUCARATRANSIT (Pivote de "Bus UNAB / VibraBus")
 
 > Documento conceptual del pivote. Fuentes: `PROMPT_IA.md` (brief), `README.md` de esta carpeta (visión), `.opencode/context.md` (baseline técnico).
 > Fase: M1 · Task T1.1 · Subtask S1.1.1
@@ -7,15 +7,15 @@
 
 ## 1. Marca de trabajo
 
-**Nombre de trabajo: "Bucaramanga Mobility"**
+**Nombre de marca: "BUCARATRANSIT"**
 
-Se usa como nombre provisional (working name) para toda la comunicación visible del proyecto —documentación, UI, panel de administración— mientras se decide el nombre comercial definitivo. Ver sección 6.
+Marca definitiva comercial para toda la comunicación visible del proyecto —documentación, UI, panel de administración— evolucionada desde el working name provisional "Bucaramanga Mobility". Ver sección 6.
 
 - **Qué es:** un **SaaS de movilidad urbana** que unifica a las transportadoras de Bucaramanga en una sola plataforma digital.
 - **Qué dejamos de ser:** una app universitaria de rastreo de buses (Bus UNAB / VibraBus), un nicho cerrado a estudiantes de una sola institución.
 - **Antes → Ahora:**
 
-| Dimensión | Bus UNAB / VibraBus (antes) | Bucaramanga Mobility (ahora) |
+| Dimensión | Bus UNAB / VibraBus (antes) | BUCARATRANSIT (ahora) |
 |---|---|---|
 | Público | Estudiantes UNAB (`@unab.edu.co`) | Cualquier pasajero de Bucaramanga |
 | Operador | UNAB (único) | N transportadoras (multi-tenant) |
@@ -85,6 +85,6 @@ Se usa como nombre provisional (working name) para toda la comunicación visible
 
 ## 6. Nombre de marca definitivo
 
-> **Nombre de marca definitivo: DECISIÓN PENDIENTE DEL USUARIO.**
+> **Nombre de marca definitivo: CONFIRMADO POR EL USUARIO.**
 >
-> Se usa **"Bucaramanga Mobility"** exclusivamente como *nombre de trabajo*. La elección final es una decisión de trademark/identidad comercial que corresponde al dueño del proyecto; involucra verificación de registro de marca, dominio y App Store/Play Store. Mientras no se confirme, todo el rebranding visible apunta a este working name y el rename final es un pase mecánico sobre la `MATRIZ_BRANDING.md`.
+> Se confirma **"BUCARATRANSIT"** como marca comercial definitiva de la plataforma. La Fase A del rebranding visible queda completada en toda la UI, manifiesto, paneles de Filament y documentación. Ver detalle en `NAMING_DECISION.md` y `MATRIZ_BRANDING.md`.

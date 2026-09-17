@@ -1,6 +1,6 @@
-# 🗺️ Plan Maestro: Migración Total a Google Cloud (Bucaramanga Mobility)
+# 🗺️ Plan Maestro: Migración Total a Google Cloud (BUCARATRANSIT)
 
-> **Proyecto en pivote a Bucaramanga Mobility** — ver README de [`Bucaramanga_Mobility_Rebranding/`](Bucaramanga_Mobility_Rebranding/README.md). El flujo descrito corresponde al sistema Bus UNAB anterior; los nombres de recursos GCP citados son literales y están **pendientes de renombrar** (afectan OAuth/Firebase — tema de API keys pospuesto).
+> **Proyecto en evolución a BUCARATRANSIT** — ver README de [`Bucaramanga_Mobility_Rebranding/`](Bucaramanga_Mobility_Rebranding/README.md). El flujo descrito corresponde al sistema Bus UNAB anterior; los nombres de recursos GCP citados son literales y están **pendientes de renombrar** (afectan OAuth/Firebase — tema de API keys pospuesto).
 
 Esta es la guía definitiva para mover todo tu ecosistema (Backend, Base de Datos, Mapas y Auth) a Google Cloud desde cero.
 

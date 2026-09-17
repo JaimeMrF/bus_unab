@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Transportadora = TENANT raíz del SaaS "Bucaramanga Mobility" (M3 · S3.1.1).
+ * Transportadora = TENANT raíz del SaaS "BUCARATRANSIT" (M3 · S3.1.1).
  *
  * Dueña de su flota (buses), sus paradas asignadas (stops), su operación de
  * rutas (route_stops/waypoints vía buses) y su equipo (users con rol

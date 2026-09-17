@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * M3 · S3.1.1 — Tabla raíz del tenant: `transportadoras` (DISEÑO_DB.md §2).
  *
  * Cada fila es una transportadora de Bucaramanga operando como inquilino
- * (tenant) del SaaS "Bucaramanga Mobility". `slug` alimenta el panel
+ * (tenant) del SaaS "BUCARATRANSIT". `slug` alimenta el panel
  * /empresa/{slug}; `plan` es solo un campo de trabajo (la suscripción real
  * vivirá en saas_subscriptions, fase posterior — PENDIENTE, no bloquea).
  *

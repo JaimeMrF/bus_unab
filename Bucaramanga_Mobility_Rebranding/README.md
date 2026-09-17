@@ -1,4 +1,4 @@
-# 🚌 Bucaramanga Mobility - Revolucionando el Transporte Público en Bucaramanga
+# 🚌 BUCARATRANSIT - Revolucionando el Transporte Público en Bucaramanga
 
 ## 🌍 Nueva Filosofía y Visión
 Bucaramanga se enfrenta a una crisis de movilidad sin precedentes. El exceso de vehículos particulares y la falta de un sistema de transporte masivo estructurado han generado trancones paralizantes. Aunque la ciudad cuenta con una amplia red de buses tradicionales e informales, la fragmentación, el desconocimiento de las rutas (especialmente en los jóvenes) y la dependencia del dinero en efectivo hacen que el sistema sea ineficiente y subutilizado.
@@ -35,7 +35,7 @@ Con esta base técnica sólida, no solo optimizamos rutas; reducimos la huella d
 
 ## 📌 Estado del pivote
 
-*Este proyecto está en pivote desde "Bus UNAB / VibraBus" hacia un SaaS de movilidad multi-tenant. El nombre visible "Bucaramanga Mobility" es un **nombre de trabajo**; la marca definitiva es decisión pendiente del usuario.*
+*Este proyecto ha evolucionado desde "Bus UNAB / VibraBus" hacia un SaaS de movilidad multi-tenant bajo la marca definitiva **BUCARATRANSIT** (ver [NAMING_DECISION.md](NAMING_DECISION.md)).*
 
 - 📘 Concepto y pilares: [CONCEPTO.md](CONCEPTO.md) · 🎨 Marca: [BRAND.md](BRAND.md) · 📖 Glosario: [GLOSSARY.md](GLOSSARY.md) · 🏷️ Decisión de nombre: [NAMING_DECISION.md](NAMING_DECISION.md)
 - 🗺️ Matriz archivo→cambio del rebranding: [MATRIZ_BRANDING.md](MATRIZ_BRANDING.md)

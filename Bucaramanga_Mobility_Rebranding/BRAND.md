@@ -1,12 +1,13 @@
-# BRAND — Matriz de marca "Bucaramanga Mobility"
+# BRAND — Matriz de marca "BUCARATRANSIT"
 
-> M1 · S1.1.1. Canónico para branding visible. Fuentes: `CONCEPTO.md` (concepto), `MATRIZ_BRANDING.md` (matriz archivo→cambio), código real (paleta). Working name vigente — ver `NAMING_DECISION.md`.
+> M1 · S1.1.1. Canónico para branding visible. Fuentes: `CONCEPTO.md` (concepto), `MATRIZ_BRANDING.md` (matriz archivo→cambio), código real (paleta). Marca definitiva confirmada — ver `NAMING_DECISION.md`.
 
 ## 1. Nombre
 
-- **Working name (visible, en uso):** **Bucaramanga Mobility**
+- **Marca definitiva (visible, en uso):** **BUCARATRANSIT**
+- **Working name anterior:** "Bucaramanga Mobility"
 - **Origen del pivote:** "Bus UNAB" / "VibraBus" (app universitaria de rastreo).
-- **Nombre definitivo:** PENDIENTE del usuario (trademark). Ningún rename de package/keystore hasta que se confirme.
+- **Estado técnico:** Fase A visible completada. Package `com.vibra.bus` y keystore congelados por continuidad operativa.
 
 ## 2. Posicionamiento
 

@@ -89,18 +89,18 @@ class SplashScreen : Screen {
                 Spacer(Modifier.height(12.dp))
 
                 Text(
-                    text          = "BUCARAMANGA",
-                    fontSize      = 44.sp,
+                    text          = "BUCARATRANSIT",
+                    fontSize      = 38.sp,
                     fontWeight    = FontWeight.ExtraBold,
                     color         = MaterialTheme.colorScheme.primary,
-                    letterSpacing = (-1).sp,
+                    letterSpacing = (-0.5).sp,
                 )
                 Text(
-                    text          = "Mobility",
+                    text          = "Plataforma de Movilidad",
                     fontSize      = 14.sp,
                     fontWeight    = FontWeight.Normal,
                     color         = MaterialTheme.colorScheme.onSurfaceVariant,
-                    letterSpacing = 4.sp,
+                    letterSpacing = 2.sp,
                 )
                 Spacer(Modifier.height(32.dp))
                 CircularProgressIndicator(

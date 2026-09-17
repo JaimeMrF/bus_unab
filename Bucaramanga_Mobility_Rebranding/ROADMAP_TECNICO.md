@@ -1,4 +1,4 @@
-# 🛣️ ROADMAP TÉCNICO — Migración de "Bus UNAB" a "Bucaramanga Mobility" (SaaS multi-tenant)
+# 🛣️ ROADMAP TÉCNICO — Migración de "Bus UNAB" a "BUCARATRANSIT" (SaaS multi-tenant)
 
 > Documento de planificación (M2 · S2.1.3). Insumos: `AUDITORIA.md` (gaps con evidencia) y `DISEÑO_DB.md` (schema objetivo).
 > Regla de oro: **cada fase termina verificable** con `cd bus_unab && php artisan test` y `php artisan migrate:fresh --seed` (SQLite, baseline del repo), y no rompe la app KMP publicada (`/api/v1` existentes, frontend `com.vibra.bus` congelado como package).
@@ -77,7 +77,7 @@ F0 Foundations multi-tenant
 **Alcance:**
 - `AdminPanelProvider` (path `/admin`) → panel **Super Admin**: gate a `super_admin` (alias backward-compat de `admin` actual, `User.php:40-58` → `canAccessPanel`), + resources globales nuevos: `TransportadoraResource`, `SaasSubscriptionResource`, `WalletResource` (solo lectura + `ajuste_admin` vía WalletService).
 - Nuevo `TenantPanelProvider` (path `/empresa`) con tenancy de Filament (`HasTenants`/`identifyUsing(user.transportadora_id)`): Resources Bus/Stop/Route/Fare/Driver/Reportes **scoped por tenant**; gate `admin_transportadora`.
-- Branding visible en ambos paneles (`brandName('Bucaramanga Mobility')` reemplaza `'Bus UNAB — Admin'`, `AdminPanelProvider.php:32`) — coordenado con M4.
+- Branding visible en ambos paneles (`brandName('BUCARATRANSIT')` reemplaza `'Bus UNAB — Admin'`, `AdminPanelProvider.php:32`) — coordenado con M4.
 
 **Criterios de salida:** admin de tenant A NO ve ni edita datos de tenant B (test de policies + smoke manual con 2 tenants seedeados); Super Admin ve todo; login Filament por rol redirige al panel correcto.
 

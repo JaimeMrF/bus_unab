@@ -1,6 +1,6 @@
-# 🚀 Roadmap de Demostración: Bucaramanga Mobility
+# 🚀 Roadmap de Demostración: BUCARATRANSIT
 
-> **Proyecto en pivote a Bucaramanga Mobility** — ver README de [`Bucaramanga_Mobility_Rebranding/`](Bucaramanga_Mobility_Rebranding/README.md). El flujo descrito corresponde al sistema Bus UNAB anterior (incluidas sus credenciales de demo, conservadas como referencia histórica).
+> **Proyecto en evolución a BUCARATRANSIT** — ver README de [`Bucaramanga_Mobility_Rebranding/`](Bucaramanga_Mobility_Rebranding/README.md). El flujo descrito corresponde al sistema Bus UNAB anterior (incluidas sus credenciales de demo, conservadas como referencia histórica).
 
 Este documento detalla los pasos exactos para realizar una demostración impecable del prototipo mañana.
 

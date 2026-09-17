@@ -9,7 +9,7 @@ use Illuminate\Database\Seeder;
  * M3 · S3.1.3 — Tenants de demostración.
  *
  * Crea las dos transportadoras que usa el seed completo:
- *  - "Bucaramanga Mobility Demo" (slug bm-demo): tenant nuevo, sin datos
+ *  - "BUCARATRANSIT Demo" (slug bt-demo): tenant nuevo, sin datos
  *    heredados; servirá para demostrar el aislamiento entre tenants.
  *  - "Metropolitana UNAB (histórica)" (slug unab-historica): tenant al que
  *    se le backfilia TODA la data semilla preexistente (buses, stops, POI,
@@ -20,7 +20,7 @@ use Illuminate\Database\Seeder;
  */
 class TransportadoraSeeder extends Seeder
 {
-    public const SLUG_DEMO = 'bm-demo';
+    public const SLUG_DEMO = 'bt-demo';
     public const SLUG_HISTORICA = 'unab-historica';
 
     public function run(): void
@@ -28,8 +28,8 @@ class TransportadoraSeeder extends Seeder
         Transportadora::updateOrCreate(
             ['slug' => self::SLUG_DEMO],
             [
-                'nombre'         => 'Bucaramanga Mobility Demo',
-                'contacto_email' => 'demo@bucaramangamobility.co',
+                'nombre'         => 'BUCARATRANSIT Demo',
+                'contacto_email' => 'demo@bucaratransit.co',
                 'plan'           => 'basico',
                 'activo'         => true,
             ],

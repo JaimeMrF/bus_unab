@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -68,7 +67,6 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
 import vibrabus.composeapp.generated.resources.buhosaludologin
-import vibrabus.composeapp.generated.resources.logo_unab_blanco_transparente
 
 class LoginScreen : Screen {
 
@@ -161,7 +159,7 @@ class LoginScreen : Screen {
 
                 Spacer(Modifier.height(4.dp)) // ← era 8dp
 
-                // ── Logo + Bucaramanga Mobility ───────────────────────────────────
+                // ── Logo + BUCARATRANSIT ───────────────────────────────────
                 AnimatedVisibility(
                     visible = isFormVisible,
                     enter = slideInVertically(
@@ -177,21 +175,12 @@ class LoginScreen : Screen {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Image(
-                            painter = painterResource(Res.drawable.logo_unab_blanco_transparente),
-                            contentDescription = "Logo Bucaramanga Mobility",
-                            modifier = Modifier.size(80.dp),
-                            contentScale = ContentScale.Fit
-                        )
-
-                        Spacer(Modifier.width(12.dp))
-
                         Column(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.Start
                         ) {
                             Text(
-                                text = "Bucaramanga Mobility",
+                                text = "BUCARATRANSIT",
                                 fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimary,
@@ -227,8 +216,8 @@ class LoginScreen : Screen {
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        Color(0xFFF5A623).copy(alpha = 0.18f),
-                                        Color(0xFFF5A623).copy(alpha = 0.08f)
+                                        Color(0xFFF2B705).copy(alpha = 0.18f),
+                                        Color(0xFFF2B705).copy(alpha = 0.08f)
                                     )
                                 )
                             )
@@ -236,8 +225,8 @@ class LoginScreen : Screen {
                                 width = 1.5.dp,
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
-                                        Color(0xFFF5A623).copy(alpha = 0.8f),
-                                        Color(0xFFF5A623).copy(alpha = 0.4f)
+                                        Color(0xFFF2B705).copy(alpha = 0.8f),
+                                        Color(0xFFF2B705).copy(alpha = 0.4f)
                                     )
                                 ),
                                 shape = RoundedCornerShape(18.dp)
@@ -253,11 +242,11 @@ class LoginScreen : Screen {
                                 text = "⭐  TODA BUCARAMANGA",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFFF5A623),
+                                color = Color(0xFFF2B705),
                                 letterSpacing = 2.sp
                             )
                             SecondaryGlassButton(
-                                text = "Ingresa con Google (@unab.edu.co)",
+                                text = "Ingresa con Google",
                                 onClick = { viewModel.loginWithGoogle() },
                                 showRecommendedBadge = false,
                                 loading = isLoading,

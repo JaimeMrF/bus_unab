@@ -1,4 +1,4 @@
-# 🔍 AUDIT — Estado actual del código vs Visión "Bucaramanga Mobility"
+# 🔍 AUDIT — Estado actual del código vs Visión "BUCARATRANSIT"
 
 > **Misión:** SaaS multi-tenant de movilidad para Bucaramanga (transportadoras = tenants, wallet prepago, QR dinámico/NFC, conductor como mPOS, Super Admin).
 > **Fuentes de la visión:** `Bucaramanga_Mobility_Rebranding/PROMPT_IA.md` + `README.md` (esta carpeta).

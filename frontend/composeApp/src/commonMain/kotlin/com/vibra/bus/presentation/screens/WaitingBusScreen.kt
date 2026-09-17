@@ -92,7 +92,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                 text = {
                     Text(
                         "Para que la notificación del bus siga visible aunque cierres la app, " +
-                        "necesitamos que desactives la optimización de batería para VibraBus. " +
+                        "necesitamos que desactives la optimización de batería para BUCARATRANSIT. " +
                         "Toca \"Activar\" y selecciona \"No restringir\".",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

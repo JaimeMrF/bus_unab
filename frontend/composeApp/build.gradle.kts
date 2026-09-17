@@ -183,6 +183,12 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            // Debug apunta al backend local (PC corriendo `php artisan serve`).
+            // En dispositivo físico: adb reverse tcp:8000 tcp:8000
+            buildConfigField("String", "BASE_URL_ANDROID", "\"http://127.0.0.1:8000/api/v1\"")
+            buildConfigField("String", "BASE_URL_IOS", "\"http://127.0.0.1:8000/api/v1\"")
+        }
         getByName("release") {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")

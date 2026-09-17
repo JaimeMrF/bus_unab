@@ -1,6 +1,6 @@
-# 🚍 Bucaramanga Mobility — Plataforma de Movilidad para Bucaramanga (antes Bus UNAB — VibraBus)
+# 🚍 BUCARATRANSIT — Plataforma de Movilidad para Bucaramanga (antes Bus UNAB — VibraBus)
 
-> **Antes Bus UNAB — VibraBus.** El proyecto está en pivote hacia un **SaaS de movilidad urbana multi-tenant** para Bucaramanga; el nombre visible actual es un *nombre de trabajo* (decisión de marca definitiva pendiente — ver [NAMING_DECISION.md](Bucaramanga_Mobility_Rebranding/NAMING_DECISION.md)).
+> **Antes Bus UNAB — VibraBus.** El proyecto ha evolucionado hacia **BUCARATRANSIT**, un **SaaS de movilidad urbana multi-tenant** para Bucaramanga (marca definitiva confirmada — ver [NAMING_DECISION.md](Bucaramanga_Mobility_Rebranding/NAMING_DECISION.md)).
 
 Plataforma de movilidad compuesta por un **backend Laravel (API REST + paneles Filament multi-tenant)** y una **app móvil Kotlin Multiplatform (Android/iOS)**: unificación de transportadoras con wallet prepago, QR dinámico de pago y cobro a bordo (mPOS conductor).
 
@@ -43,7 +43,7 @@ php artisan key:generate
 Edita `.env` con tus datos:
 
 ```dotenv
-APP_NAME="Bucaramanga Mobility"
+APP_NAME="BUCARATRANSIT"
 APP_URL=http://localhost:8000
 
 # ── Base de datos (MySQL) ────────────────────────────────────────────────
@@ -239,4 +239,4 @@ php artisan migrate:fresh --seed   # reinicia y repuebla la BD
 
 ## 📞 Contacto
 
-Proyecto desarrollado originalmente por el equipo **VIBRA+** de la Universidad Autónoma de Bucaramanga (UNAB) — *origen académico del proyecto; hoy opera como plataforma independiente en pivote "Bucaramanga Mobility"*.
+Proyecto desarrollado originalmente por el equipo **VIBRA+** de la Universidad Autónoma de Bucaramanga (UNAB) — *origen académico del proyecto; hoy opera como plataforma independiente bajo la marca "BUCARATRANSIT"*

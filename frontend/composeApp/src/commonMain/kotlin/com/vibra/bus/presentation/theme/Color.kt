@@ -5,9 +5,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
 // Brand Colors
-val UnabPurple = Color(0xFF1D1B31)      // Deep Dark Purple
-val UnabPurpleLight = Color(0xFF5B2C8C) // Standard UNAB Purple
-val UnabOrange = Color(0xFFE9A427)      // UNAB Orange
+val UnabPurple = Color(0xFF0D2140)      // Brand deep blue
+val UnabPurpleLight = Color(0xFF13315C) // Brand primary blue #13315C
+val UnabOrange = Color(0xFFF2B705)      // Brand yellow #F2B705
 
 // Light theme — warm white background, orange primary, purple disappears
 val LightColorScheme = lightColorScheme(
@@ -61,7 +61,7 @@ object GlassColors {
     val Surface = Color(0x1AFFFFFF)
     val Border = Color(0x33FFFFFF)
     val Highlight = Color(0x4DFFFFFF)
-    val SurfaceDark = Color(0xB31D1B31)   // 70% UNAB Purple (Dark Glass)
+    val SurfaceDark = Color(0xB313315C)   // 70% brand blue glass
     val BorderDark = Color(0x33FFFFFF)    // 20% White Border
     val HighlightDark = Color(0x1AFFFFFF) // 10% White Highlight
 }

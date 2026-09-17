@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 /**
- * H1 · Rol 'student' ELIMINADO del producto (pivote Bucaramanga Mobility).
+ * H1 · Rol 'student' ELIMINADO del producto (pivote BUCARATRANSIT).
  *
  * Solo DATOS: UPDATE massivo student -> pasajero. El enum físico de la BD
  * (ver 2026_09_08_120001) conserva 'student' como valor tolerado para que

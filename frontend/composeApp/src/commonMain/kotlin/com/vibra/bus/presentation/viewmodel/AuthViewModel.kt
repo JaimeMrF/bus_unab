@@ -12,8 +12,6 @@ import com.vibra.bus.util.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 sealed class AuthEvent {
     data object NavigateToHome : AuthEvent()
@@ -102,36 +100,28 @@ class AuthViewModel(
             try {
                 val idToken = googleSignInManager.signIn()
                 if (idToken != null) {
-                    val email = extractEmailFromJwt(idToken)
-                    if (email != null && email.lowercase().endsWith("@unab.edu.co")) {
-                        when (val result = authRepository.loginWithGoogle(idToken)) {
-                            is ApiResult.Success -> {
-                                val response = result.data
-                                val userData = response.data?.user
-                                if (response.success && userData != null) {
-                                    registerFcmToken()
-                                    _uiState.value = UiState.Success(userData)
-                                    _event.value = AuthEvent.NavigateToHome
-                                } else {
-                                    val errorMsg = response.message ?: "Error con Google"
-                                    _uiState.value = UiState.Error(errorMsg)
-                                    _event.value = AuthEvent.ShowError(errorMsg)
-                                }
-                            }
-                            is ApiResult.HttpError -> {
-                                _uiState.value = UiState.Error(result.message)
-                                _event.value = AuthEvent.ShowError(result.message)
-                            }
-                            is ApiResult.NetworkError -> {
-                                _uiState.value = UiState.Error("Sin conexión a internet")
-                                _event.value = AuthEvent.ShowError("Sin conexión a internet")
+                    when (val result = authRepository.loginWithGoogle(idToken)) {
+                        is ApiResult.Success -> {
+                            val response = result.data
+                            val userData = response.data?.user
+                            if (response.success && userData != null) {
+                                registerFcmToken()
+                                _uiState.value = UiState.Success(userData)
+                                _event.value = AuthEvent.NavigateToHome
+                            } else {
+                                val errorMsg = response.message ?: "Error con Google"
+                                _uiState.value = UiState.Error(errorMsg)
+                                _event.value = AuthEvent.ShowError(errorMsg)
                             }
                         }
-                    } else {
-                        googleSignInManager.signOut()
-                        val errorMsg = "Solo puedes ingresar con una cuenta @unab.edu.co"
-                        _uiState.value = UiState.Error(errorMsg)
-                        _event.value = AuthEvent.ShowError(errorMsg)
+                        is ApiResult.HttpError -> {
+                            _uiState.value = UiState.Error(result.message)
+                            _event.value = AuthEvent.ShowError(result.message)
+                        }
+                        is ApiResult.NetworkError -> {
+                            _uiState.value = UiState.Error("Sin conexión a internet")
+                            _event.value = AuthEvent.ShowError("Sin conexión a internet")
+                        }
                     }
                 } else {
                     _uiState.value = UiState.Idle
@@ -165,18 +155,5 @@ class AuthViewModel(
 
     fun consumeEvent() {
         _event.value = null
-    }
-
-    @OptIn(ExperimentalEncodingApi::class)
-    private fun extractEmailFromJwt(token: String): String? {
-        return try {
-            val payload = token.split(".").getOrNull(1) ?: return null
-            // JWT uses base64url without padding — add it back before decoding
-            val padded = payload + "=".repeat((4 - payload.length % 4) % 4)
-            val json = Base64.UrlSafe.decode(padded).decodeToString()
-            """"email"\s*:\s*"([^"]+)"""".toRegex().find(json)?.groupValues?.get(1)
-        } catch (e: Exception) {
-            null
-        }
     }
 }
