@@ -144,8 +144,8 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        buildConfigField("String", "BASE_URL_ANDROID", "\"https://bus.finsik.site/api/v1\"")
-        buildConfigField("String", "BASE_URL_IOS", "\"https://bus.finsik.site/api/v1\"")
+        buildConfigField("String", "BASE_URL_ANDROID", "\"https://bucaratransit.duckdns.org/api/v1\"")
+        buildConfigField("String", "BASE_URL_IOS", "\"https://bucaratransit.duckdns.org/api/v1\"")
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"887389827022-oj7di7remsi2k1avdgqp8asf65rlu2h3.apps.googleusercontent.com\"")
         
         val properties = Properties()

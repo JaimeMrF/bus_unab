@@ -28,7 +28,7 @@ class VibraFirebaseMessagingService : FirebaseMessagingService() {
         val notif = remoteMessage.notification
 
         val type  = data["type"]  ?: "general"
-        val title = notif?.title  ?: data["title"] ?: "VIBRA+ Bus UNAB"
+        val title = notif?.title  ?: data["title"] ?: "BUCARATRANSIT"
         val body  = notif?.body   ?: data["body"]  ?: ""
 
         // 1. Guardar en la lista local (visible en NotificationsScreen)

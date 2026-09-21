@@ -89,7 +89,7 @@ import com.vibra.bus.util.UiState
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buho_conductor
+import vibrabus.composeapp.generated.resources.leopardo_conductor
 
 private val ButtonShape = RoundedCornerShape(14.dp)
 
@@ -233,7 +233,7 @@ class DriverModeScreen : Screen {
                                 )
                             }
                             Image(
-                                painter = painterResource(Res.drawable.buho_conductor),
+                                painter = painterResource(Res.drawable.leopardo_conductor),
                                 contentDescription = null,
                                 modifier = Modifier.size(64.dp),
                                 contentScale = ContentScale.Fit,
@@ -250,7 +250,7 @@ class DriverModeScreen : Screen {
                             .padding(horizontal = 16.dp, vertical = 14.dp)
                             .shadow(8.dp, RoundedCornerShape(20.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f))
                             .clip(RoundedCornerShape(20.dp))
-                            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, Color(0xFF7A3DB8))))
+                            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, Color(0xFF6E4A12))))
                             .padding(18.dp),
                     ) {
                         Column {
@@ -509,7 +509,7 @@ private fun BusSelectorSheet(
                     Text("¿Qué ruta estás conduciendo hoy?", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
                 }
                 Image(
-                    painter = painterResource(Res.drawable.buho_conductor),
+                    painter = painterResource(Res.drawable.leopardo_conductor),
                     contentDescription = null,
                     modifier = Modifier.size(80.dp),
                     contentScale = ContentScale.Fit,

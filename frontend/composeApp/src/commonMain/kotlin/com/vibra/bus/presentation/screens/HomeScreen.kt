@@ -77,7 +77,7 @@ import com.vibra.bus.presentation.components.BusCard
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import org.jetbrains.compose.resources.painterResource
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buho_curioso
+import vibrabus.composeapp.generated.resources.leopardo_curioso
 import com.vibra.bus.presentation.viewmodel.HomeViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.AppSettings
@@ -264,21 +264,21 @@ class HomeScreen : Screen {
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(20.dp))
-                                            .background(Color(0xFF4CAF50).copy(alpha = 0.15f))
-                                            .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.4f), RoundedCornerShape(20.dp))
+                                            .background(Color(0xFF2EBE6C).copy(alpha = 0.15f))
+                                            .border(1.dp, Color(0xFF2EBE6C).copy(alpha = 0.4f), RoundedCornerShape(20.dp))
                                             .padding(horizontal = 10.dp, vertical = 5.dp)
                                     ) {
                                         Box(
                                             modifier = Modifier
                                                 .size(6.dp)
-                                                .background(Color(0xFF4CAF50), CircleShape)
+                                                .background(Color(0xFF2EBE6C), CircleShape)
                                         )
                                         Spacer(Modifier.size(5.dp))
                                         Text(
                                             text = "En vivo",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF4CAF50)
+                                            color = Color(0xFF2EBE6C)
                                         )
                                     }
                                 }
@@ -471,7 +471,7 @@ class HomeScreen : Screen {
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Image(
-                                    painter = painterResource(Res.drawable.buho_curioso),
+                                    painter = painterResource(Res.drawable.leopardo_curioso),
                                     contentDescription = null,
                                     modifier = Modifier.size(90.dp),
                                 )

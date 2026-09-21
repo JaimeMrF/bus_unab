@@ -64,8 +64,8 @@ import com.vibra.bus.presentation.viewmodel.MyTripsViewModel
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buho_muy_triste
-import vibrabus.composeapp.generated.resources.buho_un_poco_triste
+import vibrabus.composeapp.generated.resources.leopardo_triste
+import vibrabus.composeapp.generated.resources.leopardo_triste_espera
 
 class MyTripsScreen : Screen {
 
@@ -148,7 +148,7 @@ class MyTripsScreen : Screen {
                                         EmptyState(
                                             message = "Sin viajes activos",
                                             subtitle = "Solicita un bus desde la pantalla de inicio",
-                                            image = Res.drawable.buho_un_poco_triste,
+                                            image = Res.drawable.leopardo_triste_espera,
                                         )
                                     } else {
                                         LazyColumn(contentPadding = PaddingValues(16.dp)) {
@@ -178,7 +178,7 @@ class MyTripsScreen : Screen {
                                         }
                                     }
                                 }
-                                is UiState.Error -> EmptyState(message = state.message, image = Res.drawable.buho_muy_triste)
+                                is UiState.Error -> EmptyState(message = state.message, image = Res.drawable.leopardo_triste)
                                 else -> {}
                             }
                         }

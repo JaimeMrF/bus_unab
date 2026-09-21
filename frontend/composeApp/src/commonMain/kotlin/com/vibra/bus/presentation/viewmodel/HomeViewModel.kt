@@ -57,7 +57,7 @@ class HomeViewModel(
     val sessionExpired: StateFlow<Boolean> = _sessionExpired
 
     private var pollingJob: Job? = null
-    // ✅ Coordenadas ajustadas a UNAB Bucaramanga
+    // ✅ Coordenadas ajustadas a Bucaramanga
     private var currentLocation = LatLng(7.1166, -73.1051) 
 
     init {

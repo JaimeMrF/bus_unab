@@ -1,40 +1,31 @@
 package com.vibra.bus.presentation.screens
 
-import android.graphics.Point
+import android.graphics.BitmapFactory
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng as GmsLatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapEffect
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.MarkerComposable
+import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -43,8 +34,6 @@ import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.theme.LocalIsDarkTheme
 import com.vibra.bus.util.LatLng
 import com.vibra.bus.util.MapStyle
-
-private val MODEL_SIZE_DP = 53.dp
 
 @OptIn(MapsComposeExperimentalApi::class)
 @Composable
@@ -81,11 +70,24 @@ actual fun MapViewComposable(
         }
     }
 
-    var busScreenPositions by remember { mutableStateOf(emptyMap<String, Point>()) }
-    var mapLoaded          by remember { mutableStateOf(false) }
+    var mapLoaded by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
-    val density     = LocalDensity.current
-    val modelHalfPx = with(density) { (MODEL_SIZE_DP / 2).roundToPx() }
+    // ── Icono top-down del bus (marker de Google Maps) ─────────────────────────
+    // flat=true tiende el sprite sobre el plano del mapa; rotation lo gira con el
+    // heading del bus → se ve hacia dónde va sin necesitar 3D.
+    val busIcon by produceState<BitmapDescriptor?>(null) {
+        value = try {
+            val src = BitmapFactory.decodeResource(context.resources, R.drawable.ic_bus_top)
+                ?: return@produceState null
+            val w = 96 // tamaño del marker (la fuente es 1600×1600)
+            BitmapDescriptorFactory.fromBitmap(
+                android.graphics.Bitmap.createScaledBitmap(src, w, w, true)
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     Box(modifier = modifier) {
 
@@ -106,7 +108,7 @@ actual fun MapViewComposable(
             path?.let { p ->
                 val pts = p.map { GmsLatLng(it.latitude, it.longitude) }
                 val outlineColor = if (isDark) Color(0xCCFFFFFF) else Color(0x66000000)
-                val accentColor  = if (isDark) Color(0xFFE9A427) else Color(0xFF5B2C8C)
+                val accentColor  = if (isDark) Color(0xFFE8A33D) else Color(0xFF3A3226)
                 com.google.maps.android.compose.Polyline(
                     points = pts,
                     color  = outlineColor,
@@ -153,9 +155,9 @@ actual fun MapViewComposable(
                         state   = MarkerState(GmsLatLng(stop.latitude, stop.longitude)),
                         title   = stop.name,
                         snippet = "Toca para ver en Google Maps",
-                        onClick = { 
+                        onClick = {
                             onStopSelected(stop)
-                            false // Retornar false para mostrar el InfoWindow nativo
+                            false // false para mostrar el InfoWindow nativo
                         },
                         onInfoWindowClick = {
                             val uri = android.net.Uri.parse("geo:0,0?q=${stop.latitude},${stop.longitude}(${android.net.Uri.encode(stop.name)})")
@@ -163,18 +165,16 @@ actual fun MapViewComposable(
                             intent.setPackage("com.google.android.apps.maps")
                             try {
                                 context.startActivity(intent)
-                            } catch (e: Exception) {
-                                // Fallback a navegador web si Maps no está instalado
-                                val fallbackUri = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${stop.latitude},${stop.longitude}")
-                                val fallbackIntent = android.content.Intent(android.content.Intent.ACTION_VIEW, fallbackUri)
-                                context.startActivity(fallbackIntent)
+                            } catch (_: Exception) {
+                                val fb = android.net.Uri.parse("https://www.google.com/maps/search/?api=1&query=${stop.latitude},${stop.longitude}")
+                                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, fb))
                             }
                         }
                     ) { StopMarker(isSelected = selectedStop?.id == stop.id) }
                 }
             }
 
-            // Marcadores invisibles para capturar clicks en buses
+            // ── Buses: marker de Google Maps con la imagen top-down rotada por heading ──
             buses.forEach { bus ->
                 val animLat by animateFloatAsState(
                     bus.latitude.toFloat(), tween(1500, easing = LinearEasing), label = "lat_${bus.plate}"
@@ -182,60 +182,28 @@ actual fun MapViewComposable(
                 val animLng by animateFloatAsState(
                     bus.longitude.toFloat(), tween(1500, easing = LinearEasing), label = "lng_${bus.plate}"
                 )
+                val animatedHeading by animateFloatAsState(
+                    targetValue   = bus.heading.toFloat(),
+                    animationSpec = tween(800, easing = LinearEasing),
+                    label         = "hdg_${bus.plate}",
+                )
                 val markerState = remember(bus.plate) { MarkerState(GmsLatLng(bus.latitude, bus.longitude)) }
                 LaunchedEffect(animLat, animLng) {
                     markerState.position = GmsLatLng(animLat.toDouble(), animLng.toDouble())
                 }
-                com.google.maps.android.compose.Marker(
-                    state   = markerState,
-                    title   = bus.plate,
-                    alpha   = 0f,
-                    anchor  = androidx.compose.ui.geometry.Offset(0.5f, 0.5f),
-                    onClick = { onBusSelected(bus); true },
+                Marker(
+                    state    = markerState,
+                    title    = bus.plate,
+                    icon     = busIcon,
+                    rotation = animatedHeading,
+                    flat     = true,
+                    anchor   = androidx.compose.ui.geometry.Offset(0.5f, 0.5f),
+                    onClick  = { onBusSelected(bus); true },
                 )
             }
-
-            // Actualizar posiciones en pantalla al mover la cámara
-            MapEffect(buses) { map ->
-                fun update() {
-                    val proj = map.projection
-                    busScreenPositions = buses.associate { bus ->
-                        bus.plate to proj.toScreenLocation(GmsLatLng(bus.latitude, bus.longitude))
-                    }
-                }
-                map.setOnCameraIdleListener  { update() }
-                map.setOnCameraMoveListener  { update() }
-                update()
-            }
         }
 
-        // ── Overlay buses (Canvas Compose — sin SurfaceView) ─────────────────
-        buses.forEach { bus ->
-            key(bus.plate) {
-                busScreenPositions[bus.plate]?.let { screenPos ->
-                    val animatedHeading by animateFloatAsState(
-                        targetValue   = bus.heading.toFloat(),
-                        animationSpec = tween(800, easing = LinearEasing),
-                        label         = "hdg_${bus.plate}",
-                    )
-
-                    BusIconOverlay(
-                        heading  = animatedHeading,
-                        isDark   = isDark,
-                        modifier = Modifier
-                            .size(MODEL_SIZE_DP)
-                            .offset {
-                                IntOffset(
-                                    screenPos.x - modelHalfPx,
-                                    screenPos.y - modelHalfPx,
-                                )
-                            },
-                    )
-                }
-            }
-        }
-
-        // ── Loading overlay — fades out once map tiles are ready ─────────────
+        // ── Loading overlay ──
         AnimatedVisibility(
             visible = !mapLoaded,
             exit    = fadeOut(animationSpec = tween(400)),
@@ -247,149 +215,6 @@ actual fun MapViewComposable(
                 CircularProgressIndicator(
                     color       = MaterialTheme.colorScheme.primary,
                     strokeWidth = 2.5.dp,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BusIconOverlay(heading: Float, isDark: Boolean, modifier: Modifier) {
-    val bodyColor  = if (isDark) Color(0xFF5B2C8C) else Color(0xFFE9A427)
-    val roofColor  = if (isDark) Color(0xFF4A2275) else Color(0xFFCC8500)
-    val stripeColor = if (isDark) Color(0xFFE9A427) else Color(0xFF5B2C8C)
-    val arrowColor  = if (isDark) Color(0xFFE9A427) else Color(0xFF5B2C8C)
-
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val cx = size.width  / 2f
-            val cy = size.height / 2f
-            val s  = minOf(size.width, size.height)
-
-            rotate(degrees = heading, pivot = Offset(cx, cy)) {
-
-                val bW = s * 0.48f
-                val bH = s * 0.78f
-                val bL = cx - bW / 2f
-                val bT = cy - bH / 2f
-                val bR = bL + bW
-                val bB = bT + bH
-                val cr = s * 0.09f
-
-                // — Sombra —
-                drawRoundRect(
-                    color        = Color(0x40000000),
-                    topLeft      = Offset(bL + 2.5f, bT + 2.5f),
-                    size         = Size(bW, bH),
-                    cornerRadius = CornerRadius(cr),
-                )
-
-                // — Borde blanco: contraste sobre cualquier fondo de mapa —
-                drawRoundRect(
-                    color        = Color(0xFFFFFFFF),
-                    topLeft      = Offset(bL - 2f, bT - 2f),
-                    size         = Size(bW + 4f, bH + 4f),
-                    cornerRadius = CornerRadius(cr + 1.5f),
-                )
-
-                // — Carrocería base —
-                drawRoundRect(
-                    color        = bodyColor,
-                    topLeft      = Offset(bL, bT),
-                    size         = Size(bW, bH),
-                    cornerRadius = CornerRadius(cr),
-                )
-
-                // — Panel de techo (ligeramente más oscuro) —
-                drawRoundRect(
-                    color        = roofColor,
-                    topLeft      = Offset(bL + bW * 0.13f, bT + bH * 0.11f),
-                    size         = Size(bW * 0.74f, bH * 0.78f),
-                    cornerRadius = CornerRadius(cr * 0.55f),
-                )
-
-                // — Franja lateral UNAB —
-                drawRect(
-                    color   = stripeColor,
-                    topLeft = Offset(bL, cy - s * 0.052f),
-                    size    = Size(bW, s * 0.104f),
-                )
-
-                // — Parabrisas delantero —
-                drawRoundRect(
-                    color        = Color(0xCCADD8FF),
-                    topLeft      = Offset(bL + bW * 0.10f, bT + bH * 0.025f),
-                    size         = Size(bW * 0.80f, bH * 0.115f),
-                    cornerRadius = CornerRadius(s * 0.03f),
-                )
-                // Reflejo sutil en el parabrisas
-                drawRoundRect(
-                    color        = Color(0x55FFFFFF),
-                    topLeft      = Offset(bL + bW * 0.12f, bT + bH * 0.03f),
-                    size         = Size(bW * 0.28f, bH * 0.06f),
-                    cornerRadius = CornerRadius(s * 0.02f),
-                )
-
-                // — Ventana trasera —
-                drawRoundRect(
-                    color        = Color(0x88ADD8FF),
-                    topLeft      = Offset(bL + bW * 0.14f, bT + bH * 0.855f),
-                    size         = Size(bW * 0.72f, bH * 0.09f),
-                    cornerRadius = CornerRadius(s * 0.02f),
-                )
-
-                // — Ventanas laterales (4 por lado) —
-                val winW  = bW * 0.115f
-                val winH  = bH * 0.085f
-                val winXL = bL + bW * 0.045f
-                val winXR = bR - bW * 0.045f - winW
-                listOf(0.225f, 0.360f, 0.510f, 0.645f).forEach { yRel ->
-                    val winY = bT + bH * yRel
-                    drawRoundRect(
-                        color        = Color(0x99A8D4FF),
-                        topLeft      = Offset(winXL, winY),
-                        size         = Size(winW, winH),
-                        cornerRadius = CornerRadius(s * 0.015f),
-                    )
-                    drawRoundRect(
-                        color        = Color(0x99A8D4FF),
-                        topLeft      = Offset(winXR, winY),
-                        size         = Size(winW, winH),
-                        cornerRadius = CornerRadius(s * 0.015f),
-                    )
-                }
-
-                // — Ruedas (4 arcos, dos ejes) —
-                val wR  = s * 0.052f
-                val wYf = bT + bH * 0.245f   // eje delantero
-                val wYr = bT + bH * 0.720f   // eje trasero
-                listOf(bL - wR * 0.45f, bR - wR * 0.55f).forEach { wX ->
-                    // llanta exterior (negro)
-                    drawCircle(Color(0xFF1C0D33), radius = wR,           center = Offset(wX, wYf))
-                    drawCircle(Color(0xFF1C0D33), radius = wR,           center = Offset(wX, wYr))
-                    // rin interior (gris plata)
-                    drawCircle(Color(0xFFBBBBBB), radius = wR * 0.52f,  center = Offset(wX, wYf))
-                    drawCircle(Color(0xFFBBBBBB), radius = wR * 0.52f,  center = Offset(wX, wYr))
-                }
-
-                // — Faros delanteros —
-                val headY  = bT + bH * 0.038f
-                val headR  = s * 0.04f
-                drawCircle(Color(0xFFFFE680), radius = headR, center = Offset(bL + bW * 0.18f, headY))
-                drawCircle(Color(0xFFFFE680), radius = headR, center = Offset(bR - bW * 0.18f, headY))
-
-                // — Flecha de dirección (frente) —
-                val aHalf = bW * 0.20f
-                val aTip  = bT - s * 0.025f
-                val aBase = bT + bH * 0.015f
-                drawPath(
-                    path = Path().apply {
-                        moveTo(cx, aTip)
-                        lineTo(cx - aHalf, aBase)
-                        lineTo(cx + aHalf, aBase)
-                        close()
-                    },
-                    color = arrowColor,
                 )
             }
         }

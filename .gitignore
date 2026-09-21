@@ -11,3 +11,4 @@ graphify-out/
 # Python bytecode de los scripts graphify
 __pycache__/
 *.pyc
+*.pem

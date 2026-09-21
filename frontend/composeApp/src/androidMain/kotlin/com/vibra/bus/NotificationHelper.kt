@@ -21,9 +21,9 @@ internal object NotificationHelper {
     private const val ID_FULL        = 103
     private const val ID_GENERAL     = 104
 
-    private val COLOR_PURPLE = Color.parseColor("#5B2C8C")
+    private val COLOR_GOLD = Color.parseColor("#E8A33D")
     private val COLOR_GREEN  = Color.parseColor("#2EBE6C")
-    private val COLOR_ORANGE = Color.parseColor("#E9A427")
+    private val COLOR_ORANGE = Color.parseColor("#E8A33D")
 
     // ── Canales (llamar una sola vez al arrancar el servicio) ─────────────────
 
@@ -51,7 +51,7 @@ internal object NotificationHelper {
             ).apply {
                 description      = "Alertas en tiempo real cuando tu bus se acerca o llega"
                 enableLights(true)
-                lightColor       = COLOR_PURPLE
+                lightColor       = COLOR_GOLD
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 200, 80, 200)
             }
@@ -109,7 +109,7 @@ internal object NotificationHelper {
         notify(
             context, ID_APPROACHING,
             base(context, CHANNEL_BUS)
-                .setColor(COLOR_PURPLE)
+                .setColor(COLOR_GOLD)
                 .setColorized(true)
                 .setContentTitle(title)
                 .setContentText(body)
@@ -167,7 +167,7 @@ internal object NotificationHelper {
         notify(
             context, ID_GENERAL,
             base(context, CHANNEL_INFO)
-                .setColor(COLOR_PURPLE)
+                .setColor(COLOR_GOLD)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))

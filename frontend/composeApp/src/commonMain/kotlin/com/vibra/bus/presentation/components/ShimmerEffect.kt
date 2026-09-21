@@ -38,9 +38,9 @@ fun ShimmerBox(
 
     val brush = Brush.linearGradient(
         colors = listOf(
-            Color(0xFF3D2280),
-            Color(0xFF5A3AAA),
-            Color(0xFF3D2280),
+            Color(0xFFE4C88F),
+            Color(0xFFF4E4C2),
+            Color(0xFFE4C88F),
         ),
         start = Offset(translateAnim - 200, 0f),
         end = Offset(translateAnim, 0f),

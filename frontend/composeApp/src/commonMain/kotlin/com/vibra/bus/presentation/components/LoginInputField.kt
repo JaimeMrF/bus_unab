@@ -61,7 +61,7 @@ fun LoginInputField(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         MaterialTheme.vibraBusColors.glassSurface,
-                        Color(0x1A8B5CF6) // Light purple glass with 10% opacity
+                        Color(0x1AE8A33D) // Gold glass con 10% de opacidad
                     )
                 )
             )

@@ -67,8 +67,8 @@ import com.vibra.bus.presentation.components.EmptyState
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buho_muy_triste
-import vibrabus.composeapp.generated.resources.buho_viendo_mapa
+import vibrabus.composeapp.generated.resources.leopardo_triste
+import vibrabus.composeapp.generated.resources.leopardo_mapa
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -266,7 +266,7 @@ data class BusRouteScreen(val plate: String) : Screen {
                                 EmptyState(
                                     message  = "Sin paradas asignadas",
                                     subtitle = "Esta ruta aún no tiene paradas configuradas",
-                                    image    = Res.drawable.buho_viendo_mapa,
+                                    image    = Res.drawable.leopardo_mapa,
                                 )
                             } else {
                                 LazyColumn(
@@ -287,7 +287,7 @@ data class BusRouteScreen(val plate: String) : Screen {
                             EmptyState(
                                 message  = "Error al cargar paradas",
                                 subtitle = (state as UiState.Error).message,
-                                image    = Res.drawable.buho_muy_triste,
+                                image    = Res.drawable.leopardo_triste,
                             )
                         }
                         else -> {}

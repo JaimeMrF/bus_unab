@@ -66,7 +66,7 @@ import com.vibra.bus.util.UiState
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buhosaludologin
+import vibrabus.composeapp.generated.resources.leopardo_saludo
 
 class LoginScreen : Screen {
 
@@ -148,7 +148,7 @@ class LoginScreen : Screen {
                     ) + fadeOut(animationSpec = tween(durationMillis = 300))
                 ) {
                     Image(
-                        painter = painterResource(Res.drawable.buhosaludologin),
+                        painter = painterResource(Res.drawable.leopardo_saludo),
                         contentDescription = "Búho Saludando",
                         modifier = Modifier
                             .size(220.dp) // ← ligeramente más pequeño para que quepa todo
@@ -216,8 +216,8 @@ class LoginScreen : Screen {
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        Color(0xFFF2B705).copy(alpha = 0.18f),
-                                        Color(0xFFF2B705).copy(alpha = 0.08f)
+                                        Color(0xFFE8A33D).copy(alpha = 0.18f),
+                                        Color(0xFFE8A33D).copy(alpha = 0.08f)
                                     )
                                 )
                             )
@@ -225,8 +225,8 @@ class LoginScreen : Screen {
                                 width = 1.5.dp,
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
-                                        Color(0xFFF2B705).copy(alpha = 0.8f),
-                                        Color(0xFFF2B705).copy(alpha = 0.4f)
+                                        Color(0xFFE8A33D).copy(alpha = 0.8f),
+                                        Color(0xFFE8A33D).copy(alpha = 0.4f)
                                     )
                                 ),
                                 shape = RoundedCornerShape(18.dp)
@@ -242,7 +242,7 @@ class LoginScreen : Screen {
                                 text = "⭐  TODA BUCARAMANGA",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFFF2B705),
+                                color = Color(0xFFE8A33D),
                                 letterSpacing = 2.sp
                             )
                             SecondaryGlassButton(

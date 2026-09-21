@@ -23,13 +23,13 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buho_curioso
+import vibrabus.composeapp.generated.resources.leopardo_curioso
 
 @Composable
 fun EmptyState(
     message: String,
     subtitle: String = "",
-    image: DrawableResource = Res.drawable.buho_curioso,
+    image: DrawableResource = Res.drawable.leopardo_curioso,
     ctaLabel: String? = null,
     onCtaClick: (() -> Unit)? = null,
 ) {

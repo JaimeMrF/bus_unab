@@ -70,7 +70,7 @@ import com.vibra.bus.presentation.components.EmptyState
 import com.vibra.bus.presentation.theme.VibraBusShapes
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buho_muy_triste
+import vibrabus.composeapp.generated.resources.leopardo_triste
 import com.vibra.bus.util.UiState
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -192,15 +192,15 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
-                                    .background(Color(0xFF4CAF50).copy(alpha = 0.2f))
-                                    .border(1.dp, Color(0xFF4CAF50).copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                                    .background(Color(0xFF2EBE6C).copy(alpha = 0.2f))
+                                    .border(1.dp, Color(0xFF2EBE6C).copy(alpha = 0.5f), RoundedCornerShape(20.dp))
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text      = "✓ Seleccionada",
                                     fontSize  = 11.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color     = Color(0xFF4CAF50)
+                                    color     = Color(0xFF2EBE6C)
                                 )
                             }
                         }
@@ -247,7 +247,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             EmptyState(
                                 message = "Error al cargar paradas",
                                 subtitle = state.message,
-                                image = Res.drawable.buho_muy_triste,
+                                image = Res.drawable.leopardo_triste,
                             )
                         }
                         else -> {}

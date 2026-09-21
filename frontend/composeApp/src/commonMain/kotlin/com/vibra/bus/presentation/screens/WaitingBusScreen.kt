@@ -34,8 +34,8 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buho_con_celular
-import vibrabus.composeapp.generated.resources.buho_viendo_mapa
+import vibrabus.composeapp.generated.resources.leopardo_celular
+import vibrabus.composeapp.generated.resources.leopardo_mapa
 
 expect fun startBusTracking(plate: String, stopLat: Double, stopLng: Double, stopName: String)
 expect fun stopBusTracking()
@@ -76,7 +76,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                 },
                 icon = {
                     Image(
-                        painter = painterResource(Res.drawable.buho_con_celular),
+                        painter = painterResource(Res.drawable.leopardo_celular),
                         contentDescription = null,
                         modifier = Modifier.size(96.dp),
                         contentScale = ContentScale.Fit,
@@ -222,7 +222,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                             }
                             if (bus == null) {
                                 Image(
-                                    painter = painterResource(Res.drawable.buho_viendo_mapa),
+                                    painter = painterResource(Res.drawable.leopardo_mapa),
                                     contentDescription = null,
                                     modifier = Modifier.size(56.dp),
                                     contentScale = ContentScale.Fit,

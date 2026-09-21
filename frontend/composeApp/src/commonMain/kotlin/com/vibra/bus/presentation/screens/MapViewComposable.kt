@@ -89,8 +89,8 @@ fun BusMarker(
         animationSpec = tween(durationMillis = 500),
         label = "bus_marker_rotation"
     )
-    val bgColor = if (isSelected) Color(0xFF6200EE) else Color.White
-    val iconColor = if (isSelected) Color.White else Color(0xFF6200EE)
+    val bgColor = if (isSelected) Color(0xFFE8A33D) else Color.White
+    val iconColor = if (isSelected) Color(0xFF17130E) else Color(0xFFE8A33D)
 
     Box(
         modifier = modifier
@@ -103,7 +103,7 @@ fun BusMarker(
                 center = Offset(size.width / 2, size.height / 2 + 3.dp.toPx()))
             drawCircle(color = bgColor, radius = size.minDimension / 2)
             if (!isSelected) {
-                drawCircle(color = Color(0xFF6200EE), radius = size.minDimension / 2,
+                drawCircle(color = Color(0xFFE8A33D), radius = size.minDimension / 2,
                     style = Stroke(width = 2.5.dp.toPx()))
             }
         }

@@ -58,7 +58,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.buhosaludologin
+import vibrabus.composeapp.generated.resources.leopardo_saludo
 
 class MyQRScreen : Screen {
 
@@ -159,7 +159,7 @@ class MyQRScreen : Screen {
                             )
                         } else {
                             Image(
-                                painter            = painterResource(Res.drawable.buhosaludologin),
+                                painter            = painterResource(Res.drawable.leopardo_saludo),
                                 contentDescription = "Mascota BUCARATRANSIT",
                                 modifier           = Modifier.fillMaxSize().padding(8.dp),
                                 contentScale       = ContentScale.Fit,
