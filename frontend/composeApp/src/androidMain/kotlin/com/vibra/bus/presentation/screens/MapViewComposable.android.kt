@@ -26,9 +26,11 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerComposable
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.vibra.bus.R
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.theme.LocalIsDarkTheme
@@ -79,11 +81,14 @@ actual fun MapViewComposable(
     val busIcon by produceState<BitmapDescriptor?>(null) {
         value = try {
             val src = BitmapFactory.decodeResource(context.resources, R.drawable.ic_bus_top)
-                ?: return@produceState null
-            val w = 96 // tamaño del marker (la fuente es 1600×1600)
-            BitmapDescriptorFactory.fromBitmap(
-                android.graphics.Bitmap.createScaledBitmap(src, w, w, true)
-            )
+            if (src == null) {
+                null
+            } else {
+                val w = 96 // tamaño del marker (la fuente es 1600×1600)
+                BitmapDescriptorFactory.fromBitmap(
+                    android.graphics.Bitmap.createScaledBitmap(src, w, w, true)
+                )
+            }
         } catch (_: Exception) {
             null
         }
@@ -98,6 +103,9 @@ actual fun MapViewComposable(
             uiSettings = MapUiSettings(
                 zoomControlsEnabled  = false,
                 myLocationButtonEnabled = false,
+                // vista siempre top / norte arriba: sin giro ni inclinación
+                rotationGesturesEnabled = false,
+                tiltGesturesEnabled   = false,
             ),
             properties = MapProperties(
                 mapStyleOptions = if (isDark) MapStyleOptions(MapStyle.json) else null,
@@ -108,7 +116,7 @@ actual fun MapViewComposable(
             path?.let { p ->
                 val pts = p.map { GmsLatLng(it.latitude, it.longitude) }
                 val outlineColor = if (isDark) Color(0xCCFFFFFF) else Color(0x66000000)
-                val accentColor  = if (isDark) Color(0xFFE8A33D) else Color(0xFF3A3226)
+                val accentColor  = if (isDark) Color(0xFFFCBB01) else Color(0xFF01265A)
                 com.google.maps.android.compose.Polyline(
                     points = pts,
                     color  = outlineColor,
