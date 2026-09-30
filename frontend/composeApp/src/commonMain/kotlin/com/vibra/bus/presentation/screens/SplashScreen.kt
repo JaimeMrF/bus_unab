@@ -1,11 +1,14 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,6 +18,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,8 +30,11 @@ import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.util.AppSettings
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+import vibrabus.composeapp.generated.resources.Res
+import vibrabus.composeapp.generated.resources.logo_bucaratransit
 
 class SplashScreen : Screen {
 
@@ -87,6 +95,17 @@ class SplashScreen : Screen {
                 )
 
                 Spacer(Modifier.height(12.dp))
+
+                Image(
+                    painter = painterResource(Res.drawable.logo_bucaratransit),
+                    contentDescription = "Logo BUCARATRANSIT",
+                    modifier = Modifier
+                        .size(width = 240.dp, height = 160.dp)
+                        .clip(RoundedCornerShape(20.dp)),
+                    contentScale = ContentScale.Fit,
+                )
+
+                Spacer(Modifier.height(20.dp))
 
                 Text(
                     text          = "BUCARATRANSIT",

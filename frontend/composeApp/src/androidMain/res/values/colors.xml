@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Identidad BUCARATRANSIT (tomada del logo oficial) -->
+    <color name="brand_blue">#01265A</color>
+    <color name="brand_yellow">#FCBB01</color>
+</resources>

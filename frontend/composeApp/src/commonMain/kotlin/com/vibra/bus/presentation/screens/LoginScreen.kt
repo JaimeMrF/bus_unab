@@ -67,6 +67,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
 import vibrabus.composeapp.generated.resources.leopardo_saludo
+import vibrabus.composeapp.generated.resources.logo_bucaratransit
 
 class LoginScreen : Screen {
 
@@ -134,6 +135,27 @@ class LoginScreen : Screen {
                 if (showDriverForm) {
                     Spacer(Modifier.height(24.dp))
                 }
+
+                // ── Logo BUCARATRANSIT ────────────────────────────────────────────
+                AnimatedVisibility(
+                    visible = isFormVisible,
+                    enter = slideInVertically(
+                        initialOffsetY = { -it / 3 },
+                        animationSpec = tween(durationMillis = 800)
+                    ) + fadeIn(animationSpec = tween(durationMillis = 800)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 300))
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.logo_bucaratransit),
+                        contentDescription = "Logo BUCARATRANSIT",
+                        modifier = Modifier
+                            .size(width = 200.dp, height = 134.dp)
+                            .clip(RoundedCornerShape(18.dp)),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+
+                Spacer(Modifier.height(8.dp))
 
                 // ── Mascota Búho ──────────────────────────────────────────────────
                 AnimatedVisibility(
@@ -216,8 +238,8 @@ class LoginScreen : Screen {
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-                                        Color(0xFFE8A33D).copy(alpha = 0.18f),
-                                        Color(0xFFE8A33D).copy(alpha = 0.08f)
+                                        Color(0xFFFCBB01).copy(alpha = 0.18f),
+                                        Color(0xFFFCBB01).copy(alpha = 0.08f)
                                     )
                                 )
                             )
@@ -225,8 +247,8 @@ class LoginScreen : Screen {
                                 width = 1.5.dp,
                                 brush = Brush.horizontalGradient(
                                     colors = listOf(
-                                        Color(0xFFE8A33D).copy(alpha = 0.8f),
-                                        Color(0xFFE8A33D).copy(alpha = 0.4f)
+                                        Color(0xFFFCBB01).copy(alpha = 0.8f),
+                                        Color(0xFFFCBB01).copy(alpha = 0.4f)
                                     )
                                 ),
                                 shape = RoundedCornerShape(18.dp)
@@ -242,7 +264,7 @@ class LoginScreen : Screen {
                                 text = "⭐  TODA BUCARAMANGA",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFFE8A33D),
+                                color = Color(0xFFFCBB01),
                                 letterSpacing = 2.sp
                             )
                             SecondaryGlassButton(

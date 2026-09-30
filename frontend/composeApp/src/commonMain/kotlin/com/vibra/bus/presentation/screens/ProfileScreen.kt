@@ -110,9 +110,9 @@ class ProfileScreen : Screen {
 
                 // ── Header con gradiente ──────────────────────────────────────
                 val headerGradient = if (isDark)
-                    Brush.verticalGradient(listOf(Color(0xFF5B3D0A), Color(0xFFE8A33D)))
+                    Brush.verticalGradient(listOf(Color(0xFF001A3D), Color(0xFF01265A)))
                 else
-                    Brush.verticalGradient(listOf(Color(0xFFCC8500), Color(0xFFE8A33D)))
+                    Brush.verticalGradient(listOf(Color(0xFF2A6FD6), Color(0xFF01265A)))
 
                 Box(
                     modifier = Modifier
@@ -134,9 +134,9 @@ class ProfileScreen : Screen {
                             )
                         } else {
                             val avatarGradient = if (isDark)
-                                Brush.radialGradient(listOf(Color(0xFF2A241B), Color(0xFF6E4A12)))
+                                Brush.radialGradient(listOf(Color(0xFF001A3D), Color(0xFF01265A)))
                             else
-                                Brush.radialGradient(listOf(Color(0xFFE8A33D), Color(0xFFCC8500)))
+                                Brush.radialGradient(listOf(Color(0xFFFCBB01), Color(0xFFC99400)))
                             Box(
                                 modifier = Modifier
                                     .size(96.dp)
