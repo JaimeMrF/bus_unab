@@ -27,7 +27,7 @@ Estrategia de color: **Committed** — el dorado leopardo lleva la superficie (p
 - **Glass panels**: `GlassColors` (Surface/Border/Highlight blanco translúcido; variante dark espresso glass) — paneles flotantes sobre el mapa.
 - **Botones**: `GlassButton` / `PrimaryGlassButton` / `SecondaryGlassButton` (glass con resplandor).
 - **Barra de navegación**: `BottomNavBar` con vibraBusColors.
-- **Mapa** (Google Maps, `maps.compose`): bus renderizado **2D Canvas orientado por heading** (`BusIconOverlay`), paradas con marcadores, polilínea punteada para ETA. Leopard gold/espresso en el bus del mapa.
+- **Mapa** (MapLibre GL + tiles vectoriales de OpenFreeMap — sin API key): bus renderizado como `SymbolLayer` rotado por el `heading` de cada feature, paradas y usuario como `CircleLayer`, polilínea punteada (halo + línea + guía) para la ruta. Estilo dark/light según el tema, cámara siempre Norte-arriba (sin gestos de giro ni inclinación).
 - **QR** de pasajero (rotativo) y scanner conductor (mPOS).
 
 ## Type

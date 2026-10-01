@@ -27,6 +27,5 @@ efectivo y reduce la evasión.
   (`bus_unab_3d.glb`) y las vistas pre-renderizadas fueron descartados y eliminados del repo.
 
 ## No inventado / pendiente
-- Google Maps API key nueva (MAPS_API_KEY en `local.properties` y `GOOGLE_MAPS_API_KEY` del backend).
 - FCM_SERVER_KEY (push) opcional.
 - Confirmación de que el web client id de Google coincide con el de Firebase.

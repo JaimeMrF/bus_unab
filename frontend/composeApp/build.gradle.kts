@@ -102,9 +102,8 @@ kotlin {
             // Coroutines Android
             implementation(libs.kotlinx.coroutines.android)
 
-            // Maps
-            implementation(libs.google.maps.compose)
-            implementation(libs.play.services.maps)
+            // Maps — MapLibre + OpenFreeMap (sin API key ni tarjeta)
+            implementation(libs.maplibre.android)
             implementation(libs.play.services.location)
 
             // Firebase Android
@@ -153,8 +152,7 @@ android {
         if (localPropertiesFile.exists()) {
             properties.load(localPropertiesFile.inputStream())
         }
-        val mapsApiKey = properties.getProperty("MAPS_API_KEY") ?: ""
-        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        // Ya no hay meta-data de API key: el mapa usa MapLibre + OpenFreeMap (sin key).
     }
 
     buildFeatures {

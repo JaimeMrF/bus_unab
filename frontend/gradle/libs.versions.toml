@@ -15,6 +15,7 @@ gitlive-firebase = "2.1.0"
 google-maps-compose = "6.2.1"
 play-services-maps = "19.0.0"
 play-services-location = "21.3.0"
+maplibre = "13.6.1"
 google-services = "4.4.2"
 firebase-bom = "33.7.0"
 credential-manager = "1.3.0"
@@ -73,9 +74,8 @@ multiplatform-settings-coroutines = { module = "com.russhwolf:multiplatform-sett
 gitlive-firebase-app = { module = "dev.gitlive:firebase-app", version.ref = "gitlive-firebase" }
 gitlive-firebase-messaging = { module = "dev.gitlive:firebase-messaging", version.ref = "gitlive-firebase" }
 
-# Google Maps (Android)
-google-maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "google-maps-compose" }
-play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "play-services-maps" }
+# Mapas: MapLibre + tiles vectoriales de OpenFreeMap (sin API key)
+maplibre-android = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "play-services-location" }
 
 # Firebase Android

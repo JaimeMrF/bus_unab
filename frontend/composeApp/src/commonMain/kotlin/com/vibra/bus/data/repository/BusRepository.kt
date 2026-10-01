@@ -11,7 +11,6 @@ import com.vibra.bus.util.ApiResult
 
 class BusRepository(
     private val api: BusApi,
-    private val googleMapsApi: com.vibra.bus.data.api.GoogleMapsApi? = null
 ) {
     suspend fun getBusCatalog(): ApiResult<BusCatalogResponse> = api.getBusCatalog()
     suspend fun getBuses(lat: Double, lng: Double): ApiResult<BusesResponse> = api.getBuses(lat, lng)
@@ -28,7 +27,4 @@ class BusRepository(
 
     suspend fun updateDriverLocation(plate: String, lat: Double, lng: Double, heading: Int) =
         api.updateDriverLocation(plate, lat, lng, heading)
-
-    suspend fun getDirections(origin: String, destination: String, waypoints: String?, apiKey: String) =
-        googleMapsApi?.getDirections(origin, destination, waypoints, apiKey)
 }
