@@ -25,7 +25,7 @@ mlkit-barcode = "17.3.0"
 accompanist = "0.36.0"
 androidx-lifecycle = "2.8.7"
 androidx-activity-compose = "1.9.3"
-sceneview = "0.10.0"
+sceneview = "4.49.0"
 
 [libraries]
 # Ktor
