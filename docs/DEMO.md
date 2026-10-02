@@ -15,7 +15,7 @@ scripts/dev-up.sh [--fresh] [--simulate] [--queue] [--port 8000]
 scripts/dev-up.sh --stop
 ```
 
-El script: verifica `php`/`composer` (y extensiones gd, mbstring, pdo_sqlite, intl, bcmath), instala dependencias, crea `bus_unab/.env` si falta y fija `APP_URL=http://<IP_LAN>:8000` y `CORS_ALLOWED_ORIGINS`, ejecuta `migrate` + `demo:setup --no-fresh`, arranca `php artisan serve --host=0.0.0.0`, abre el firewall de Windows (perfil Privado; sin admin imprime el comando), comprueba `/api/v1/branding/<slug>` e imprime URL, credenciales y el comando de build.
+El script: verifica PHP 8.2+ y `composer` (extensiones obligatorias: mbstring, pdo_sqlite, intl, bcmath; `gd` solo avisa si falta), instala dependencias, crea `bus_unab/.env` si falta y fija `APP_URL=http://<IP_LAN>:8000` y `CORS_ALLOWED_ORIGINS`, ejecuta `migrate` + `demo:setup --no-fresh`, arranca `php artisan serve --host=0.0.0.0`, abre el firewall de Windows (perfil Privado; sin admin imprime el comando), comprueba `/api/v1/branding/<slug>` e imprime URL, credenciales y el comando de build.
 
 | Flag | Efecto |
 |---|---|

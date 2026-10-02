@@ -20,15 +20,23 @@ fail() { printf '\033[31m[dev-up] ERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
 stop_dev() {
   if [ -f "$PIDFILE" ]; then
-    while read -r p; do kill "$p" 2>/dev/null && info "detenido PID $p" || true; done < "$PIDFILE"
+    while read -r p; do
+      [ -n "$p" ] || continue
+      pkill -TERM -P "$p" 2>/dev/null || true   # hijo `php -S` de `artisan serve`
+      kill "$p" 2>/dev/null && info "detenido PID $p" || true
+    done < "$PIDFILE"
     rm -f "$PIDFILE"
-  else info "nada que detener"; fi
+  fi
+  # Red de seguridad: lo que siga escuchando en el puerto
+  if command -v lsof >/dev/null; then lsof -ti tcp:"$PORT" -sTCP:LISTEN 2>/dev/null | xargs -r kill 2>/dev/null || true
+  elif command -v fuser >/dev/null; then fuser -k "$PORT"/tcp 2>/dev/null || true; fi
 }
 if [ "$STOP" = 1 ]; then stop_dev; exit 0; fi
 
 for c in php composer; do command -v "$c" >/dev/null || fail "'$c' no esta en PATH (o usa docker compose, ver README)"; done
 mods="$(php -m)"
-for m in gd mbstring pdo_sqlite intl bcmath; do echo "$mods" | grep -qix "$m" || fail "extension PHP '$m' no habilitada"; done
+echo "$mods" | grep -qix gd || echo "WARN: extension PHP gd no habilitada (opcional)" >&2
+for m in mbstring pdo_sqlite intl bcmath; do echo "$mods" | grep -qix "$m" || fail "extension PHP '$m' no habilitada"; done
 
 IP="$( (hostname -I 2>/dev/null | tr ' ' '\n' | grep -E '^(192\.168|10\.|172\.(1[6-9]|2[0-9]|3[01]))' | head -1) || true)"
 [ -z "$IP" ] && IP="$(ipconfig getifaddr en0 2>/dev/null || true)"

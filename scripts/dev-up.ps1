@@ -27,11 +27,19 @@ function Fail($m) { Write-Host "[dev-up] ERROR: $m" -ForegroundColor Red; exit 1
 function Stop-Dev {
     if (Test-Path $PidFile) {
         Get-Content $PidFile | ForEach-Object {
-            $p = Get-Process -Id ([int]$_) -ErrorAction SilentlyContinue
-            if ($p) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; Info "detenido PID $($p.Id)" }
+            if ($_ -match '^\d+$') {
+                # /T mata el arbol: `artisan serve` lanza un hijo `php -S` que sobrevive al padre
+                & taskkill /T /F /PID $_ 2>$null | Out-Null
+                Info "detenido arbol PID $_"
+            }
         }
         Remove-Item $PidFile -Force
-    } else { Info 'nada que detener' }
+    }
+    # Red de seguridad: cualquier proceso php escuchando en el puerto
+    Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
+        $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
+        if ($p -and $p.ProcessName -match '^php') { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; Info "detenido php en :$Port (PID $($p.Id))" }
+    }
 }
 
 if ($Stop) { Stop-Dev; exit 0 }
@@ -39,11 +47,12 @@ if ($Stop) { Stop-Dev; exit 0 }
 # -- Requisitos ---------------------------------------------------------------
 foreach ($c in 'php', 'composer') {
     if (-not (Get-Command $c -ErrorAction SilentlyContinue)) {
-        Fail "'$c' no esta en PATH. Instala PHP 8.3+ y Composer (o usa docker compose, ver README)."
+        Fail "'$c' no esta en PATH. Instala PHP 8.2+ y Composer (o usa docker compose, ver README)."
     }
 }
 $phpMods = (& php -m) -join ','
-foreach ($m in 'gd', 'mbstring', 'pdo_sqlite', 'intl', 'bcmath') {
+if ($phpMods -notmatch '(?im)(^|,)gd(,|$)') { Write-Warning "extension PHP 'gd' no habilitada (opcional; actívala en php.ini si subes imágenes)." }
+foreach ($m in 'mbstring', 'pdo_sqlite', 'intl', 'bcmath') {
     if ($phpMods -notmatch "(?im)(^|,)$m(,|$)") { Fail "extension PHP '$m' no habilitada (php.ini)." }
 }
 
