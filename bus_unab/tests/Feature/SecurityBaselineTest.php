@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Pasajero;
 use App\Models\User;
 use App\Services\AuthService;
 use Illuminate\Foundation\Testing\RefreshDatabase;

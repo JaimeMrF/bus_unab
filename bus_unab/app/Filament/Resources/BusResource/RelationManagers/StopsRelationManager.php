@@ -11,9 +11,13 @@ use Filament\Tables\Table;
 class StopsRelationManager extends RelationManager
 {
     protected static string $relationship = 'stops';
+
     protected static ?string $title = 'Paradas de la ruta';
+
     protected static ?string $modelLabel = 'parada';
+
     protected static ?string $pluralModelLabel = 'paradas';
+
     protected static bool $shouldSkipAuthorization = true;
 
     public function form(Form $form): Form

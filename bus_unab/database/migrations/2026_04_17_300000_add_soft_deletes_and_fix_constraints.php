@@ -11,14 +11,14 @@ return new class extends Migration
     {
         // Soft deletes en buses
         Schema::table('buses', function (Blueprint $table) {
-            if (!Schema::hasColumn('buses', 'deleted_at')) {
+            if (! Schema::hasColumn('buses', 'deleted_at')) {
                 $table->softDeletes()->after('is_active');
             }
         });
 
         // Soft deletes en stops
         Schema::table('stops', function (Blueprint $table) {
-            if (!Schema::hasColumn('stops', 'deleted_at')) {
+            if (! Schema::hasColumn('stops', 'deleted_at')) {
                 $table->softDeletes()->after('is_active');
             }
         });
@@ -28,12 +28,12 @@ return new class extends Migration
         // un usuario puede tener múltiples registros con status=cancelled/expired/boarded.
         // La restricción correcta es: solo 1 solicitud PENDING por usuario por bus.
         $uniqueName = 'bus_requests_user_id_bus_id_status_unique';
-        $plainName  = 'bus_requests_user_id_bus_id_status_index';
-        $driver     = DB::getDriverName();
+        $plainName = 'bus_requests_user_id_bus_id_status_index';
+        $driver = DB::getDriverName();
 
         if ($driver === 'mysql') {
-            $hasUnique = collect(DB::select("SHOW INDEX FROM bus_requests WHERE Key_name = ?", [$uniqueName]))->isNotEmpty();
-            $hasPlain  = collect(DB::select("SHOW INDEX FROM bus_requests WHERE Key_name = ?", [$plainName]))->isNotEmpty();
+            $hasUnique = collect(DB::select('SHOW INDEX FROM bus_requests WHERE Key_name = ?', [$uniqueName]))->isNotEmpty();
+            $hasPlain = collect(DB::select('SHOW INDEX FROM bus_requests WHERE Key_name = ?', [$plainName]))->isNotEmpty();
         } elseif ($driver === 'sqlite') {
             // SHOW INDEX no existe en SQLite: los índices (incl. unique) viven en sqlite_master.
             $hasUnique = collect(DB::select(
@@ -47,7 +47,7 @@ return new class extends Migration
         } else {
             // Otros drivers: no tocar nada.
             $hasUnique = false;
-            $hasPlain  = true;
+            $hasPlain = true;
         }
 
         if ($hasUnique) {
@@ -65,7 +65,7 @@ return new class extends Migration
             });
         }
 
-        if (!$hasPlain) {
+        if (! $hasPlain) {
             Schema::table('bus_requests', function (Blueprint $table) {
                 $table->index(['user_id', 'bus_id', 'status']);
             });

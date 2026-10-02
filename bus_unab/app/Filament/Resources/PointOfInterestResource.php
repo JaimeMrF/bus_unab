@@ -13,11 +13,16 @@ use Filament\Tables\Table;
 class PointOfInterestResource extends Resource
 {
     protected static ?string $model = PointOfInterest::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-star';
+
+    protected static ?string $navigationIcon = 'heroicon-o-star';
+
     protected static ?string $navigationLabel = 'Puntos de Interés';
-    protected static ?string $modelLabel      = 'Punto de Interés';
+
+    protected static ?string $modelLabel = 'Punto de Interés';
+
     protected static ?string $pluralModelLabel = 'Puntos de Interés';
-    protected static ?int    $navigationSort  = 3;
+
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
@@ -52,12 +57,12 @@ class PointOfInterestResource extends Resource
                 Forms\Components\Select::make('category')
                     ->label('Categoría')
                     ->options([
-                        'campus'    => 'Campus UNAB',
-                        'parking'   => 'Parqueadero',
-                        'food'      => 'Alimentación',
-                        'health'    => 'Salud',
+                        'campus' => 'Campus UNAB',
+                        'parking' => 'Parqueadero',
+                        'food' => 'Alimentación',
+                        'health' => 'Salud',
                         'transport' => 'Transporte',
-                        'other'     => 'Otro',
+                        'other' => 'Otro',
                     ])
                     ->required()
                     ->default('other'),
@@ -86,21 +91,21 @@ class PointOfInterestResource extends Resource
                 Tables\Columns\TextColumn::make('category')
                     ->label('Categoría')
                     ->badge()
-                    ->color(fn ($state) => match($state) {
-                        'campus'    => 'primary',
-                        'parking'   => 'warning',
-                        'food'      => 'success',
-                        'health'    => 'danger',
+                    ->color(fn ($state) => match ($state) {
+                        'campus' => 'primary',
+                        'parking' => 'warning',
+                        'food' => 'success',
+                        'health' => 'danger',
                         'transport' => 'info',
-                        default     => 'gray',
+                        default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'campus'    => 'Campus UNAB',
-                        'parking'   => 'Parqueadero',
-                        'food'      => 'Alimentación',
-                        'health'    => 'Salud',
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'campus' => 'Campus UNAB',
+                        'parking' => 'Parqueadero',
+                        'food' => 'Alimentación',
+                        'health' => 'Salud',
                         'transport' => 'Transporte',
-                        default     => 'Otro',
+                        default => 'Otro',
                     }),
 
                 Tables\Columns\TextColumn::make('latitude')->label('Lat')->numeric(5),
@@ -114,12 +119,12 @@ class PointOfInterestResource extends Resource
                 Tables\Filters\SelectFilter::make('category')
                     ->label('Categoría')
                     ->options([
-                        'campus'    => 'Campus UNAB',
-                        'parking'   => 'Parqueadero',
-                        'food'      => 'Alimentación',
-                        'health'    => 'Salud',
+                        'campus' => 'Campus UNAB',
+                        'parking' => 'Parqueadero',
+                        'food' => 'Alimentación',
+                        'health' => 'Salud',
                         'transport' => 'Transporte',
-                        'other'     => 'Otro',
+                        'other' => 'Otro',
                     ]),
             ])
             ->actions([
@@ -136,9 +141,9 @@ class PointOfInterestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListPointsOfInterest::route('/'),
+            'index' => Pages\ListPointsOfInterest::route('/'),
             'create' => Pages\CreatePointOfInterest::route('/create'),
-            'edit'   => Pages\EditPointOfInterest::route('/{record}/edit'),
+            'edit' => Pages\EditPointOfInterest::route('/{record}/edit'),
         ];
     }
 }

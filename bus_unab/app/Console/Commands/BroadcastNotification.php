@@ -18,11 +18,11 @@ class BroadcastNotification extends Command
     public function handle(NotificationService $notificationService): int
     {
         $title = $this->option('title') ?: $this->ask('Título de la notificación');
-        $body  = $this->option('body')  ?: $this->ask('Cuerpo del mensaje');
-        $role  = $this->option('role');
-        $type  = $this->option('type');
+        $body = $this->option('body') ?: $this->ask('Cuerpo del mensaje');
+        $role = $this->option('role');
+        $type = $this->option('type');
 
-        $this->info("Enviando notificación...");
+        $this->info('Enviando notificación...');
         $this->line("  Título : {$title}");
         $this->line("  Cuerpo : {$body}");
         $this->line("  Destino: {$role}");
@@ -30,6 +30,7 @@ class BroadcastNotification extends Command
         $notificationService->broadcast($title, $body, ['type' => $type], $role);
 
         $this->info('Notificación enviada.');
+
         return Command::SUCCESS;
     }
 }

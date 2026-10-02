@@ -11,10 +11,14 @@ use Illuminate\Support\Facades\Cache;
 
 class RouteWaypointsRelationManager extends RelationManager
 {
-    protected static string $relationship  = 'routeWaypoints';
-    protected static ?string $title        = 'Puntos de ruta (calles específicas)';
-    protected static ?string $modelLabel   = 'punto';
+    protected static string $relationship = 'routeWaypoints';
+
+    protected static ?string $title = 'Puntos de ruta (calles específicas)';
+
+    protected static ?string $modelLabel = 'punto';
+
     protected static ?string $pluralModelLabel = 'puntos';
+
     protected static bool $shouldSkipAuthorization = true;
 
     public function form(Form $form): Form
@@ -72,18 +76,18 @@ class RouteWaypointsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->after(fn () => Cache::forget('bus_route_polyline_' . $this->getOwnerRecord()->plate)),
+                    ->after(fn () => Cache::forget('bus_route_polyline_'.$this->getOwnerRecord()->plate)),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->after(fn () => Cache::forget('bus_route_polyline_' . $this->getOwnerRecord()->plate)),
+                    ->after(fn () => Cache::forget('bus_route_polyline_'.$this->getOwnerRecord()->plate)),
                 Tables\Actions\DeleteAction::make()
-                    ->after(fn () => Cache::forget('bus_route_polyline_' . $this->getOwnerRecord()->plate)),
+                    ->after(fn () => Cache::forget('bus_route_polyline_'.$this->getOwnerRecord()->plate)),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->after(fn () => Cache::forget('bus_route_polyline_' . $this->getOwnerRecord()->plate)),
+                        ->after(fn () => Cache::forget('bus_route_polyline_'.$this->getOwnerRecord()->plate)),
                 ]),
             ]);
     }

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\QrPaymentToken;
+use App\Models\Transportadora;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
@@ -20,24 +21,27 @@ class QrPaymentTest extends TestCase
     use RefreshDatabase;
 
     private User $passenger;
+
     private User $driver;
+
     private QrPaymentService $qr;
+
     private WalletService $wallets;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->passenger = User::factory()->create(['role' => 'pasajero']);
-        $this->driver    = User::factory()->create(['role' => 'driver']);
-        $this->qr        = app(QrPaymentService::class);
-        $this->wallets   = app(WalletService::class);
+        $this->driver = User::factory()->create(['role' => 'driver']);
+        $this->qr = app(QrPaymentService::class);
+        $this->wallets = app(WalletService::class);
     }
 
     private function fundWallet(int $centavos): Wallet
     {
         $w = Wallet::para($this->passenger);
 
-        return $this->wallets->credit($w, $centavos, 'test_seed_' . $centavos, 'mock')->wallet;
+        return $this->wallets->credit($w, $centavos, 'test_seed_'.$centavos, 'mock')->wallet;
     }
 
     /** @return array{0:QrPaymentToken,1:string} */
@@ -96,9 +100,9 @@ class QrPaymentTest extends TestCase
      */
     public function test_pay_reports_passenger_name_under_driver_tenant_context(): void
     {
-        $tenant = \App\Models\Transportadora::create([
+        $tenant = Transportadora::create([
             'nombre' => 'Coop BGA Región',
-            'slug'   => 'coop-bga-region',
+            'slug' => 'coop-bga-region',
         ]);
         $this->driver->transportadora_id = $tenant->id;
         $this->driver->save();
@@ -151,7 +155,7 @@ class QrPaymentTest extends TestCase
         $this->fundWallet(500000);
         [, $qr] = $this->issue();
         [$selector, $firma] = explode('.', $qr);
-        $mala = $firma[0] === 'a' ? 'b' . substr($firma, 1) : 'a' . substr($firma, 1);
+        $mala = $firma[0] === 'a' ? 'b'.substr($firma, 1) : 'a'.substr($firma, 1);
 
         $this->actingAs($this->driver, 'sanctum')
             ->postJson('/api/v1/qr/pay', ['qr' => "{$selector}.{$mala}"])

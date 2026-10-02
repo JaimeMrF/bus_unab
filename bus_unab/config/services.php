@@ -50,7 +50,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'fcm' => [
-        'server_key'      => env('FCM_SERVER_KEY'),       // legacy (ya no usada)
+        'server_key' => env('FCM_SERVER_KEY'),       // legacy (ya no usada)
         'credentials_b64' => env('FIREBASE_CREDENTIALS_B64'), // FCM v1
     ],
 

@@ -35,9 +35,9 @@ class QrPaymentToken extends Model
     {
         return [
             'monto_snapshot_centavos' => 'integer',
-            'issued_at'               => 'datetime',
-            'expires_at'              => 'datetime',
-            'used_at'                 => 'datetime',
+            'issued_at' => 'datetime',
+            'expires_at' => 'datetime',
+            'used_at' => 'datetime',
         ];
     }
 

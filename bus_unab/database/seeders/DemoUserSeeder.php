@@ -15,9 +15,9 @@ class DemoUserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'estudiante@unab.edu.co'],
             [
-                'name'     => 'Estudiante de Prueba',
+                'name' => 'Estudiante de Prueba',
                 'password' => Hash::make('password123'),
-                'role'     => 'pasajero',
+                'role' => 'pasajero',
             ]
         );
 
@@ -25,9 +25,9 @@ class DemoUserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'conductor@unab.edu.co'],
             [
-                'name'     => 'Conductor de Prueba',
+                'name' => 'Conductor de Prueba',
                 'password' => Hash::make('password123'),
-                'role'     => 'driver',
+                'role' => 'driver',
             ]
         );
     }

@@ -40,18 +40,18 @@ class BusRequestService
             // Crear la nueva solicitud
             $request = BusRequest::create([
                 'user_id' => $user->id,
-                'bus_id'  => $bus->id,
+                'bus_id' => $bus->id,
                 'stop_id' => $stop->id,
-                'status'  => 'pending',
+                'status' => 'pending',
             ]);
 
             return [
-                'request'           => $request->load(['bus:id,name,plate', 'stop:id,name,address']),
+                'request' => $request->load(['bus:id,name,plate', 'stop:id,name,address']),
                 'current_occupancy' => $pending + 1,
-                'capacity'          => $bus->capacity,
-                'percentage'        => $this->calcPercentage($pending + 1, $bus->capacity),
-                'level'             => $this->calcLevel($pending + 1, $bus->capacity),
-                'is_full'           => $isFull,
+                'capacity' => $bus->capacity,
+                'percentage' => $this->calcPercentage($pending + 1, $bus->capacity),
+                'level' => $this->calcLevel($pending + 1, $bus->capacity),
+                'is_full' => $isFull,
             ];
         });
     }
@@ -90,7 +90,7 @@ class BusRequestService
             }
 
             BusRequest::whereIn('id', $requests->pluck('id'))->update([
-                'status'     => 'boarded',
+                'status' => 'boarded',
                 'boarded_at' => now(),
             ]);
 
@@ -119,12 +119,12 @@ class BusRequestService
             ->count();
 
         return [
-            'bus_id'            => $bus->id,
-            'bus_name'          => $bus->name,
+            'bus_id' => $bus->id,
+            'bus_name' => $bus->name,
             'current_occupancy' => $pending,
-            'capacity'          => $bus->capacity,
-            'percentage'        => $this->calcPercentage($pending, $bus->capacity),
-            'level'             => $this->calcLevel($pending, $bus->capacity),
+            'capacity' => $bus->capacity,
+            'percentage' => $this->calcPercentage($pending, $bus->capacity),
+            'level' => $this->calcLevel($pending, $bus->capacity),
         ];
     }
 
@@ -134,18 +134,22 @@ class BusRequestService
 
     private function calcPercentage(int $count, int $capacity): float
     {
-        if ($capacity === 0) return 0.0;
+        if ($capacity === 0) {
+            return 0.0;
+        }
+
         return round(min(($count / $capacity) * 100, 100), 1);
     }
 
     private function calcLevel(int $count, int $capacity): string
     {
         $pct = $this->calcPercentage($count, $capacity);
+
         return match (true) {
             $pct >= 90 => 'full',
             $pct >= 60 => 'high',
             $pct >= 30 => 'medium',
-            default    => 'low',
+            default => 'low',
         };
     }
 }

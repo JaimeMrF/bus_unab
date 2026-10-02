@@ -59,7 +59,7 @@ class WalletService
             abs($montoCentavos),
             WalletTransaction::TIPO_AJUSTE,
             $reference,
-            'ajuste:' . $motivo,
+            'ajuste:'.$motivo,
             ['signo' => $montoCentavos > 0 ? 1 : -1, 'created_by' => $createdBy]
         );
     }
@@ -114,13 +114,13 @@ class WalletService
             // para no disparar eventos que otro GlobalScope interprete mal.
 
             return WalletTransaction::create([
-                'wallet_id'      => $locked->getKey(),
-                'tipo'           => $tipo,
+                'wallet_id' => $locked->getKey(),
+                'tipo' => $tipo,
                 'monto_centavos' => $montoCentavos,
-                'balance_after'  => $nuevoSaldo,
-                'reference'      => $reference,
-                'contraparte'    => $contraparte,
-                'metadata'       => $metadata ?: null,
+                'balance_after' => $nuevoSaldo,
+                'reference' => $reference,
+                'contraparte' => $contraparte,
+                'metadata' => $metadata ?: null,
             ]);
         });
     }

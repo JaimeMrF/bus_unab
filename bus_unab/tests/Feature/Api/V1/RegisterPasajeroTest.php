@@ -21,9 +21,9 @@ class RegisterPasajeroTest extends TestCase
     private function payload(array $overrides = []): array
     {
         return array_merge([
-            'name'                  => 'Ana Pérez',
-            'email'                 => 'ana@gmail.com',
-            'password'              => 'Secreta123',
+            'name' => 'Ana Pérez',
+            'email' => 'ana@gmail.com',
+            'password' => 'Secreta123',
             'password_confirmation' => 'Secreta123',
         ], $overrides);
     }
@@ -57,7 +57,7 @@ class RegisterPasajeroTest extends TestCase
     public function test_register_rejects_weak_or_unconfirmed_password(): void
     {
         $this->postJson('/api/v1/auth/register', $this->payload([
-            'password'              => 'corta',
+            'password' => 'corta',
             'password_confirmation' => 'corta',
         ]))->assertStatus(422)->assertJsonValidationErrors('password');
 
@@ -71,7 +71,7 @@ class RegisterPasajeroTest extends TestCase
         $this->postJson('/api/v1/auth/register', $this->payload())->assertStatus(200);
 
         $this->postJson('/api/v1/auth/login', [
-            'email'    => 'ana@gmail.com',
+            'email' => 'ana@gmail.com',
             'password' => 'Secreta123',
         ])->assertStatus(200)
             ->assertJsonPath('data.user.role', 'pasajero');
@@ -83,13 +83,13 @@ class RegisterPasajeroTest extends TestCase
 
         Http::fake([
             'oauth2.googleapis.com/*' => Http::response([
-                'sub'     => 'google-gmail-001',
-                'email'   => 'pepito@gmail.com',
-                'name'    => 'Pepito Ciudad',
+                'sub' => 'google-gmail-001',
+                'email' => 'pepito@gmail.com',
+                'name' => 'Pepito Ciudad',
                 'picture' => null,
-                'aud'     => 'test-client.apps.googleusercontent.com',
+                'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
-                'exp'     => time() + 3600,
+                'exp' => time() + 3600,
             ], 200),
         ]);
 
@@ -97,9 +97,9 @@ class RegisterPasajeroTest extends TestCase
             ->assertStatus(200);
 
         $this->assertDatabaseHas('users', [
-            'email'     => 'pepito@gmail.com',
+            'email' => 'pepito@gmail.com',
             'google_id' => 'google-gmail-001',
-            'role'      => 'pasajero',
+            'role' => 'pasajero',
         ]);
     }
 

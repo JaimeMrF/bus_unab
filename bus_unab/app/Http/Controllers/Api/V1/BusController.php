@@ -23,10 +23,10 @@ class BusController extends BaseController
             ->select('id', 'name', 'plate', 'capacity')
             ->orderBy('name')
             ->get()
-            ->map(fn($b) => [
-                'id'       => $b->id,
-                'name'     => $b->name,
-                'plate'    => $b->plate,
+            ->map(fn ($b) => [
+                'id' => $b->id,
+                'name' => $b->name,
+                'plate' => $b->plate,
                 'capacity' => $b->capacity,
             ]);
 
@@ -43,15 +43,15 @@ class BusController extends BaseController
         $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
 
         $validated = $request->validate([
-            'lat'     => 'required|numeric|between:-90,90',
-            'lng'     => 'required|numeric|between:-180,180',
+            'lat' => 'required|numeric|between:-90,90',
+            'lng' => 'required|numeric|between:-180,180',
             'heading' => 'required|integer|between:0,360',
         ]);
 
         Cache::put("driver_location_{$plate}", [
-            'latitude'  => (float) $validated['lat'],
+            'latitude' => (float) $validated['lat'],
             'longitude' => (float) $validated['lng'],
-            'heading'   => (int)   $validated['heading'],
+            'heading' => (int) $validated['heading'],
         ], 60);
 
         return $this->success();
@@ -90,8 +90,8 @@ class BusController extends BaseController
         $localBuses = Bus::active()->get()->keyBy('plate');
 
         $buses = collect($externalBuses)
-            ->filter(fn($v) => isset($localBuses[$v['Placa']]))
-            ->map(fn($v) => $this->formatBusSummary($v, $localBuses[$v['Placa']]))
+            ->filter(fn ($v) => isset($localBuses[$v['Placa']]))
+            ->map(fn ($v) => $this->formatBusSummary($v, $localBuses[$v['Placa']]))
             ->values();
 
         return $this->success($buses);
@@ -152,28 +152,28 @@ class BusController extends BaseController
             return $this->error('Esta ruta no tiene paradas asignadas', 400);
         }
 
-        $firstStop  = $stops->first();
-        $lastStop   = $stops->last();
+        $firstStop = $stops->first();
+        $lastStop = $stops->last();
 
-        $originLat      = $firstStop->latitude;
-        $originLng      = $firstStop->longitude;
+        $originLat = $firstStop->latitude;
+        $originLng = $firstStop->longitude;
         $destinationLat = $lastStop->latitude;
         $destinationLng = $lastStop->longitude;
 
         // Combina paradas + waypoints personalizados ordenados para trazar la ruta completa
-        $stopCoords = $stops->map(fn($s) => [
-            'order'  => $s->pivot->order * 100,
+        $stopCoords = $stops->map(fn ($s) => [
+            'order' => $s->pivot->order * 100,
             'coords' => [$s->longitude, $s->latitude],
         ]);
 
-        $waypointCoords = $bus->routeWaypoints->map(fn($w) => [
-            'order'  => $w->order,
+        $waypointCoords = $bus->routeWaypoints->map(fn ($w) => [
+            'order' => $w->order,
             'coords' => [$w->longitude, $w->latitude],
         ]);
 
         $coordinatePath = $stopCoords->concat($waypointCoords)
             ->sortBy('order')
-            ->map(fn($p) => "{$p['coords'][0]},{$p['coords'][1]}")
+            ->map(fn ($p) => "{$p['coords'][0]},{$p['coords'][1]}")
             ->implode(';');
 
         $cacheKey = "bus_route_polyline_{$plate}";
@@ -190,18 +190,18 @@ class BusController extends BaseController
                     if (($data['code'] ?? '') === 'Ok' && isset($data['routes'][0]['geometry'])) {
                         return $data['routes'][0]['geometry'];
                     }
-                    Log::warning('BusController::route - OSRM code: ' . ($data['code'] ?? 'unknown'), ['plate' => $plate]);
+                    Log::warning('BusController::route - OSRM code: '.($data['code'] ?? 'unknown'), ['plate' => $plate]);
                 }
             } catch (\Exception $e) {
-                Log::error('BusController::route - OSRM error: ' . $e->getMessage(), ['plate' => $plate]);
+                Log::error('BusController::route - OSRM error: '.$e->getMessage(), ['plate' => $plate]);
             }
 
             return null;
         });
 
-        if (!$polyline) {
+        if (! $polyline) {
             return response()->json([
-                'status'        => 'ERROR',
+                'status' => 'ERROR',
                 'error_message' => 'No se pudo calcular la ruta.',
             ], 502);
         }
@@ -221,12 +221,12 @@ class BusController extends BaseController
     private function formatBusSummary(array $external, Bus $local): array
     {
         return [
-            'id'        => $local->id,
-            'name'      => $local->name,
-            'plate'     => $local->plate,
-            'latitude'  => (float) $external['Latitud'],
+            'id' => $local->id,
+            'name' => $local->name,
+            'plate' => $local->plate,
+            'latitude' => (float) $external['Latitud'],
             'longitude' => (float) $external['Longitud'],
-            'heading'   => (int) ($external['Sentido'] ?? 0),
+            'heading' => (int) ($external['Sentido'] ?? 0),
         ];
     }
 
@@ -237,16 +237,16 @@ class BusController extends BaseController
         $address = preg_replace('/\s+CSQ:\d+.*$/i', '', $v['Info'] ?? '');
 
         return [
-            'id'              => $local->id,
-            'name'            => $local->name,
-            'plate'           => $local->plate,
-            'latitude'        => (float) $v['Lt'],
-            'longitude'       => (float) $v['Lg'],
-            'speed_kmh'       => (int) ($v['Vel'] ?? 0),
-            'heading'         => (int) ($v['Std'] ?? 0),
-            'address'         => trim($address),
-            'driver'          => $v['Cond'] ?: null,
-            'last_event'      => $v['NEv'] ?? null,
+            'id' => $local->id,
+            'name' => $local->name,
+            'plate' => $local->plate,
+            'latitude' => (float) $v['Lt'],
+            'longitude' => (float) $v['Lg'],
+            'speed_kmh' => (int) ($v['Vel'] ?? 0),
+            'heading' => (int) ($v['Std'] ?? 0),
+            'address' => trim($address),
+            'driver' => $v['Cond'] ?: null,
+            'last_event' => $v['NEv'] ?? null,
             'last_updated_at' => $v['FdS'] ?? null,
         ];
     }

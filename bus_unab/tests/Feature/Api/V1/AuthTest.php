@@ -19,7 +19,7 @@ class AuthTest extends TestCase
         ]);
 
         $response = $this->postJson('/api/v1/auth/login', [
-            'email'    => 'test@unab.edu.co',
+            'email' => 'test@unab.edu.co',
             'password' => 'password',
         ]);
 
@@ -36,7 +36,7 @@ class AuthTest extends TestCase
         User::factory()->create(['email' => 'test@unab.edu.co']);
 
         $this->postJson('/api/v1/auth/login', [
-            'email'    => 'test@unab.edu.co',
+            'email' => 'test@unab.edu.co',
             'password' => 'wrong',
         ])->assertStatus(401)->assertJson(['success' => false]);
     }
@@ -44,7 +44,7 @@ class AuthTest extends TestCase
     public function test_login_with_nonexistent_email(): void
     {
         $this->postJson('/api/v1/auth/login', [
-            'email'    => 'nobody@unab.edu.co',
+            'email' => 'nobody@unab.edu.co',
             'password' => 'password',
         ])->assertStatus(401);
     }
@@ -64,10 +64,10 @@ class AuthTest extends TestCase
             ->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'data'    => [
-                    'id'    => $user->id,
+                'data' => [
+                    'id' => $user->id,
                     'email' => $user->email,
-                    'role'  => $user->role,
+                    'role' => $user->role,
                 ],
             ]);
     }
@@ -79,7 +79,7 @@ class AuthTest extends TestCase
 
     public function test_logout_succeeds(): void
     {
-        $user  = User::factory()->create();
+        $user = User::factory()->create();
         $token = $user->createToken('mobile_app')->plainTextToken;
 
         $this->withHeader('Authorization', "Bearer {$token}")
@@ -107,13 +107,13 @@ class AuthTest extends TestCase
 
         Http::fake([
             'oauth2.googleapis.com/*' => Http::response([
-                'sub'     => 'google-sub-123',
-                'email'   => 'alumno@unab.edu.co',
-                'name'    => 'Alumno Test',
+                'sub' => 'google-sub-123',
+                'email' => 'alumno@unab.edu.co',
+                'name' => 'Alumno Test',
                 'picture' => 'https://example.com/photo.jpg',
-                'aud'     => 'test-client.apps.googleusercontent.com',
+                'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
-                'exp'     => time() + 3600,
+                'exp' => time() + 3600,
             ], 200),
         ]);
 
@@ -123,9 +123,9 @@ class AuthTest extends TestCase
             ->assertJsonStructure(['data' => ['access_token', 'user']]);
 
         $this->assertDatabaseHas('users', [
-            'email'     => 'alumno@unab.edu.co',
+            'email' => 'alumno@unab.edu.co',
             'google_id' => 'google-sub-123',
-            'role'      => 'pasajero',
+            'role' => 'pasajero',
         ]);
     }
 
@@ -134,20 +134,20 @@ class AuthTest extends TestCase
         config(['services.google.client_id' => 'test-client.apps.googleusercontent.com']);
 
         $existing = User::factory()->create([
-            'email'     => 'admin@unab.edu.co',
-            'role'      => 'admin',
+            'email' => 'admin@unab.edu.co',
+            'role' => 'admin',
             'google_id' => null,
         ]);
 
         Http::fake([
             'oauth2.googleapis.com/*' => Http::response([
-                'sub'     => 'google-admin-999',
-                'email'   => 'admin@unab.edu.co',
-                'name'    => 'Admin UNAB',
+                'sub' => 'google-admin-999',
+                'email' => 'admin@unab.edu.co',
+                'name' => 'Admin UNAB',
                 'picture' => null,
-                'aud'     => 'test-client.apps.googleusercontent.com',
+                'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
-                'exp'     => time() + 3600,
+                'exp' => time() + 3600,
             ], 200),
         ]);
 
@@ -155,9 +155,9 @@ class AuthTest extends TestCase
             ->assertStatus(200);
 
         $this->assertDatabaseHas('users', [
-            'id'        => $existing->id,
+            'id' => $existing->id,
             'google_id' => 'google-admin-999',
-            'role'      => 'admin',
+            'role' => 'admin',
         ]);
 
         // No debe crear un usuario duplicado
@@ -191,12 +191,12 @@ class AuthTest extends TestCase
 
         Http::fake([
             'oauth2.googleapis.com/*' => Http::response([
-                'sub'   => 'google-external-999',
+                'sub' => 'google-external-999',
                 'email' => 'externo@gmail.com',
-                'name'  => 'Usuario Externo',
-                'aud'   => 'test-client.apps.googleusercontent.com',
+                'name' => 'Usuario Externo',
+                'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
-                'exp'   => time() + 3600,
+                'exp' => time() + 3600,
             ], 200),
         ]);
 
@@ -206,7 +206,7 @@ class AuthTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'email' => 'externo@gmail.com',
-            'role'  => 'pasajero',
+            'role' => 'pasajero',
         ]);
     }
 
@@ -216,12 +216,12 @@ class AuthTest extends TestCase
 
         Http::fake([
             'oauth2.googleapis.com/*' => Http::response([
-                'sub'   => 'google-unab-001',
+                'sub' => 'google-unab-001',
                 'email' => 'estudiante@unab.edu.co',
-                'name'  => 'Estudiante UNAB',
-                'aud'   => 'test-client.apps.googleusercontent.com',
+                'name' => 'Estudiante UNAB',
+                'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
-                'exp'   => time() + 3600,
+                'exp' => time() + 3600,
             ], 200),
         ]);
 

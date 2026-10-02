@@ -13,9 +13,10 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements FilamentUser
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
-    use BelongsToTenant;
 
     protected $fillable = [
         'name',
@@ -36,7 +37,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
+            'password' => 'hashed',
         ];
     }
 
@@ -78,15 +79,15 @@ class User extends Authenticatable implements FilamentUser
     {
         return match ($panelId) {
             'empresa' => [
-                'driver'   => 'Conductor',
+                'driver' => 'Conductor',
                 'pasajero' => 'Pasajero',
             ],
             default => [
-                'super_admin'  => 'Super Admin',
+                'super_admin' => 'Super Admin',
                 'tenant_admin' => 'Admin de Empresa',
-                'driver'       => 'Conductor',
-                'pasajero'     => 'Pasajero',
-                'admin'        => 'Administrador (legado)',
+                'driver' => 'Conductor',
+                'pasajero' => 'Pasajero',
+                'admin' => 'Administrador (legado)',
             ],
         };
     }
@@ -118,9 +119,9 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return match ($panel->getId()) {
-            'admin'   => $this->isSuperAdmin(),
+            'admin' => $this->isSuperAdmin(),
             'empresa' => $this->isTenantAdmin(),
-            default   => false,
+            default => false,
         };
     }
 

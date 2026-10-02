@@ -17,10 +17,10 @@ class QrController extends BaseController
     {
         $validated = $request->validate([
             'request_id' => 'required|integer',
-            'user_id'    => 'required|integer',
-            'bus_id'     => 'required|integer',
-            'stop_id'    => 'required|integer',
-            'ts'         => 'required|integer',
+            'user_id' => 'required|integer',
+            'bus_id' => 'required|integer',
+            'stop_id' => 'required|integer',
+            'ts' => 'required|integer',
         ]);
 
         // Verificar que el QR no esté expirado (60 segundos)
@@ -39,7 +39,7 @@ class QrController extends BaseController
 
         // Verificar que los datos del QR coincidan con la solicitud real
         if ($busRequest->user_id !== (int) $validated['user_id'] ||
-            $busRequest->bus_id  !== (int) $validated['bus_id']  ||
+            $busRequest->bus_id !== (int) $validated['bus_id'] ||
             $busRequest->stop_id !== (int) $validated['stop_id']) {
             return $this->error('QR inválido: los datos no coinciden', 422);
         }
@@ -53,7 +53,7 @@ class QrController extends BaseController
         }
 
         $busRequest->update([
-            'status'     => 'boarded',
+            'status' => 'boarded',
             'boarded_at' => now(),
         ]);
 
@@ -61,11 +61,11 @@ class QrController extends BaseController
 
         return $this->success([
             'user' => [
-                'id'    => $busRequest->user->id,
-                'name'  => $busRequest->user->name,
+                'id' => $busRequest->user->id,
+                'name' => $busRequest->user->name,
                 'email' => $busRequest->user->email,
             ],
-            'bus'  => $busRequest->bus->name,
+            'bus' => $busRequest->bus->name,
             'stop' => $busRequest->stop->name,
         ], 'Acceso validado correctamente');
     }

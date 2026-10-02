@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\InsufficientFundsException;
 use App\Models\Bus;
 use App\Models\Fare;
 use App\Models\QrPaymentToken;
@@ -38,9 +39,7 @@ class QrPaymentService
     /** Tarifa de rescate en centavos cuando no hay ninguna Fare vigente ($1.850 COP). */
     public const FALLBACK_FARE_CENTAVOS = 185000;
 
-    public function __construct(private readonly WalletService $wallets)
-    {
-    }
+    public function __construct(private readonly WalletService $wallets) {}
 
     /**
      * Emite un token efímero para el usuario. Devuelve [QrPaymentToken, qrString].
@@ -54,24 +53,24 @@ class QrPaymentService
             throw new DomainException('Tu wallet está congelada; contacta a soporte.');
         }
 
-        $fare  = $this->resolveFare($busId);
+        $fare = $this->resolveFare($busId);
         $monto = $fare?->monto_centavos ?? self::FALLBACK_FARE_CENTAVOS;
 
-        $selector  = bin2hex(random_bytes(16)); // 32 hex chars — jamás se persiste
-        $issuedAt  = now();
+        $selector = bin2hex(random_bytes(16)); // 32 hex chars — jamás se persiste
+        $issuedAt = now();
         $expiresAt = $issuedAt->copy()->addSeconds($ttlSeconds);
         $signature = $this->sign($selector, $expiresAt->getTimestamp());
 
         $token = QrPaymentToken::create([
-            'user_id'                 => $user->id,
-            'wallet_id'               => $wallet->id,
-            'fare_id'                 => $fare?->id,
-            'transportadora_id'       => $fare?->transportadora_id,
-            'bus_id'                  => $busId,
-            'token_hash'              => hash('sha256', $selector),
+            'user_id' => $user->id,
+            'wallet_id' => $wallet->id,
+            'fare_id' => $fare?->id,
+            'transportadora_id' => $fare?->transportadora_id,
+            'bus_id' => $busId,
+            'token_hash' => hash('sha256', $selector),
             'monto_snapshot_centavos' => $monto,
-            'issued_at'               => $issuedAt,
-            'expires_at'              => $expiresAt,
+            'issued_at' => $issuedAt,
+            'expires_at' => $expiresAt,
         ]);
 
         return [$token, "{$selector}.{$signature}"];
@@ -80,8 +79,8 @@ class QrPaymentService
     /**
      * Cobra un QR en nombre del conductor/scanner. Devuelve [QrPaymentToken, WalletTransaction].
      *
-     * @throws DomainException              QR inexistente, manipulado, expirado o reutilizado
-     * @throws \App\Exceptions\InsufficientFundsException saldo insuficiente (rollback total)
+     * @throws DomainException QR inexistente, manipulado, expirado o reutilizado
+     * @throws InsufficientFundsException saldo insuficiente (rollback total)
      */
     public function pay(string $qr, User $driver): array
     {
@@ -109,9 +108,9 @@ class QrPaymentService
                 ->where('id', $token->id)
                 ->whereNull('used_at')
                 ->update([
-                    'used_at'           => now(),
+                    'used_at' => now(),
                     'used_by_driver_id' => $driver->id,
-                    'updated_at'        => now(),
+                    'updated_at' => now(),
                 ]);
 
             if ($claimed !== 1) {

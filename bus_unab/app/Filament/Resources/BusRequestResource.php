@@ -13,11 +13,16 @@ use Filament\Tables\Table;
 class BusRequestResource extends Resource
 {
     protected static ?string $model = BusRequest::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-clipboard-document-list';
+
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+
     protected static ?string $navigationLabel = 'Solicitudes';
-    protected static ?string $modelLabel      = 'Solicitud';
+
+    protected static ?string $modelLabel = 'Solicitud';
+
     protected static ?string $pluralModelLabel = 'Solicitudes';
-    protected static ?int    $navigationSort  = 5;
+
+    protected static ?int $navigationSort = 5;
 
     public static function form(Form $form): Form
     {
@@ -25,8 +30,8 @@ class BusRequestResource extends Resource
             Forms\Components\Select::make('status')
                 ->label('Estado')
                 ->options([
-                    'pending'   => 'Pendiente',
-                    'boarded'   => 'Abordado',
+                    'pending' => 'Pendiente',
+                    'boarded' => 'Abordado',
                     'cancelled' => 'Cancelado',
                 ])
                 ->required(),
@@ -57,17 +62,17 @@ class BusRequestResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
                     ->badge()
-                    ->color(fn ($state) => match($state) {
-                        'pending'   => 'warning',
-                        'boarded'   => 'success',
+                    ->color(fn ($state) => match ($state) {
+                        'pending' => 'warning',
+                        'boarded' => 'success',
                         'cancelled' => 'danger',
-                        default     => 'gray',
+                        default => 'gray',
                     })
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'pending'   => 'Pendiente',
-                        'boarded'   => 'Abordado',
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'pending' => 'Pendiente',
+                        'boarded' => 'Abordado',
                         'cancelled' => 'Cancelado',
-                        default     => $state,
+                        default => $state,
                     }),
 
                 Tables\Columns\TextColumn::make('created_at')
@@ -79,8 +84,8 @@ class BusRequestResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Estado')
                     ->options([
-                        'pending'   => 'Pendiente',
-                        'boarded'   => 'Abordado',
+                        'pending' => 'Pendiente',
+                        'boarded' => 'Abordado',
                         'cancelled' => 'Cancelado',
                     ]),
 

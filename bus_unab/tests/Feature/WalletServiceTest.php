@@ -19,14 +19,15 @@ class WalletServiceTest extends TestCase
     use RefreshDatabase;
 
     private WalletService $service;
+
     private Wallet $wallet;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $user           = User::factory()->create();
-        $this->wallet   = Wallet::para($user);
-        $this->service  = app(WalletService::class);
+        $user = User::factory()->create();
+        $this->wallet = Wallet::para($user);
+        $this->service = app(WalletService::class);
     }
 
     public function test_credit_increments_balance_and_writes_ledger(): void

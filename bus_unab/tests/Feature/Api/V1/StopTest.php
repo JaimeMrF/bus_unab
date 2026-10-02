@@ -24,12 +24,12 @@ class StopTest extends TestCase
     private function createStop(array $overrides = []): Stop
     {
         return Stop::create(array_merge([
-            'name'          => 'Parada Test',
-            'address'       => 'Calle 48 #39-234',
-            'latitude'      => 7.1218,
-            'longitude'     => -73.1158,
+            'name' => 'Parada Test',
+            'address' => 'Calle 48 #39-234',
+            'latitude' => 7.1218,
+            'longitude' => -73.1158,
             'radius_meters' => 100,
-            'is_active'     => true,
+            'is_active' => true,
         ], $overrides));
     }
 
@@ -66,11 +66,11 @@ class StopTest extends TestCase
     public function test_stops_by_bus_returns_ordered_stops(): void
     {
         $bus = Bus::create([
-            'name'                => 'Ruta 1',
-            'plate'               => 'RUTA1',
+            'name' => 'Ruta 1',
+            'plate' => 'RUTA1',
             'external_vehicle_id' => 97141,
-            'capacity'            => 40,
-            'is_active'           => true,
+            'capacity' => 40,
+            'is_active' => true,
         ]);
 
         $stopA = $this->createStop(['name' => 'Parada A', 'latitude' => 7.1]);

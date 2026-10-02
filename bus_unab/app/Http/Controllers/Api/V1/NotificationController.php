@@ -18,10 +18,10 @@ class NotificationController extends BaseController
     public function broadcast(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'title'   => 'required|string|max:255',
-            'body'    => 'required|string|max:1000',
-            'role'    => 'nullable|in:all,student,driver,admin',
-            'type'    => 'nullable|string|max:50',
+            'title' => 'required|string|max:255',
+            'body' => 'required|string|max:1000',
+            'role' => 'nullable|in:all,student,driver,admin',
+            'type' => 'nullable|string|max:50',
         ]);
 
         $role = $validated['role'] ?? 'all';

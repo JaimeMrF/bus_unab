@@ -33,12 +33,12 @@ class BusMapController extends Controller
         $buses = Bus::active()->get();
 
         $busData = $buses->map(function (Bus $bus) {
-            $detail  = $this->gpsService->getBusDetail($bus->external_vehicle_id);
+            $detail = $this->gpsService->getBusDetail($bus->external_vehicle_id);
             $pending = BusRequest::where('bus_id', $bus->id)
                 ->where('status', 'pending')
                 ->count();
 
-            $pct   = $bus->capacity > 0
+            $pct = $bus->capacity > 0
                 ? round(min(($pending / $bus->capacity) * 100, 100), 1)
                 : 0.0;
 
@@ -46,24 +46,24 @@ class BusMapController extends Controller
                 $pct >= 90 => 'full',
                 $pct >= 60 => 'high',
                 $pct >= 30 => 'medium',
-                default    => 'low',
+                default => 'low',
             };
 
             $gps = null;
             if ($detail) {
                 $rawAddress = $detail['Info'] ?? '';
-                $address    = trim(preg_replace('/\s+CSQ:\d+.*$/i', '', $rawAddress));
+                $address = trim(preg_replace('/\s+CSQ:\d+.*$/i', '', $rawAddress));
 
                 $gps = [
-                    'latitude'        => (float) ($detail['Lt']  ?? 0),
-                    'longitude'       => (float) ($detail['Lg']  ?? 0),
-                    'speed_kmh'       => (int)   ($detail['Vel'] ?? 0),
-                    'heading'         => (int)   ($detail['Std'] ?? 0),
-                    'address'         => $address ?: null,
-                    'driver'          => ($detail['Cond'] ?? null) ?: null,
-                    'last_event'      => $detail['NEv'] ?? null,
+                    'latitude' => (float) ($detail['Lt'] ?? 0),
+                    'longitude' => (float) ($detail['Lg'] ?? 0),
+                    'speed_kmh' => (int) ($detail['Vel'] ?? 0),
+                    'heading' => (int) ($detail['Std'] ?? 0),
+                    'address' => $address ?: null,
+                    'driver' => ($detail['Cond'] ?? null) ?: null,
+                    'last_event' => $detail['NEv'] ?? null,
                     'last_updated_at' => $detail['FdS'] ?? null,
-                    'online'          => true,
+                    'online' => true,
                 ];
             }
 
@@ -71,33 +71,33 @@ class BusMapController extends Controller
             $driverLoc = Cache::get("driver_location_{$bus->plate}");
             if ($driverLoc) {
                 if ($gps) {
-                    $gps['latitude']  = $driverLoc['lat'];
+                    $gps['latitude'] = $driverLoc['lat'];
                     $gps['longitude'] = $driverLoc['lng'];
-                    $gps['heading']   = $driverLoc['heading'];
+                    $gps['heading'] = $driverLoc['heading'];
                 } else {
                     $gps = [
-                        'latitude'        => $driverLoc['lat'],
-                        'longitude'       => $driverLoc['lng'],
-                        'speed_kmh'       => 0,
-                        'heading'         => $driverLoc['heading'],
-                        'address'         => null,
-                        'driver'          => null,
-                        'last_event'      => null,
+                        'latitude' => $driverLoc['lat'],
+                        'longitude' => $driverLoc['lng'],
+                        'speed_kmh' => 0,
+                        'heading' => $driverLoc['heading'],
+                        'address' => null,
+                        'driver' => null,
+                        'last_event' => null,
                         'last_updated_at' => null,
-                        'online'          => true,
+                        'online' => true,
                     ];
                 }
             }
 
             return [
-                'id'       => $bus->id,
-                'name'     => $bus->name,
-                'plate'    => $bus->plate,
+                'id' => $bus->id,
+                'name' => $bus->name,
+                'plate' => $bus->plate,
                 'capacity' => $bus->capacity,
                 'occupancy' => [
-                    'count'      => $pending,
+                    'count' => $pending,
                     'percentage' => $pct,
-                    'level'      => $level,
+                    'level' => $level,
                 ],
                 'gps' => $gps ?? ['online' => false],
             ];
@@ -107,8 +107,8 @@ class BusMapController extends Controller
             ->get(['id', 'name', 'address', 'latitude', 'longitude', 'radius_meters']);
 
         return response()->json([
-            'buses'      => $busData,
-            'stops'      => $stops,
+            'buses' => $busData,
+            'stops' => $stops,
             'fetched_at' => now()->toIso8601String(),
         ]);
     }

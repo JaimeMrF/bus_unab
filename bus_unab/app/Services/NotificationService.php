@@ -19,8 +19,8 @@ class NotificationService
     {
         $this->sendToUser($user,
             title: "🚌 {$bus->name} llegó",
-            body:  "Tu bus llegó a la parada: {$stop->name}",
-            data:  ['type' => 'bus_arrival', 'bus_id' => (string) $bus->id, 'stop_id' => (string) $stop->id]
+            body: "Tu bus llegó a la parada: {$stop->name}",
+            data: ['type' => 'bus_arrival', 'bus_id' => (string) $bus->id, 'stop_id' => (string) $stop->id]
         );
     }
 
@@ -33,16 +33,16 @@ class NotificationService
 
         $tokens = DeviceToken::whereIn('user_id', $userIds)->pluck('token')->toArray();
 
-        $minutes  = $this->estimateEtaMinutes($bus->latitude, $bus->longitude, $stop->latitude, $stop->longitude);
-        $etaText  = $minutes === 1 ? '1 minuto' : "{$minutes} minutos";
+        $minutes = $this->estimateEtaMinutes($bus->latitude, $bus->longitude, $stop->latitude, $stop->longitude);
+        $etaText = $minutes === 1 ? '1 minuto' : "{$minutes} minutos";
 
         $this->sendToTokens($tokens,
             title: "🚌 {$bus->name} está llegando",
-            body:  "Llegará a {$stop->name} en ~{$etaText}",
-            data:  [
-                'type'         => 'bus_approaching',
-                'bus_id'       => (string) $bus->id,
-                'stop_id'      => (string) $stop->id,
+            body: "Llegará a {$stop->name} en ~{$etaText}",
+            data: [
+                'type' => 'bus_approaching',
+                'bus_id' => (string) $bus->id,
+                'stop_id' => (string) $stop->id,
                 'minutes_away' => (string) $minutes,
             ]
         );
@@ -51,12 +51,12 @@ class NotificationService
     /** Distancia Haversine → tiempo estimado a velocidad urbana (25 km/h). */
     private function estimateEtaMinutes(float $busLat, float $busLon, float $stopLat, float $stopLon): int
     {
-        $R    = 6371;
+        $R = 6371;
         $dLat = deg2rad($stopLat - $busLat);
         $dLon = deg2rad($stopLon - $busLon);
-        $a    = sin($dLat / 2) ** 2
+        $a = sin($dLat / 2) ** 2
               + cos(deg2rad($busLat)) * cos(deg2rad($stopLat)) * sin($dLon / 2) ** 2;
-        $km   = 2 * $R * asin(sqrt($a));
+        $km = 2 * $R * asin(sqrt($a));
 
         return max(1, min((int) ceil($km / 25 * 60), 30));
     }
@@ -70,19 +70,18 @@ class NotificationService
         $tokens = DeviceToken::whereIn('user_id', $userIds)->pluck('token')->toArray();
 
         $pending = BusRequest::where('bus_id', $bus->id)->where('status', 'pending')->count();
-        $pct     = $bus->capacity > 0 ? round(min(($pending / $bus->capacity) * 100, 100), 1) : 0;
+        $pct = $bus->capacity > 0 ? round(min(($pending / $bus->capacity) * 100, 100), 1) : 0;
 
         $this->sendToTokens($tokens,
             title: "⚠️ {$bus->name} casi lleno",
-            body:  "El bus tiene {$pct}% de ocupación.",
-            data:  ['type' => 'bus_almost_full', 'bus_id' => (string) $bus->id]
+            body: "El bus tiene {$pct}% de ocupación.",
+            data: ['type' => 'bus_almost_full', 'bus_id' => (string) $bus->id]
         );
     }
 
     public function broadcast(string $title, string $body, array $data = [], string $role = 'all'): void
     {
-        $tokens = DeviceToken::when($role !== 'all', fn ($q) =>
-            $q->whereHas('user', fn ($u) => $u->where('role', $role))
+        $tokens = DeviceToken::when($role !== 'all', fn ($q) => $q->whereHas('user', fn ($u) => $u->where('role', $role))
         )->pluck('token')->toArray();
 
         $this->sendToTokens($tokens, $title, $body, $data);
@@ -98,13 +97,17 @@ class NotificationService
 
     private function sendToTokens(array $tokens, string $title, string $body, array $data = []): void
     {
-        if (empty($tokens)) return;
+        if (empty($tokens)) {
+            return;
+        }
 
         $accessToken = $this->getAccessToken();
-        if (! $accessToken) return;
+        if (! $accessToken) {
+            return;
+        }
 
         $projectId = $this->getProjectId();
-        $endpoint  = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
+        $endpoint = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
 
         // FCM v1 no admite multicast nativo → enviar de uno en uno (máx 500/s)
         foreach ($tokens as $token) {
@@ -112,17 +115,17 @@ class NotificationService
                 $response = Http::withToken($accessToken)
                     ->post($endpoint, [
                         'message' => [
-                            'token'        => $token,
+                            'token' => $token,
                             'notification' => ['title' => $title, 'body' => $body],
-                            'data'         => array_map('strval', $data),
-                            'android'      => ['notification' => ['sound' => 'default', 'icon' => 'ic_notification', 'color' => '#5B2C8C']],
+                            'data' => array_map('strval', $data),
+                            'android' => ['notification' => ['sound' => 'default', 'icon' => 'ic_notification', 'color' => '#5B2C8C']],
                         ],
                     ]);
 
                 if (! $response->successful()) {
                     Log::warning('NotificationService FCM v1 error', [
                         'status' => $response->status(),
-                        'body'   => $response->json('error.message'),
+                        'body' => $response->json('error.message'),
                     ]);
                 }
             } catch (\Exception $e) {
@@ -138,24 +141,28 @@ class NotificationService
 
             if (! $b64) {
                 Log::warning('NotificationService: FIREBASE_CREDENTIALS_B64 no configurado.');
+
                 return null;
             }
 
             $json = base64_decode($b64);
             $credentials = new ServiceAccountCredentials(self::SCOPE, json_decode($json, true));
             $token = $credentials->fetchAuthToken();
+
             return $token['access_token'] ?? null;
 
         } catch (\Exception $e) {
             Log::error('NotificationService: error obteniendo access token', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
 
     private function getProjectId(): string
     {
-        $b64  = config('services.fcm.credentials_b64', '');
+        $b64 = config('services.fcm.credentials_b64', '');
         $json = json_decode(base64_decode($b64), true);
+
         return $json['project_id'] ?? '';
     }
 }

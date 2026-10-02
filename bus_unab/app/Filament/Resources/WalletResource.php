@@ -26,12 +26,18 @@ use Illuminate\Support\Str;
 class WalletResource extends Resource
 {
     protected static ?string $model = Wallet::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-wallet';
+
+    protected static ?string $navigationIcon = 'heroicon-o-wallet';
+
     protected static ?string $navigationLabel = 'Wallets';
-    protected static ?string $modelLabel      = 'Wallet';
+
+    protected static ?string $modelLabel = 'Wallet';
+
     protected static ?string $pluralModelLabel = 'Wallets';
+
     protected static ?string $navigationGroup = 'SaaS';
-    protected static ?int    $navigationSort  = 2;
+
+    protected static ?int $navigationSort = 2;
 
     public static function canCreate(): bool
     {
@@ -47,7 +53,7 @@ class WalletResource extends Resource
                 Infolists\Components\TextEntry::make('user.email')->label('Correo'),
                 Infolists\Components\TextEntry::make('balance_centavos')
                     ->label('Saldo')
-                    ->formatStateUsing(fn ($state) => '$ ' . number_format(((int) $state) / 100, 0, ',', '.') . ' COP'),
+                    ->formatStateUsing(fn ($state) => '$ '.number_format(((int) $state) / 100, 0, ',', '.').' COP'),
                 Infolists\Components\TextEntry::make('estado')
                     ->label('Estado')
                     ->badge()
@@ -82,7 +88,7 @@ class WalletResource extends Resource
 
                 Tables\Columns\TextColumn::make('balance_centavos')
                     ->label('Saldo')
-                    ->formatStateUsing(fn ($state) => '$ ' . number_format(((int) $state) / 100, 0, ',', '.'))
+                    ->formatStateUsing(fn ($state) => '$ '.number_format(((int) $state) / 100, 0, ',', '.'))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('estado')
@@ -104,8 +110,8 @@ class WalletResource extends Resource
                 Tables\Filters\SelectFilter::make('estado')
                     ->label('Estado')
                     ->options([
-                        Wallet::ESTADO_ACTIVA     => 'Activa',
-                        Wallet::ESTADO_CONGELADA  => 'Congelada',
+                        Wallet::ESTADO_ACTIVA => 'Activa',
+                        Wallet::ESTADO_CONGELADA => 'Congelada',
                     ]),
             ])
             ->actions([
@@ -133,7 +139,7 @@ class WalletResource extends Resource
                             $tx = app(WalletService::class)->adjust(
                                 $record,
                                 $centavos,
-                                'admin_adjust-' . Str::uuid()->toString(),
+                                'admin_adjust-'.Str::uuid()->toString(),
                                 (string) $data['motivo'],
                                 auth()->user()?->email,
                             );
@@ -150,7 +156,7 @@ class WalletResource extends Resource
                         Notification::make()
                             ->success()
                             ->title('Ajuste aplicado')
-                            ->body('Nuevo saldo: $ ' . number_format($tx->balance_after / 100, 0, ',', '.') . ' COP')
+                            ->body('Nuevo saldo: $ '.number_format($tx->balance_after / 100, 0, ',', '.').' COP')
                             ->send();
                     }),
             ])
@@ -168,7 +174,7 @@ class WalletResource extends Resource
     {
         return [
             'index' => Pages\ListWallets::route('/'),
-            'view'  => Pages\ViewWallet::route('/{record}'),
+            'view' => Pages\ViewWallet::route('/{record}'),
         ];
     }
 }

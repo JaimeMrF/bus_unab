@@ -3,23 +3,29 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BusResource\Pages;
+use App\Filament\Resources\BusResource\RelationManagers\RouteWaypointsRelationManager;
 use App\Filament\Resources\BusResource\RelationManagers\StopsRelationManager;
 use App\Models\Bus;
-use Filament\Tables\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 
 class BusResource extends Resource
 {
     protected static ?string $model = Bus::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-truck';
+
+    protected static ?string $navigationIcon = 'heroicon-o-truck';
+
     protected static ?string $navigationLabel = 'Buses';
-    protected static ?string $modelLabel      = 'Bus';
+
+    protected static ?string $modelLabel = 'Bus';
+
     protected static ?string $pluralModelLabel = 'Buses';
-    protected static ?int    $navigationSort  = 1;
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -112,17 +118,17 @@ class BusResource extends Resource
     {
         return [
             StopsRelationManager::class,
-            \App\Filament\Resources\BusResource\RelationManagers\RouteWaypointsRelationManager::class,
+            RouteWaypointsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListBuses::route('/'),
+            'index' => Pages\ListBuses::route('/'),
             'create' => Pages\CreateBus::route('/create'),
-            'edit'   => Pages\EditBus::route('/{record}/edit'),
-            'route'  => Pages\EditBusRoute::route('/{record}/route'),
+            'edit' => Pages\EditBus::route('/{record}/edit'),
+            'route' => Pages\EditBusRoute::route('/{record}/route'),
         ];
     }
 }

@@ -38,9 +38,9 @@ class WalletTransaction extends Model
     protected function casts(): array
     {
         return [
-            'monto_centavos'  => 'integer',
-            'balance_after'   => 'integer',
-            'metadata'        => 'array',
+            'monto_centavos' => 'integer',
+            'balance_after' => 'integer',
+            'metadata' => 'array',
         ];
     }
 

@@ -16,11 +16,11 @@ class StopController extends BaseController
     {
         $stops = Stop::active()->get(['id', 'name', 'address', 'latitude', 'longitude', 'radius_meters'])
             ->map(fn ($s) => [
-                'id'            => $s->id,
-                'name'          => $s->name,
-                'address'       => $s->address ?? '',
-                'latitude'      => $s->latitude,
-                'longitude'     => $s->longitude,
+                'id' => $s->id,
+                'name' => $s->name,
+                'address' => $s->address ?? '',
+                'latitude' => $s->latitude,
+                'longitude' => $s->longitude,
                 'radius_meters' => $s->radius_meters ?? 50,
             ]);
 
@@ -47,13 +47,13 @@ class StopController extends BaseController
         }
 
         $stops = $bus->stops->map(fn ($stop) => [
-            'id'                => $stop->id,
-            'name'              => $stop->name,
-            'address'           => $stop->address ?? '',
-            'latitude'          => $stop->latitude,
-            'longitude'         => $stop->longitude,
-            'radius_meters'     => $stop->radius_meters ?? 50,
-            'order'             => $stop->pivot->order,
+            'id' => $stop->id,
+            'name' => $stop->name,
+            'address' => $stop->address ?? '',
+            'latitude' => $stop->latitude,
+            'longitude' => $stop->longitude,
+            'radius_meters' => $stop->radius_meters ?? 50,
+            'order' => $stop->pivot->order,
             'estimated_minutes' => $stop->pivot->estimated_minutes ?? 0,
         ]);
 

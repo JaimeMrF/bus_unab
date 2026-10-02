@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Bus;
-use App\Models\Stop;
 use App\Models\RouteStop;
+use App\Models\Stop;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -33,15 +33,15 @@ class Route2Seeder extends Seeder
         DB::transaction(function () use ($stopsData) {
             // 2. Buscar el bus de la Ruta 2
             $bus = Bus::where('plate', 'RUTA2')->first();
-            
-            if (!$bus) {
+
+            if (! $bus) {
                 // Si no existe, lo creamos para que el seeder no falle
                 $bus = Bus::create([
                     'name' => 'Ruta 2',
                     'plate' => 'RUTA2',
                     'capacity' => 40,
                     'external_vehicle_id' => 190024,
-                    'is_active' => true
+                    'is_active' => true,
                 ]);
             }
 
@@ -57,7 +57,7 @@ class Route2Seeder extends Seeder
                         'longitude' => $data['lng'],
                         'address' => $data['address'],
                         'radius_meters' => 100,
-                        'is_active' => true
+                        'is_active' => true,
                     ]
                 );
 
@@ -66,7 +66,7 @@ class Route2Seeder extends Seeder
                     'bus_id' => $bus->id,
                     'stop_id' => $stop->id,
                     'order' => ($index + 1) * 10,
-                    'estimated_minutes' => 5 // Valor por defecto
+                    'estimated_minutes' => 5, // Valor por defecto
                 ]);
             }
         });

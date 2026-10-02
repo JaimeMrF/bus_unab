@@ -24,11 +24,11 @@ class BusRequestController extends BaseController
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'bus_id'  => 'required|integer|exists:buses,id',
+            'bus_id' => 'required|integer|exists:buses,id',
             'stop_id' => 'required|integer|exists:stops,id,is_active,1',
         ]);
 
-        $bus  = Bus::find($validated['bus_id']);
+        $bus = Bus::find($validated['bus_id']);
         $stop = Stop::find($validated['stop_id']);
 
         if (! $bus->is_active) {
@@ -77,10 +77,10 @@ class BusRequestController extends BaseController
             ->latest()
             ->get()
             ->map(fn ($r) => [
-                'id'     => $r->id,
+                'id' => $r->id,
                 'status' => $r->status,
-                'bus'    => ['id' => $r->bus->id, 'name' => $r->bus->name, 'plate' => $r->bus->plate],
-                'stop'   => ['id' => $r->stop->id, 'name' => $r->stop->name, 'address' => $r->stop->address],
+                'bus' => ['id' => $r->bus->id, 'name' => $r->bus->name, 'plate' => $r->bus->plate],
+                'stop' => ['id' => $r->stop->id, 'name' => $r->stop->name, 'address' => $r->stop->address],
             ]);
 
         return $this->success($requests);
@@ -93,7 +93,7 @@ class BusRequestController extends BaseController
     public function occupancy(string $plate): JsonResponse
     {
         $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
-        $bus   = Bus::active()->where('plate', $plate)->first();
+        $bus = Bus::active()->where('plate', $plate)->first();
 
         if (! $bus) {
             return $this->notFound("La ruta '{$plate}' no existe");
@@ -115,19 +115,19 @@ class BusRequestController extends BaseController
         ]);
 
         $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
-        $bus   = Bus::active()->where('plate', $plate)->first();
+        $bus = Bus::active()->where('plate', $plate)->first();
 
         if (! $bus) {
             return $this->notFound("La ruta '{$plate}' no existe");
         }
 
-        $stop     = Stop::findOrFail($validated['stop_id']);
+        $stop = Stop::findOrFail($validated['stop_id']);
         $notified = $this->service->markBusArrivedAtStop($bus, $stop);
 
         return $this->success([
             'notified_users' => $notified,
-            'stop'           => $stop->name,
-            'bus'            => $bus->name,
+            'stop' => $stop->name,
+            'bus' => $bus->name,
         ], "{$notified} usuario(s) notificados");
     }
 
@@ -140,7 +140,7 @@ class BusRequestController extends BaseController
         $validated = $request->validate(['is_full' => 'required|boolean']);
 
         $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
-        $bus   = Bus::active()->where('plate', $plate)->first();
+        $bus = Bus::active()->where('plate', $plate)->first();
 
         if (! $bus) {
             return $this->notFound("La ruta '{$plate}' no existe");
@@ -167,7 +167,7 @@ class BusRequestController extends BaseController
         ]);
 
         $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
-        $bus   = Bus::active()->where('plate', $plate)->first();
+        $bus = Bus::active()->where('plate', $plate)->first();
 
         if (! $bus) {
             return $this->notFound("La ruta '{$plate}' no existe");
@@ -178,7 +178,7 @@ class BusRequestController extends BaseController
 
         return $this->success([
             'stop' => $stop->name,
-            'bus'  => $bus->name,
+            'bus' => $bus->name,
         ], "Usuarios notificados: el bus está llegando a {$stop->name}");
     }
 }

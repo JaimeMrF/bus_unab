@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
 class AdminSeeder extends Seeder
 {
@@ -13,10 +13,10 @@ class AdminSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'admin@unab.edu.co'],
             [
-                'name'     => 'Administrador UNAB',
-                'email'    => 'admin@unab.edu.co',
+                'name' => 'Administrador UNAB',
+                'email' => 'admin@unab.edu.co',
                 'password' => Hash::make('Admin2024*'),
-                'role'     => 'admin',
+                'role' => 'admin',
             ]
         );
     }

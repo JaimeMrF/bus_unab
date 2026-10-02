@@ -22,7 +22,7 @@ trait BelongsToTenant
 {
     public static function bootBelongsToTenant(): void
     {
-        static::addGlobalScope(new GlobalTenantScope());
+        static::addGlobalScope(new GlobalTenantScope);
 
         static::creating(function ($model) {
             if (TenantContext::id() !== null && empty($model->transportadora_id)) {

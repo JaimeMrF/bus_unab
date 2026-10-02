@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Bus;
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\TenantContext;
+use App\Models\PointOfInterest;
 use App\Models\Stop;
 use App\Models\Transportadora;
 use App\Models\User;
@@ -32,11 +33,11 @@ class TenantIsolationTest extends TestCase
 
         $this->tenantA = Transportadora::create([
             'nombre' => 'Tenant A',
-            'slug'   => 'tenant-a',
+            'slug' => 'tenant-a',
         ]);
         $this->tenantB = Transportadora::create([
             'nombre' => 'Tenant B',
-            'slug'   => 'tenant-b',
+            'slug' => 'tenant-b',
         ]);
     }
 
@@ -45,12 +46,12 @@ class TenantIsolationTest extends TestCase
         static $seq = 0;
 
         return Bus::create([
-            'name'                => "Ruta {$plate}",
-            'plate'               => $plate,
+            'name' => "Ruta {$plate}",
+            'plate' => $plate,
             'external_vehicle_id' => 95000 + ++$seq,
-            'capacity'            => 40,
-            'is_active'           => true,
-            'transportadora_id'   => $tenantId,
+            'capacity' => 40,
+            'is_active' => true,
+            'transportadora_id' => $tenantId,
         ]);
     }
 
@@ -64,7 +65,7 @@ class TenantIsolationTest extends TestCase
         $this->assertCount(3, Bus::all());
     }
 
-    public function test_withTenant_filters_rows_of_other_tenants(): void
+    public function test_with_tenant_filters_rows_of_other_tenants(): void
     {
         $this->makeBus('A1', $this->tenantA->id);
         $this->makeBus('B1', $this->tenantB->id);
@@ -81,11 +82,11 @@ class TenantIsolationTest extends TestCase
     {
         $bus = Bus::withTenant($this->tenantB->id, function () {
             return Bus::create([
-                'name'                => 'Auto-asignado',
-                'plate'               => 'AUTO1',
+                'name' => 'Auto-asignado',
+                'plate' => 'AUTO1',
                 'external_vehicle_id' => 97140,
-                'capacity'            => 40,
-                'is_active'           => true,
+                'capacity' => 40,
+                'is_active' => true,
                 // transportadora_id NO se pasa: debe rellenarse del contexto.
             ]);
         });
@@ -97,12 +98,12 @@ class TenantIsolationTest extends TestCase
     {
         $bus = Bus::withTenant($this->tenantB->id, function () {
             return Bus::create([
-                'name'                => 'Explícito',
-                'plate'               => 'EXP1',
+                'name' => 'Explícito',
+                'plate' => 'EXP1',
                 'external_vehicle_id' => 97141,
-                'capacity'            => 40,
-                'is_active'           => true,
-                'transportadora_id'   => $this->tenantA->id,
+                'capacity' => 40,
+                'is_active' => true,
+                'transportadora_id' => $this->tenantA->id,
             ]);
         });
 
@@ -155,7 +156,7 @@ class TenantIsolationTest extends TestCase
 
     public function test_relation_transportadora_resolves_in_both_directions(): void
     {
-        $bus  = $this->makeBus('A1', $this->tenantA->id);
+        $bus = $this->makeBus('A1', $this->tenantA->id);
         $stop = Stop::create([
             'name' => 'Parada A', 'latitude' => 7.1, 'longitude' => -73.1,
             'transportadora_id' => $this->tenantA->id,
@@ -173,7 +174,7 @@ class TenantIsolationTest extends TestCase
 
     public function test_trait_is_applied_on_all_core_models(): void
     {
-        foreach ([Bus::class, Stop::class, User::class, \App\Models\PointOfInterest::class] as $model) {
+        foreach ([Bus::class, Stop::class, User::class, PointOfInterest::class] as $model) {
             $this->assertContains(
                 BelongsToTenant::class,
                 class_uses_recursive($model),
@@ -192,10 +193,10 @@ class TenantIsolationTest extends TestCase
     private function makeStop(string $name, ?int $tenantId): Stop
     {
         return Stop::create([
-            'name'              => $name,
-            'latitude'          => 7.1,
-            'longitude'         => -73.1,
-            'is_active'         => true,
+            'name' => $name,
+            'latitude' => 7.1,
+            'longitude' => -73.1,
+            'is_active' => true,
             'transportadora_id' => $tenantId,
         ]);
     }
@@ -203,10 +204,10 @@ class TenantIsolationTest extends TestCase
     private function gpsFix(string $plate): array
     {
         return [
-            'Placa'    => $plate,
-            'Latitud'  => '7.1218',
+            'Placa' => $plate,
+            'Latitud' => '7.1218',
             'Longitud' => '-73.1158',
-            'Sentido'  => '90',
+            'Sentido' => '90',
         ];
     }
 

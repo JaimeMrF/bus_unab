@@ -2,7 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Bus;
 use App\Models\Concerns\TenantContext;
+use App\Models\PointOfInterest;
+use App\Models\Stop;
+use App\Models\User;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -30,10 +34,10 @@ class EnsureTenantScope
 {
     /** Modelos de dominio con columna transportadora_id. */
     private const TENANT_MODELS = [
-        \App\Models\Bus::class,
-        \App\Models\Stop::class,
-        \App\Models\User::class,
-        \App\Models\PointOfInterest::class,
+        Bus::class,
+        Stop::class,
+        User::class,
+        PointOfInterest::class,
     ];
 
     public function handle(Request $request, Closure $next): Response

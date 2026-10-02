@@ -30,9 +30,9 @@ class Fare extends Model
     {
         return [
             'monto_centavos' => 'integer',
-            'activa'         => 'boolean',
-            'vigente_desde'  => 'datetime',
-            'vigente_hasta'  => 'datetime',
+            'activa' => 'boolean',
+            'vigente_desde' => 'datetime',
+            'vigente_hasta' => 'datetime',
         ];
     }
 

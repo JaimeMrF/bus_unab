@@ -13,11 +13,16 @@ use Filament\Tables\Table;
 class StopResource extends Resource
 {
     protected static ?string $model = Stop::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-map-pin';
+
+    protected static ?string $navigationIcon = 'heroicon-o-map-pin';
+
     protected static ?string $navigationLabel = 'Paradas';
-    protected static ?string $modelLabel      = 'Parada';
+
+    protected static ?string $modelLabel = 'Parada';
+
     protected static ?string $pluralModelLabel = 'Paradas';
-    protected static ?int    $navigationSort  = 2;
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
@@ -111,9 +116,9 @@ class StopResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListStops::route('/'),
+            'index' => Pages\ListStops::route('/'),
             'create' => Pages\CreateStop::route('/create'),
-            'edit'   => Pages\EditStop::route('/{record}/edit'),
+            'edit' => Pages\EditStop::route('/{record}/edit'),
         ];
     }
 }

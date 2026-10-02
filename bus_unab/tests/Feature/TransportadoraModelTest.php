@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Transportadora;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 /**
@@ -17,8 +17,8 @@ class TransportadoraModelTest extends TestCase
     private function payload(array $overrides = []): array
     {
         return array_merge([
-            'nombre'         => 'Transportadora de Prueba',
-            'slug'           => 'trans-prueba',
+            'nombre' => 'Transportadora de Prueba',
+            'slug' => 'trans-prueba',
             'contacto_email' => 'prueba@trans.co',
         ], $overrides);
     }
@@ -29,9 +29,9 @@ class TransportadoraModelTest extends TestCase
         $t->refresh(); // defaults de plan/activo viven en la BD; sin refetch el modelo los tiene null en memoria
 
         $this->assertDatabaseHas('transportadoras', [
-            'id'     => $t->id,
-            'slug'   => 'trans-prueba',
-            'plan'   => 'basico',
+            'id' => $t->id,
+            'slug' => 'trans-prueba',
+            'plan' => 'basico',
             'activo' => true,
         ]);
         $this->assertTrue($t->activo);
@@ -42,7 +42,7 @@ class TransportadoraModelTest extends TestCase
     {
         Transportadora::create($this->payload());
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         Transportadora::create($this->payload(['nombre' => 'Otra']));
     }
 

@@ -15,7 +15,9 @@ class BusRequestTest extends TestCase
     use RefreshDatabase;
 
     private User $student;
-    private Bus  $bus;
+
+    private Bus $bus;
+
     private Stop $stop;
 
     protected function setUp(): void
@@ -25,26 +27,26 @@ class BusRequestTest extends TestCase
         $this->student = User::factory()->create(['role' => 'pasajero']);
 
         $this->bus = Bus::create([
-            'name'                => 'Ruta 1',
-            'plate'               => 'RUTA1',
+            'name' => 'Ruta 1',
+            'plate' => 'RUTA1',
             'external_vehicle_id' => 97141,
-            'capacity'            => 40,
-            'is_active'           => true,
+            'capacity' => 40,
+            'is_active' => true,
         ]);
 
         $this->stop = Stop::create([
-            'name'          => 'UNAB Campus',
-            'address'       => 'Calle 48',
-            'latitude'      => 7.1218,
-            'longitude'     => -73.1158,
+            'name' => 'UNAB Campus',
+            'address' => 'Calle 48',
+            'latitude' => 7.1218,
+            'longitude' => -73.1158,
             'radius_meters' => 100,
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         RouteStop::create([
-            'bus_id'            => $this->bus->id,
-            'stop_id'           => $this->stop->id,
-            'order'             => 1,
+            'bus_id' => $this->bus->id,
+            'stop_id' => $this->stop->id,
+            'order' => 1,
             'estimated_minutes' => 5,
         ]);
     }
@@ -55,7 +57,7 @@ class BusRequestTest extends TestCase
     {
         $response = $this->actingAs($this->student, 'sanctum')
             ->postJson('/api/v1/requests', [
-                'bus_id'  => $this->bus->id,
+                'bus_id' => $this->bus->id,
                 'stop_id' => $this->stop->id,
             ]);
 
@@ -67,16 +69,16 @@ class BusRequestTest extends TestCase
 
         $this->assertDatabaseHas('bus_requests', [
             'user_id' => $this->student->id,
-            'bus_id'  => $this->bus->id,
+            'bus_id' => $this->bus->id,
             'stop_id' => $this->stop->id,
-            'status'  => 'pending',
+            'status' => 'pending',
         ]);
     }
 
     public function test_request_requires_authentication(): void
     {
         $this->postJson('/api/v1/requests', [
-            'bus_id'  => $this->bus->id,
+            'bus_id' => $this->bus->id,
             'stop_id' => $this->stop->id,
         ])->assertStatus(401);
     }
@@ -91,17 +93,17 @@ class BusRequestTest extends TestCase
     public function test_request_rejects_stop_not_on_route(): void
     {
         $otherStop = Stop::create([
-            'name'          => 'Otra Parada',
-            'address'       => 'Calle 10',
-            'latitude'      => 7.2000,
-            'longitude'     => -73.2000,
+            'name' => 'Otra Parada',
+            'address' => 'Calle 10',
+            'latitude' => 7.2000,
+            'longitude' => -73.2000,
             'radius_meters' => 100,
-            'is_active'     => true,
+            'is_active' => true,
         ]);
 
         $this->actingAs($this->student, 'sanctum')
             ->postJson('/api/v1/requests', [
-                'bus_id'  => $this->bus->id,
+                'bus_id' => $this->bus->id,
                 'stop_id' => $otherStop->id,
             ])->assertStatus(400);
     }
@@ -111,20 +113,20 @@ class BusRequestTest extends TestCase
         // Primera solicitud
         $first = BusRequest::create([
             'user_id' => $this->student->id,
-            'bus_id'  => $this->bus->id,
+            'bus_id' => $this->bus->id,
             'stop_id' => $this->stop->id,
-            'status'  => 'pending',
+            'status' => 'pending',
         ]);
 
         // Nueva solicitud del mismo usuario para el mismo bus
         $this->actingAs($this->student, 'sanctum')
             ->postJson('/api/v1/requests', [
-                'bus_id'  => $this->bus->id,
+                'bus_id' => $this->bus->id,
                 'stop_id' => $this->stop->id,
             ])->assertStatus(201);
 
         $this->assertDatabaseHas('bus_requests', [
-            'id'     => $first->id,
+            'id' => $first->id,
             'status' => 'cancelled',
         ]);
     }
@@ -136,15 +138,15 @@ class BusRequestTest extends TestCase
         foreach ($others as $u) {
             BusRequest::create([
                 'user_id' => $u->id,
-                'bus_id'  => $this->bus->id,
+                'bus_id' => $this->bus->id,
                 'stop_id' => $this->stop->id,
-                'status'  => 'pending',
+                'status' => 'pending',
             ]);
         }
 
         $response = $this->actingAs($this->student, 'sanctum')
             ->postJson('/api/v1/requests', [
-                'bus_id'  => $this->bus->id,
+                'bus_id' => $this->bus->id,
                 'stop_id' => $this->stop->id,
             ]);
 
@@ -158,7 +160,7 @@ class BusRequestTest extends TestCase
     {
         $response = $this->actingAs($this->student, 'sanctum')
             ->postJson('/api/v1/requests', [
-                'bus_id'  => $this->bus->id,
+                'bus_id' => $this->bus->id,
                 'stop_id' => $this->stop->id,
             ]);
 
@@ -172,9 +174,9 @@ class BusRequestTest extends TestCase
     {
         BusRequest::create([
             'user_id' => $this->student->id,
-            'bus_id'  => $this->bus->id,
+            'bus_id' => $this->bus->id,
             'stop_id' => $this->stop->id,
-            'status'  => 'pending',
+            'status' => 'pending',
         ]);
 
         $this->actingAs($this->student, 'sanctum')
@@ -184,7 +186,7 @@ class BusRequestTest extends TestCase
 
         $this->assertDatabaseHas('bus_requests', [
             'user_id' => $this->student->id,
-            'status'  => 'cancelled',
+            'status' => 'cancelled',
         ]);
     }
 
@@ -204,7 +206,7 @@ class BusRequestTest extends TestCase
             ->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'data'    => ['current_occupancy' => 0, 'capacity' => 40, 'level' => 'low'],
+                'data' => ['current_occupancy' => 0, 'capacity' => 40, 'level' => 'low'],
             ]);
     }
 
@@ -212,16 +214,16 @@ class BusRequestTest extends TestCase
     {
         BusRequest::create([
             'user_id' => $this->student->id,
-            'bus_id'  => $this->bus->id,
+            'bus_id' => $this->bus->id,
             'stop_id' => $this->stop->id,
-            'status'  => 'pending',
+            'status' => 'pending',
         ]);
 
         BusRequest::create([
             'user_id' => User::factory()->create()->id,
-            'bus_id'  => $this->bus->id,
+            'bus_id' => $this->bus->id,
             'stop_id' => $this->stop->id,
-            'status'  => 'cancelled',
+            'status' => 'cancelled',
         ]);
 
         $this->actingAs($this->student, 'sanctum')
@@ -237,9 +239,9 @@ class BusRequestTest extends TestCase
         foreach ($users as $u) {
             BusRequest::create([
                 'user_id' => $u->id,
-                'bus_id'  => $this->bus->id,
+                'bus_id' => $this->bus->id,
                 'stop_id' => $this->stop->id,
-                'status'  => 'pending',
+                'status' => 'pending',
             ]);
         }
 
@@ -264,9 +266,9 @@ class BusRequestTest extends TestCase
 
         BusRequest::create([
             'user_id' => $this->student->id,
-            'bus_id'  => $this->bus->id,
+            'bus_id' => $this->bus->id,
             'stop_id' => $this->stop->id,
-            'status'  => 'pending',
+            'status' => 'pending',
         ]);
 
         $response = $this->actingAs($admin, 'sanctum')
@@ -275,12 +277,12 @@ class BusRequestTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'data'    => ['notified_users' => 1],
+                'data' => ['notified_users' => 1],
             ]);
 
         $this->assertDatabaseHas('bus_requests', [
             'user_id' => $this->student->id,
-            'status'  => 'boarded',
+            'status' => 'boarded',
         ]);
     }
 

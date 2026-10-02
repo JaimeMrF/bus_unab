@@ -34,7 +34,7 @@ class Wallet extends Model
     {
         return [
             'balance_centavos' => 'integer',
-            'version'          => 'integer',
+            'version' => 'integer',
             'transportadora_id' => 'integer',
         ];
     }

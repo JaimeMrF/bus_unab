@@ -23,21 +23,21 @@ class BusTest extends TestCase
     private function createBus(string $plate = 'RUTA1', int $externalId = 97141): Bus
     {
         return Bus::create([
-            'name'                => "Ruta {$plate}",
-            'plate'               => $plate,
+            'name' => "Ruta {$plate}",
+            'plate' => $plate,
             'external_vehicle_id' => $externalId,
-            'capacity'            => 40,
-            'is_active'           => true,
+            'capacity' => 40,
+            'is_active' => true,
         ]);
     }
 
     private function fakeGpsData(string $plate = 'RUTA1'): array
     {
         return [
-            'Placa'    => $plate,
-            'Latitud'  => '7.1218',
+            'Placa' => $plate,
+            'Latitud' => '7.1218',
             'Longitud' => '-73.1158',
-            'Sentido'  => '90',
+            'Sentido' => '90',
         ];
     }
 
@@ -107,14 +107,14 @@ class BusTest extends TestCase
 
         $mock = $this->mock(GpsMobileService::class);
         $mock->shouldReceive('getBusDetail')->andReturn([
-            'Lt'   => '7.1218',
-            'Lg'   => '-73.1158',
-            'Vel'  => '30',
-            'Std'  => '180',
+            'Lt' => '7.1218',
+            'Lg' => '-73.1158',
+            'Vel' => '30',
+            'Std' => '180',
             'Info' => 'Bucaramanga, El Jardín. Calle 48 con 27 CSQ:5 DSleep:0',
             'Cond' => 'Juan Pérez',
-            'NEv'  => 'Encendido',
-            'FdS'  => '2026-05-02 10:00:00',
+            'NEv' => 'Encendido',
+            'FdS' => '2026-05-02 10:00:00',
         ]);
 
         $this->actingAs($this->user, 'sanctum')
@@ -133,14 +133,14 @@ class BusTest extends TestCase
 
         $mock = $this->mock(GpsMobileService::class);
         $mock->shouldReceive('getBusDetail')->andReturn([
-            'Lt'   => '7.1218',
-            'Lg'   => '-73.1158',
-            'Vel'  => '0',
-            'Std'  => '0',
+            'Lt' => '7.1218',
+            'Lg' => '-73.1158',
+            'Vel' => '0',
+            'Std' => '0',
             'Info' => 'Bucaramanga, El Jardín. Calle 48 CSQ:5 DSleep:0 IN1:1 IN2:0',
             'Cond' => '',
-            'NEv'  => null,
-            'FdS'  => null,
+            'NEv' => null,
+            'FdS' => null,
         ]);
 
         $response = $this->actingAs($this->user, 'sanctum')

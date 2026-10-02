@@ -10,13 +10,18 @@ use Illuminate\Support\Facades\Log;
 class GpsMobileService
 {
     private string $baseUrl;
-    private int    $codUserInc;
-    private float  $defaultLat;
-    private float  $defaultLng;
-    private int    $timeout;
+
+    private int $codUserInc;
+
+    private float $defaultLat;
+
+    private float $defaultLng;
+
+    private int $timeout;
 
     // Tiempo de caché en segundos (30 s para ubicaciones, 5 min para detalle)
-    private const CACHE_BUSES_TTL  = 30;
+    private const CACHE_BUSES_TTL = 30;
+
     private const CACHE_DETAIL_TTL = 30;
 
     public function __construct()
@@ -24,18 +29,18 @@ class GpsMobileService
         // Casts defensivos: sin GPSMOBILE_* en .env, config() puede devolver
         // string/null y rompe las propiedades estrictamente tipadas (TypeError 500).
         // Defaults coinciden con config/gpsmobile.php.
-        $this->baseUrl    = (string) config('gpsmobile.base_url', 'http://gpsmobile.co:4000');
+        $this->baseUrl = (string) config('gpsmobile.base_url', 'http://gpsmobile.co:4000');
         $this->codUserInc = (int) config('gpsmobile.cod_user_inc', 110571);
         $this->defaultLat = (float) config('gpsmobile.default_lat', 7.1218);
         $this->defaultLng = (float) config('gpsmobile.default_lng', -73.1158);
-        $this->timeout    = (int) config('gpsmobile.timeout', 10);
+        $this->timeout = (int) config('gpsmobile.timeout', 10);
     }
 
     /**
      * Obtiene la ubicación en tiempo real de todos los buses.
      * Resultado cacheado 30 segundos.
      */
-    public function getAllBuses(float $lat = null, float $lng = null): ?array
+    public function getAllBuses(?float $lat = null, ?float $lng = null): ?array
     {
         $lat ??= $this->defaultLat;
         $lng ??= $this->defaultLng;
@@ -74,6 +79,7 @@ class GpsMobileService
                 Log::warning('GpsMobileService::getAllBuses - respuesta no exitosa', [
                     'status' => $response->status(),
                 ]);
+
                 return null;
             }
 
@@ -81,15 +87,18 @@ class GpsMobileService
 
             if (! ($data['sucess'] ?? false)) {
                 Log::warning('GpsMobileService::getAllBuses - sucess=false');
+
                 return null;
             }
 
             $vehicles = $data['response']['veh'] ?? [];
             Log::info('GpsMobileService::getAllBuses - vehículos recibidos', ['vehicles' => $vehicles]);
+
             return $vehicles;
 
         } catch (ConnectionException $e) {
-            Log::error('GpsMobileService::getAllBuses - error de conexión: ' . $e->getMessage());
+            Log::error('GpsMobileService::getAllBuses - error de conexión: '.$e->getMessage());
+
             return null;
         }
     }
@@ -103,8 +112,9 @@ class GpsMobileService
             if (! $response->successful()) {
                 Log::warning('GpsMobileService::getBusDetail - respuesta no exitosa', [
                     'vehicle_id' => $externalVehicleId,
-                    'status'     => $response->status(),
+                    'status' => $response->status(),
                 ]);
+
                 return null;
             }
 
@@ -112,13 +122,15 @@ class GpsMobileService
 
             if (! ($data['sucess'] ?? false)) {
                 Log::warning('GpsMobileService::getBusDetail - sucess=false');
+
                 return null;
             }
 
             return $data['response']['veh'] ?? null;
 
         } catch (ConnectionException $e) {
-            Log::error('GpsMobileService::getBusDetail - error de conexión: ' . $e->getMessage());
+            Log::error('GpsMobileService::getBusDetail - error de conexión: '.$e->getMessage());
+
             return null;
         }
     }

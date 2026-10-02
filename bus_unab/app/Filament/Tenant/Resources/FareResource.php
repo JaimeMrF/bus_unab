@@ -3,11 +3,13 @@
 namespace App\Filament\Tenant\Resources;
 
 use App\Filament\Tenant\Resources\FareResource\Pages;
+use App\Models\Concerns\TenantContext;
 use App\Models\Fare;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * M3 · S3.3.2 — Tarifas del TENANT (panel /empresa).
@@ -24,19 +26,25 @@ use Filament\Tables\Table;
 class FareResource extends Resource
 {
     protected static ?string $model = Fare::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-ticket';
-    protected static ?string $navigationLabel = 'Tarifas';
-    protected static ?string $modelLabel      = 'Tarifa';
-    protected static ?string $pluralModelLabel = 'Tarifas';
-    protected static ?string $navigationGroup = 'Operación';
-    protected static ?int    $navigationSort  = 3;
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    protected static ?string $navigationIcon = 'heroicon-o-ticket';
+
+    protected static ?string $navigationLabel = 'Tarifas';
+
+    protected static ?string $modelLabel = 'Tarifa';
+
+    protected static ?string $pluralModelLabel = 'Tarifas';
+
+    protected static ?string $navigationGroup = 'Operación';
+
+    protected static ?int $navigationSort = 3;
+
+    public static function getEloquentQuery(): Builder
     {
         // Fare NO tiene GlobalTenantScope (sin trait BelongsToTenant) → la
         // lectura se filtra a mano por el contexto que fija EnsureTenantScope.
         return parent::getEloquentQuery()
-            ->where('transportadora_id', \App\Models\Concerns\TenantContext::id());
+            ->where('transportadora_id', TenantContext::id());
     }
 
     public static function form(Forms\Form $form): Forms\Form
@@ -114,7 +122,7 @@ class FareResource extends Resource
 
                 Tables\Columns\TextColumn::make('monto_centavos')
                     ->label('Monto')
-                    ->formatStateUsing(fn ($state) => '$ ' . number_format(((int) $state) / 100, 0, ',', '.') . ' COP')
+                    ->formatStateUsing(fn ($state) => '$ '.number_format(((int) $state) / 100, 0, ',', '.').' COP')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('ruta_id')
@@ -130,7 +138,7 @@ class FareResource extends Resource
                 Tables\Columns\TextColumn::make('vigencia')
                     ->label('Vigencia')
                     ->getStateUsing(fn (Fare $r): string => trim(
-                        ($r->vigente_desde?->format('d/m/Y') ?? '—') . ' → ' . ($r->vigente_hasta?->format('d/m/Y') ?? '∞')
+                        ($r->vigente_desde?->format('d/m/Y') ?? '—').' → '.($r->vigente_hasta?->format('d/m/Y') ?? '∞')
                     ))
                     ->badge()
                     ->color('gray'),
@@ -153,9 +161,9 @@ class FareResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListFares::route('/'),
+            'index' => Pages\ListFares::route('/'),
             'create' => Pages\CreateFare::route('/create'),
-            'edit'   => Pages\EditFare::route('/{record}/edit'),
+            'edit' => Pages\EditFare::route('/{record}/edit'),
         ];
     }
 }

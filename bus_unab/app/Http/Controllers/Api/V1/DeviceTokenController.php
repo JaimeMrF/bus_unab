@@ -15,7 +15,7 @@ class DeviceTokenController extends BaseController
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'token'    => 'required|string|min:10|max:4096',
+            'token' => 'required|string|min:10|max:4096',
             'platform' => 'required|in:android,ios',
         ]);
 

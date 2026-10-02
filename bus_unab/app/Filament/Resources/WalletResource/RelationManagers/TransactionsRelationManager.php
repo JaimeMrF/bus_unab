@@ -35,15 +35,15 @@ class TransactionsRelationManager extends RelationManager
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         WalletTransaction::TIPO_CREDITO => 'success',
-                        WalletTransaction::TIPO_DEBITO  => 'danger',
-                        default                         => 'warning',
+                        WalletTransaction::TIPO_DEBITO => 'danger',
+                        default => 'warning',
                     }),
                 Tables\Columns\TextColumn::make('monto_centavos')
                     ->label('Monto')
-                    ->formatStateUsing(fn ($state) => '$ ' . number_format(abs((int) $state) / 100, 0, ',', '.')),
+                    ->formatStateUsing(fn ($state) => '$ '.number_format(abs((int) $state) / 100, 0, ',', '.')),
                 Tables\Columns\TextColumn::make('balance_after')
                     ->label('Saldo luego')
-                    ->formatStateUsing(fn ($state) => '$ ' . number_format(((int) $state) / 100, 0, ',', '.')),
+                    ->formatStateUsing(fn ($state) => '$ '.number_format(((int) $state) / 100, 0, ',', '.')),
                 Tables\Columns\TextColumn::make('reference')
                     ->label('Referencia')
                     ->searchable()

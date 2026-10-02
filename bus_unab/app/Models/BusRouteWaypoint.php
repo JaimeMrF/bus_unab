@@ -11,9 +11,9 @@ class BusRouteWaypoint extends Model
     protected function casts(): array
     {
         return [
-            'latitude'  => 'float',
+            'latitude' => 'float',
             'longitude' => 'float',
-            'order'     => 'integer',
+            'order' => 'integer',
         ];
     }
 

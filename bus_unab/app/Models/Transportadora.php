@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Database\Factories\TransportadoraFactory;
 use App\Services\BrandingService;
+use Database\Factories\TransportadoraFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;

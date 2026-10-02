@@ -9,11 +9,15 @@ use Filament\Support\Enums\MaxWidth;
 
 class BusMap extends Page
 {
-    protected static ?string $navigationIcon  = 'heroicon-o-map';
+    protected static ?string $navigationIcon = 'heroicon-o-map';
+
     protected static ?string $navigationLabel = 'Mapa en Vivo';
-    protected static ?string $title           = 'Mapa de Buses en Tiempo Real';
-    protected static ?string $slug            = 'bus-map';
-    protected static ?int    $navigationSort  = 0; // Primero en el menú
+
+    protected static ?string $title = 'Mapa de Buses en Tiempo Real';
+
+    protected static ?string $slug = 'bus-map';
+
+    protected static ?int $navigationSort = 0; // Primero en el menú
 
     protected static string $view = 'filament.pages.bus-map';
 
@@ -30,7 +34,7 @@ class BusMap extends Page
     public function getViewData(): array
     {
         return [
-            'busCount'  => Bus::active()->count(),
+            'busCount' => Bus::active()->count(),
             'stopCount' => Stop::where('is_active', true)->count(),
             // URL del endpoint AJAX — generada desde PHP para no hardcodear en JS
             'mapDataUrl' => route('admin.map-data'),

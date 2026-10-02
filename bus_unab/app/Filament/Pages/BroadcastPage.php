@@ -18,11 +18,15 @@ class BroadcastPage extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon  = 'heroicon-o-megaphone';
+    protected static ?string $navigationIcon = 'heroicon-o-megaphone';
+
     protected static ?string $navigationLabel = 'Broadcast';
-    protected static ?string $title           = 'Enviar Notificación Global';
-    protected static ?int    $navigationSort  = 10;
-    protected static string  $view            = 'filament.pages.broadcast-page';
+
+    protected static ?string $title = 'Enviar Notificación Global';
+
+    protected static ?int $navigationSort = 10;
+
+    protected static string $view = 'filament.pages.broadcast-page';
 
     public ?array $data = [];
 
@@ -53,9 +57,9 @@ class BroadcastPage extends Page implements HasForms
                 Select::make('role')
                     ->label('Destinatarios')
                     ->options([
-                        'all'      => 'Todos los usuarios',
+                        'all' => 'Todos los usuarios',
                         'pasajero' => 'Solo pasajeros',
-                        'driver'   => 'Solo conductores',
+                        'driver' => 'Solo conductores',
                     ])
                     ->default('all')
                     ->required(),
@@ -81,9 +85,9 @@ class BroadcastPage extends Page implements HasForms
         try {
             app(NotificationService::class)->broadcast(
                 title: $data['title'],
-                body:  $data['body'],
-                data:  ['type' => 'general'],
-                role:  $data['role'],
+                body: $data['body'],
+                data: ['type' => 'general'],
+                role: $data['role'],
             );
 
             Notification::make()

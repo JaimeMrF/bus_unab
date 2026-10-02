@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Stop extends Model
 {
-    use SoftDeletes;
     use BelongsToTenant;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -24,10 +24,10 @@ class Stop extends Model
     protected function casts(): array
     {
         return [
-            'latitude'      => 'float',
-            'longitude'     => 'float',
+            'latitude' => 'float',
+            'longitude' => 'float',
             'radius_meters' => 'integer',
-            'is_active'     => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -56,9 +56,9 @@ class Stop extends Model
         $earthRadius = 6371000; // metros
 
         $latFrom = deg2rad($this->latitude);
-        $latTo   = deg2rad($lat);
-        $dLat    = deg2rad($lat - $this->latitude);
-        $dLng    = deg2rad($lng - $this->longitude);
+        $latTo = deg2rad($lat);
+        $dLat = deg2rad($lat - $this->latitude);
+        $dLng = deg2rad($lng - $this->longitude);
 
         $a = sin($dLat / 2) ** 2
             + cos($latFrom) * cos($latTo) * sin($dLng / 2) ** 2;

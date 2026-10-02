@@ -17,7 +17,7 @@ class StopSeeder extends Seeder
             ['name' => 'Terminal de Transportes',            'address' => 'Cra 15 con Calle 30, Bucaramanga',    'latitude' => 7.0919,  'longitude' => -73.1208],
             ['name' => 'Metrolínea Estación Norte',          'address' => 'Av. González Valencia, Bucaramanga',  'latitude' => 7.1290,  'longitude' => -73.1241],
             ['name' => 'Clínica FOSCAL',                     'address' => 'Autopista Bucaramanga-Floridablanca', 'latitude' => 7.0793,  'longitude' => -73.1041],
-            ['name' => 'Universidad Industrial de Santander','address' => 'Cra 27 con Calle 9, Bucaramanga',     'latitude' => 7.1405,  'longitude' => -73.1197],
+            ['name' => 'Universidad Industrial de Santander', 'address' => 'Cra 27 con Calle 9, Bucaramanga',     'latitude' => 7.1405,  'longitude' => -73.1197],
         ];
 
         foreach ($stops as $stop) {

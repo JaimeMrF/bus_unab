@@ -38,7 +38,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Session Encryption                                                      |  
+    | Session Encryption                                                      |
     |--------------------------------------------------------------------------
     |                                                                         |
     | This option allows you to easily specify that all of your session data  |
@@ -129,7 +129,7 @@ return [
 
     'cookie' => env(
         'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')) . '-session'
+        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
     ),
 
     /*

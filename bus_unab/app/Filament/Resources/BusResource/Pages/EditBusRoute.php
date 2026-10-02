@@ -3,13 +3,11 @@
 namespace App\Filament\Resources\BusResource\Pages;
 
 use App\Filament\Resources\BusResource;
-use App\Models\Bus;
 use App\Models\BusRouteWaypoint;
 use App\Models\RouteStop;
-use App\Models\Stop;
 use Filament\Notifications\Notification;
-use Filament\Resources\Pages\Page;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
+use Filament\Resources\Pages\Page;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +16,8 @@ class EditBusRoute extends Page
     use InteractsWithRecord;
 
     protected static string $resource = BusResource::class;
-    protected static string $view     = 'filament.resources.bus-resource.pages.edit-bus-route';
+
+    protected static string $view = 'filament.resources.bus-resource.pages.edit-bus-route';
 
     public function mount(int|string $record): void
     {
@@ -37,8 +36,8 @@ class EditBusRoute extends Page
     /**
      * Guarda paradas (en orden) y waypoints intermedios en una sola operación.
      *
-     * @param array $routeStops  [{stop_id, order, estimated_minutes}]
-     * @param array $waypoints   [{lat, lng, order, label}]
+     * @param  array  $routeStops  [{stop_id, order, estimated_minutes}]
+     * @param  array  $waypoints  [{lat, lng, order, label}]
      */
     public function saveAll(array $routeStops, array $waypoints): void
     {
@@ -48,10 +47,10 @@ class EditBusRoute extends Page
 
             foreach ($routeStops as $rs) {
                 RouteStop::create([
-                    'bus_id'             => $this->record->id,
-                    'stop_id'            => (int) $rs['stop_id'],
-                    'order'              => (int) $rs['order'],
-                    'estimated_minutes'  => (int) ($rs['estimated_minutes'] ?? 0),
+                    'bus_id' => $this->record->id,
+                    'stop_id' => (int) $rs['stop_id'],
+                    'order' => (int) $rs['order'],
+                    'estimated_minutes' => (int) ($rs['estimated_minutes'] ?? 0),
                 ]);
             }
 
@@ -60,11 +59,11 @@ class EditBusRoute extends Page
 
             foreach ($waypoints as $wp) {
                 BusRouteWaypoint::create([
-                    'bus_id'    => $this->record->id,
-                    'order'     => (int)   ($wp['order'] ?? 999),
-                    'latitude'  => (float) ($wp['lat']   ?? 0),
-                    'longitude' => (float) ($wp['lng']   ?? 0),
-                    'label'     => $wp['label'] ?? null,
+                    'bus_id' => $this->record->id,
+                    'order' => (int) ($wp['order'] ?? 999),
+                    'latitude' => (float) ($wp['lat'] ?? 0),
+                    'longitude' => (float) ($wp['lng'] ?? 0),
+                    'label' => $wp['label'] ?? null,
                 ]);
             }
         });
@@ -73,7 +72,7 @@ class EditBusRoute extends Page
 
         Notification::make()
             ->title('Ruta guardada')
-            ->body(count($routeStops) . ' paradas · ' . count($waypoints) . ' waypoints guardados.')
+            ->body(count($routeStops).' paradas · '.count($waypoints).' waypoints guardados.')
             ->success()
             ->send();
     }

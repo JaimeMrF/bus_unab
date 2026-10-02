@@ -16,8 +16,8 @@ class RouteStop extends Model
     protected function casts(): array
     {
         return [
-            'order'              => 'integer',
-            'estimated_minutes'  => 'integer',
+            'order' => 'integer',
+            'estimated_minutes' => 'integer',
         ];
     }
 

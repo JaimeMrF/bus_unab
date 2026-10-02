@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\EnsureTenantScope;
+use App\Http\Middleware\EnsureUserHasRole;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,9 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Alias para el middleware de roles
         $middleware->alias([
-            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'role' => EnsureUserHasRole::class,
             // M3 · S3.3.3 — activa el contexto de tenant en rutas de API
-            'tenant.scope' => \App\Http\Middleware\EnsureTenantScope::class,
+            'tenant.scope' => EnsureTenantScope::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -53,7 +55,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'message' => 'Los datos enviados no son válidos.',
-                    'errors'  => $e->errors(),
+                    'errors' => $e->errors(),
                 ], 422);
             }
         });

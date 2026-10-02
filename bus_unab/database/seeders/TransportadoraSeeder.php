@@ -21,6 +21,7 @@ use Illuminate\Database\Seeder;
 class TransportadoraSeeder extends Seeder
 {
     public const SLUG_DEMO = 'bt-demo';
+
     public const SLUG_HISTORICA = 'unab-historica';
 
     public function run(): void
@@ -28,20 +29,20 @@ class TransportadoraSeeder extends Seeder
         Transportadora::updateOrCreate(
             ['slug' => self::SLUG_DEMO],
             [
-                'nombre'         => 'BUCARATRANSIT Demo',
+                'nombre' => 'BUCARATRANSIT Demo',
                 'contacto_email' => 'demo@bucaratransit.co',
-                'plan'           => 'basico',
-                'activo'         => true,
+                'plan' => 'basico',
+                'activo' => true,
             ],
         );
 
         Transportadora::updateOrCreate(
             ['slug' => self::SLUG_HISTORICA],
             [
-                'nombre'         => 'Metropolitana UNAB (histórica)',
+                'nombre' => 'Metropolitana UNAB (histórica)',
                 'contacto_email' => 'operaciones@unab-historica.co',
-                'plan'           => 'basico',
-                'activo'         => true,
+                'plan' => 'basico',
+                'activo' => true,
             ],
         );
     }

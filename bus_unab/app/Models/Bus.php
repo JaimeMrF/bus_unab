@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Bus extends Model
 {
-    use SoftDeletes;
     use BelongsToTenant;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -23,9 +23,9 @@ class Bus extends Model
     protected function casts(): array
     {
         return [
-            'is_active'           => 'boolean',
+            'is_active' => 'boolean',
             'external_vehicle_id' => 'integer',
-            'capacity'            => 'integer',
+            'capacity' => 'integer',
         ];
     }
 
@@ -69,7 +69,10 @@ class Bus extends Model
      */
     public function occupancyPercentage(): float
     {
-        if ($this->capacity === 0) return 0.0;
+        if ($this->capacity === 0) {
+            return 0.0;
+        }
+
         return round(min(($this->pendingRequestsCount() / $this->capacity) * 100, 100), 1);
     }
 
@@ -79,11 +82,12 @@ class Bus extends Model
     public function occupancyLevel(): string
     {
         $pct = $this->occupancyPercentage();
-        return match(true) {
+
+        return match (true) {
             $pct >= 90 => 'full',
             $pct >= 60 => 'high',
             $pct >= 30 => 'medium',
-            default    => 'low',
+            default => 'low',
         };
     }
 }
