@@ -1,5 +1,8 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Row
+import com.vibra.bus.presentation.motion.CountdownRing
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -174,11 +177,24 @@ class MyQRScreen : Screen {
 
                     Spacer(Modifier.height(16.dp))
 
-                    StatusPill(
-                        text = "Expira en ${countdown}s",
-                        tone = if (countdown > 10) PillTone.Brand else PillTone.Error,
-                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                    ) {
+                        CountdownRing(remaining = countdown, total = 60) {
+                            Text(
+                                text = "$countdown",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = "Expira en ${countdown}s",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
 
                     Spacer(Modifier.height(20.dp))
 

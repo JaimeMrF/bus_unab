@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.auroraBackground
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.TextButton
@@ -102,7 +103,7 @@ class OrganizationCodeScreen : Screen {
 
         Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
             Box(
-                modifier = Modifier.fillMaxSize().padding(padding).imePadding(),
+                modifier = Modifier.fillMaxSize().auroraBackground().padding(padding).imePadding(),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(

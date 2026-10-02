@@ -1,5 +1,11 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.geometry.Offset
+import com.vibra.bus.presentation.motion.ConfettiBurst
 import androidx.compose.foundation.layout.WindowInsets
 import com.vibra.bus.presentation.theme.readableOn
 import com.vibra.bus.presentation.theme.appColors
@@ -76,6 +82,10 @@ class QRScannerScreen : Screen {
         val lastResult by viewModel.lastResult.collectAsState()
         val mode by viewModel.mode.collectAsState()
         val manualCode by viewModel.manualCode.collectAsState()
+        var confetti by remember { mutableStateOf(0) }
+        LaunchedEffect(lastResult) {
+            if (lastResult is ScanResult.Charged) confetti++
+        }
 
         Scaffold(
             contentWindowInsets = WindowInsets(0),
@@ -183,6 +193,8 @@ class QRScannerScreen : Screen {
                         }
                     }
                 }
+
+                ConfettiBurst(trigger = confetti, modifier = Modifier.fillMaxSize(), origin = Offset(0.5f, 0.2f))
 
                 // Banner de resultado (aparece/desaparece desde arriba)
                 AnimatedVisibility(

@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.staggerIn
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -84,6 +85,7 @@ data class StopsListScreen(val plate: String) : Screen {
                             ) {
                                 itemsIndexed(state.data, key = { _, s -> s.id }) { index, stop ->
                                     StopListItem(
+                                        modifier = Modifier.staggerIn(index),
                                         stop = stop,
                                         isFirst = index == 0,
                                         isLast = index == state.data.lastIndex,
@@ -106,13 +108,13 @@ data class StopsListScreen(val plate: String) : Screen {
 }
 
 @Composable
-private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boolean) {
+private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boolean, modifier: Modifier = Modifier) {
     val badge = if (isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
     val onBadge = if (isFirst) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
     val eta = if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min"
 
     AppCard(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {
                 contentDescription = "Parada ${stop.order}, ${stop.name}, ${stop.address}, $eta"

@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.parallaxCollapse
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -80,6 +81,7 @@ class ProfileScreen : Screen {
         val authEvent     by authViewModel.event.collectAsState()
         val themeMode     by settings.themeModeFlow.collectAsState()
         var showLogout    by remember { mutableStateOf(false) }
+        val scroll        = rememberScrollState()
 
         LaunchedEffect(authEvent) {
             if (authEvent is AuthEvent.NavigateToLogin) {
@@ -114,12 +116,12 @@ class ProfileScreen : Screen {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scroll)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 // ── Identidad ────────────────────────────────────────────────
-                AppCard(modifier = Modifier.fillMaxWidth()) {
+                AppCard(modifier = Modifier.fillMaxWidth().parallaxCollapse({ scroll.value.toFloat() })) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,

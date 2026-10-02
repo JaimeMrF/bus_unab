@@ -1,5 +1,10 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.vibra.bus.presentation.motion.ConfettiBurst
+import com.vibra.bus.presentation.motion.CountdownRing
+import com.vibra.bus.presentation.motion.CountUpText
+import com.vibra.bus.presentation.motion.parallaxCollapse
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -84,10 +89,13 @@ class WalletScreen : Screen {
         val snackbarHostState = remember { SnackbarHostState() }
         var payVisible by remember { mutableStateOf(false) }
         var rechargeAmount by remember { mutableStateOf(5_000) } // COP
+        var confetti by remember { mutableStateOf(0) }
+        val listState = rememberLazyListState()
 
         LaunchedEffect(Unit) { viewModel.refresh() }
         LaunchedEffect(message) {
             message?.let {
+                if (it.startsWith("Recarga aplicada")) confetti++
                 snackbarHostState.showSnackbar(it)
                 viewModel.consumeMessage()
             }
@@ -99,7 +107,9 @@ class WalletScreen : Screen {
             topBar = { AppTopBar(title = "Wallet") },
             containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
+            Box(Modifier.fillMaxSize()) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
@@ -107,7 +117,12 @@ class WalletScreen : Screen {
                 // ── Saldo ───────────────────────────────────────────
                 item {
                     Surface(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().parallaxCollapse(
+                            offset = {
+                                if (listState.firstVisibleItemIndex == 0) listState.firstVisibleItemScrollOffset.toFloat()
+                                else 4000f
+                            },
+                        ),
                         shape = AppShape.CardLarge,
                         color = MaterialTheme.colorScheme.primary,
                     ) {
@@ -121,12 +136,22 @@ class WalletScreen : Screen {
                             if (wallet == null && loading) {
                                 ShimmerBox(height = 40.dp)
                             } else {
-                                Text(
-                                    text = wallet?.let { formatCentavosCop(it.balanceCentavos) } ?: "—",
-                                    style = MaterialTheme.typography.displayMedium,
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                                )
+                                val current = wallet
+                                if (current == null) {
+                                    Text(
+                                        text = "—",
+                                        style = MaterialTheme.typography.displayMedium,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                    )
+                                } else {
+                                    CountUpText(
+                                        target = current.balanceCentavos,
+                                        style = MaterialTheme.typography.displayMedium,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        format = { formatCentavosCop(it) },
+                                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                                    )
+                                }
                             }
                         }
                     }
@@ -190,9 +215,18 @@ class WalletScreen : Screen {
                                         color = MaterialTheme.colorScheme.onSurface,
                                     )
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        StatusPill(
-                                            text = "Expira en ${payCountdown}s",
-                                            tone = if (payCountdown > 10) PillTone.Brand else PillTone.Error,
+                                        CountdownRing(remaining = payCountdown, total = 60, size = 44.dp, strokeWidth = 4.dp) {
+                                            Text(
+                                                "$payCountdown",
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                            )
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            "segundos",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                         Spacer(Modifier.width(8.dp))
                                         TextButton(
@@ -284,6 +318,8 @@ class WalletScreen : Screen {
                         )
                     }
                 }
+            }
+            ConfettiBurst(trigger = confetti, modifier = Modifier.fillMaxSize().padding(padding))
             }
         }
     }

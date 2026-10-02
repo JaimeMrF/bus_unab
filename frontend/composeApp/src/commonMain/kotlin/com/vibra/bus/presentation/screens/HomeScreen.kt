@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.staggerIn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -346,9 +348,9 @@ class HomeScreen : Screen {
                             modifier = Modifier.fillMaxWidth(),
                             contentPadding = PaddingValues(bottom = 16.dp),
                         ) {
-                            items(busList, key = { it.plate }) { bus ->
+                            itemsIndexed(busList, key = { _, b -> b.plate }) { index, bus ->
                                 BusCard(
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.animateItem().staggerIn(index),
                                     bus = bus,
                                     occupancy = occupancyMap[bus.plate],
                                     onClick = {

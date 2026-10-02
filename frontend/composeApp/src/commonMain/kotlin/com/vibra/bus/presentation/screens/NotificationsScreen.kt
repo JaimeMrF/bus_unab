@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.staggerIn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Schedule
@@ -89,8 +91,9 @@ class NotificationsScreen : Screen {
                     )
                 } else {
                     LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                        items(notifications, key = { it.id }) { notif ->
+                        itemsIndexed(notifications, key = { _, n -> n.id }) { index, notif ->
                             SwipeToDeleteNotification(
+                                modifier = Modifier.staggerIn(index),
                                 notif    = notif,
                                 onDelete = { viewModel.deleteNotification(notif.id) },
                             )
@@ -104,7 +107,7 @@ class NotificationsScreen : Screen {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SwipeToDeleteNotification(notif: NotificationItem, onDelete: () -> Unit) {
+private fun SwipeToDeleteNotification(notif: NotificationItem, onDelete: () -> Unit, modifier: Modifier = Modifier) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) { onDelete(); true } else false
@@ -129,7 +132,7 @@ private fun SwipeToDeleteNotification(notif: NotificationItem, onDelete: () -> U
                 )
             }
         },
-        modifier = Modifier.padding(vertical = 5.dp),
+        modifier = modifier.padding(vertical = 5.dp),
     ) {
         NotificationCard(notif)
     }

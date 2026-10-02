@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.PulseRings
 import androidx.compose.foundation.layout.width
 import com.vibra.bus.presentation.theme.Motion
 import com.vibra.bus.presentation.components.PrimaryButton
@@ -207,6 +208,11 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 )
                             }
                             Box(
+                                modifier = Modifier.size(96.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                            if (isArriving || bus == null) PulseRings(Modifier.fillMaxSize())
+                            Box(
                                 modifier = Modifier
                                     .size(64.dp)
                                     .clip(CircleShape)
@@ -228,6 +234,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     )
                                 }
+                            }
                             }
                         }
 

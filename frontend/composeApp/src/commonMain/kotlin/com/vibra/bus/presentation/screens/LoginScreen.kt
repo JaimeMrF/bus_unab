@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.auroraBackground
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -106,16 +107,8 @@ class LoginScreen : Screen {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    // Resplandor sutil del color primario del tenant, dibujado una sola vez.
-                    .drawBehind {
-                        drawRect(
-                            Brush.radialGradient(
-                                colors = listOf(glow.copy(alpha = 0.16f), glow.copy(alpha = 0f)),
-                                center = Offset(size.width / 2f, 0f),
-                                radius = size.width * 0.95f,
-                            )
-                        )
-                    }
+                    // Aurora con los colores del tenant (estática con "reducir movimiento").
+                    .auroraBackground()
                     .padding(padding)
                     .imePadding(),
                 contentAlignment = Alignment.Center,

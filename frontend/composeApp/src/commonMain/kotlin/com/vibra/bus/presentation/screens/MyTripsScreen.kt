@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.staggerIn
+import androidx.compose.foundation.lazy.itemsIndexed
 import com.vibra.bus.presentation.components.PillTone
 import com.vibra.bus.presentation.components.StatusPill
 import androidx.compose.foundation.layout.heightIn
@@ -101,11 +103,12 @@ class MyTripsScreen : Screen {
                                         )
                                     } else {
                                         LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                                            items(state.data, key = { it.id }) { trip ->
+                                            itemsIndexed(state.data, key = { _, t -> t.id }) { index, trip ->
                                                 val canResume = trip.status == "pending" &&
                                                     settings.hasActiveTracking() &&
                                                     settings.trackingPlate == trip.bus.plate
                                                 TripCard(
+                                                    index = index,
                                                     trip = trip,
                                                     onCancel = { viewModel.cancelTrip(trip.bus.id) },
                                                     onResume = if (canResume) {
@@ -143,7 +146,7 @@ class MyTripsScreen : Screen {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun TripCard(trip: RequestInfo, onCancel: () -> Unit, onResume: (() -> Unit)? = null) {
+    private fun TripCard(trip: RequestInfo, onCancel: () -> Unit, onResume: (() -> Unit)? = null, index: Int = 0) {
         val dismissState = rememberSwipeToDismissBoxState(
             confirmValueChange = { value ->
                 if (value == SwipeToDismissBoxValue.EndToStart && trip.status == "pending") {
@@ -169,7 +172,7 @@ class MyTripsScreen : Screen {
                     )
                 }
             },
-            modifier = Modifier.padding(vertical = 6.dp),
+            modifier = Modifier.padding(vertical = 6.dp).staggerIn(index),
         ) {
             AppCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
