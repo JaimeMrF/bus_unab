@@ -113,28 +113,33 @@ class WalletController extends BaseController
             'qr' => 'required|string',
         ]);
 
-        try {
-            [$token, $asiento] = $this->qrService->pay($data['qr'], $request->user());
-        } catch (InsufficientFundsException $e) {
-            return $this->error('Saldo insuficiente del pasajero para este viaje.', 422, [
-                'saldo_centavos' => $e->saldoCentavos,
-                'requiere_centavos' => $e->montoCentavos,
-            ]);
-        } catch (DomainException $e) {
-            return $this->error($e->getMessage(), 422);
-        }
+        // Idempotente por (conductor, Idempotency-Key): el reintento tras un corte
+        // devuelve el cobro original sin segundo débito.
+        return $this->idempotently($request, 'qr_pay', strtolower(trim($data['qr'])), function () use ($data, $request): array {
+            try {
+                [$token, $asiento] = $this->qrService->pay($data['qr'], $request->user());
+            } catch (InsufficientFundsException $e) {
+                return [422, [
+                    'success' => false,
+                    'message' => 'Saldo insuficiente del pasajero para este viaje.',
+                    'errors' => ['saldo_centavos' => $e->saldoCentavos, 'requiere_centavos' => $e->montoCentavos],
+                ]];
+            } catch (DomainException $e) {
+                return [422, ['success' => false, 'message' => $e->getMessage()]];
+            }
 
-        return $this->success([
-            'token_id' => $token->id,
-            'monto_centavos' => (int) $token->monto_snapshot_centavos,
-            'contraparte' => $asiento->contraparte,
-            'reference' => $asiento->reference,
-            'saldo_restante' => (int) $token->wallet->fresh()->balance_centavos,
-            // El pasajero suele ser dato compartido (transportadora_id NULL):
-            // se resuelve SIN el GlobalScope de tenant, que en esta ruta está
-            // puesto por tenant.scope con el tenant del CONDUCTOR.
-            'pasajero' => User::withoutGlobalScope(GlobalTenantScope::class)
-                ->find($token->user_id)?->name,
-        ], 'Abordaje cobrado');
+            return [200, ['success' => true, 'message' => 'Abordaje cobrado', 'data' => [
+                'token_id' => $token->id,
+                'monto_centavos' => (int) $token->monto_snapshot_centavos,
+                'contraparte' => $asiento->contraparte,
+                'reference' => $asiento->reference,
+                'saldo_restante' => (int) $token->wallet->fresh()->balance_centavos,
+                // El pasajero suele ser dato compartido (transportadora_id NULL):
+                // se resuelve SIN el GlobalScope de tenant, que en esta ruta está
+                // puesto por tenant.scope con el tenant del CONDUCTOR.
+                'pasajero' => User::withoutGlobalScope(GlobalTenantScope::class)
+                    ->find($token->user_id)?->name,
+            ]]];
+        });
     }
 }
