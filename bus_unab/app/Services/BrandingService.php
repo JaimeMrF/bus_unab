@@ -9,6 +9,7 @@ use App\Rules\SafeSvg;
 use App\Support\ColorContrast;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -68,6 +69,40 @@ class BrandingService
     public static function defaultFeatures(): array
     {
         return ['qr_payments' => true, 'wallet' => true, 'driver_mode' => true];
+    }
+
+    public const CACHE_TTL = 300;
+
+    private static function cacheKey(string $slug): string
+    {
+        return 'branding:'.strtolower($slug);
+    }
+
+    public static function forget(?string $slug): void
+    {
+        if ($slug !== null && $slug !== '') {
+            Cache::forget(self::cacheKey($slug));
+        }
+    }
+
+    /** Payload público cacheado por slug; null si no existe o está inactivo (no se cachea). */
+    public function cachedPayload(string $slug): ?array
+    {
+        $key = self::cacheKey($slug);
+
+        if (($hit = Cache::get($key)) !== null) {
+            return $hit;
+        }
+
+        $tenant = Transportadora::where('slug', $slug)->where('activo', true)->first();
+        if (! $tenant) {
+            return null;
+        }
+
+        $payload = $this->payload($tenant);
+        Cache::put($key, $payload, self::CACHE_TTL);
+
+        return $payload;
     }
 
     /** Contrato público GET /api/v1/branding/{slug}. */

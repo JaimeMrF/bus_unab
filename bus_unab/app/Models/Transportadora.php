@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\TransportadoraFactory;
+use App\Services\BrandingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -66,6 +67,15 @@ class Transportadora extends Model
                 $t->branding_version = ((int) ($t->getOriginal('branding_version') ?? 1)) + 1;
             }
         });
+
+        // Invalida el payload cacheado (slug actual y, si cambió, el anterior).
+        $forget = function (self $t): void {
+            BrandingService::forget($t->slug);
+            BrandingService::forget($t->getOriginal('slug'));
+        };
+        static::saved($forget);
+        static::deleted($forget);
+        static::restored($forget);
     }
 
     public function buses(): HasMany

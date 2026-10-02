@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Transportadora;
 use App\Services\BrandingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,16 +18,13 @@ class BrandingController extends BaseController
      */
     public function show(Request $request, string $slug): JsonResponse
     {
-        $tenant = Transportadora::query()
-            ->where('slug', $slug)
-            ->where('activo', true)
-            ->first();
+        $payload = $this->branding->cachedPayload($slug);
 
-        if (! $tenant) {
+        if ($payload === null) {
             return $this->notFound();
         }
 
-        $response = $this->success($this->branding->payload($tenant));
+        $response = $this->success($payload);
 
         $response->setEtag(md5($response->getContent()));
         $response->headers->set('Cache-Control', 'public, max-age=300');
