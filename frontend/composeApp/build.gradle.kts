@@ -190,10 +190,8 @@ android {
 
     buildTypes {
         getByName("debug") {
-            // Debug apunta al backend local (PC corriendo `php artisan serve`).
-            // En dispositivo físico: adb reverse tcp:8000 tcp:8000
-            buildConfigField("String", "BASE_URL_ANDROID", "\"http://10.0.2.2:8000/api/v1\"")
-            buildConfigField("String", "BASE_URL_IOS", "\"http://10.0.2.2:8000/api/v1\"")
+            // Sin URLs fijas: el servidor se elige en runtime (pantalla de organización > Opciones
+            // avanzadas) o con -PapiBaseUrl. Cleartext http solo se permite en debug.
         }
         getByName("release") {
             isMinifyEnabled = false
