@@ -147,8 +147,10 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        buildConfigField("String", "BASE_URL_ANDROID", "\"https://bucaratransit.duckdns.org/api/v1\"")
-        buildConfigField("String", "BASE_URL_IOS", "\"https://bucaratransit.duckdns.org/api/v1\"")
+        // Backend por build: ./gradlew assembleRelease -PapiBaseUrl=https://api.tu-dominio.com/api/v1
+        val apiBaseUrl = (project.findProperty("apiBaseUrl") as String?) ?: "https://bucaratransit.duckdns.org/api/v1"
+        buildConfigField("String", "BASE_URL_ANDROID", "\"$apiBaseUrl\"")
+        buildConfigField("String", "BASE_URL_IOS", "\"$apiBaseUrl\"")
         // Slug de la organización por defecto de este build; vacío = pedir el código al primer arranque.
         buildConfigField("String", "DEFAULT_ORG_SLUG", "\"${project.findProperty("defaultOrgSlug") ?: ""}\"")
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"887389827022-oj7di7remsi2k1avdgqp8asf65rlu2h3.apps.googleusercontent.com\"")

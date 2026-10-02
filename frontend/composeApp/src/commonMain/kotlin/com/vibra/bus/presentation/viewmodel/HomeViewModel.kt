@@ -57,7 +57,7 @@ class HomeViewModel(
     val sessionExpired: StateFlow<Boolean> = _sessionExpired
 
     private var pollingJob: Job? = null
-    // ✅ Coordenadas ajustadas a Bucaramanga
+    // Ubicación por defecto hasta tener GPS del usuario
     private var currentLocation = LatLng(7.1166, -73.1051) 
 
     init {
