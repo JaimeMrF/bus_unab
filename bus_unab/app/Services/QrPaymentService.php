@@ -98,6 +98,15 @@ class QrPaymentService
             throw new DomainException('QR inválido: la firma no coincide (manipulado).');
         }
 
+        // Aislamiento de tenant: un conductor solo cobra QR de su propia transportadora
+        // (token sin tenant = tarifa global de ciudad, cobrable por cualquiera).
+        // Mismo mensaje que un QR inexistente: no revela que el token existe.
+        if ($driver->transportadora_id !== null
+            && $token->transportadora_id !== null
+            && (int) $driver->transportadora_id !== (int) $token->transportadora_id) {
+            throw new DomainException('QR inválido o inexistente.');
+        }
+
         if ($token->estaExpirado()) {
             throw new DomainException('El QR expiró; pídele al pasajero que genere uno nuevo.');
         }
