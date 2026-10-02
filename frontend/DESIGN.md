@@ -62,3 +62,20 @@ Preferencia del usuario `Sistema` (por defecto) · `Claro` · `Oscuro`
 - `Color(0x…)` fuera de `theme/` (excepto negro/blanco funcionales: QR, sombras).
 - Texto sobre color de marca sin pasar por `readableOn`/`ensureContrast`.
 - Emojis como iconografía: usar iconos Material.
+
+## Movimiento (`presentation/motion/`)
+Reglas: solo `graphicsLayer`/`drawWithCache`/`Canvas`; el valor animado se lee en la lambda de
+dibujo, nunca en composición; sin librerías nuevas.
+
+| Pieza | Uso |
+|---|---|
+| `MotionEnv` / `ProvideMotion` | `reduceMotion` (Android `ANIMATOR_DURATION_SCALE==0`, iOS Reduce Motion) → versión estática; `lowTier` (RAM baja / poca memoria) → sin aurora, confeti ni ondas; `appActive` → los loops se detienen en segundo plano |
+| `auroraBackground()` | Fondo mesh con colores del tenant en splash, login y código de organización (1 `infiniteTransition`; estático o degradado plano según el entorno) |
+| `pressScale` | Escala al presionar en botones y tarjetas clicables, sin recomposición |
+| `staggerIn(index)` | Entrada escalonada de listas (solo los 9 primeros ítems) |
+| `CountUpText` | Saldo del wallet (dibujado con `drawText`) |
+| `CountdownRing` | Cuenta regresiva de los QR (Mi QR y pago del wallet) |
+| `PulseRings` | Ondas en "bus llegando"/espera; punto "en vivo" de `StatusPill` |
+| `ConfettiBurst` | ≤36 partículas, 1.5 s, al recargar con éxito y al cobrar en el escáner |
+| `parallaxCollapse` | Cabecera del perfil y tarjeta de saldo |
+| `BottomNavBar` | Indicador único con resorte entre pestañas |
