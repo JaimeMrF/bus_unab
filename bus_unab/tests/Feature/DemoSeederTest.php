@@ -176,18 +176,18 @@ class DemoSeederTest extends TestCase
         $this->seedDemo();
 
         $this->artisan('demo:simulate-buses --ticks=1 --interval=0 --speed=40')->assertSuccessful();
-        $first = Cache::get('driver_location_MB-101');
+        $first = Cache::get('driver_location_MB101');
         $this->assertNotNull($first);
-        $this->assertEqualsCanonicalizing(['latitude', 'longitude', 'lat', 'lng', 'heading'], array_keys($first));
-        $this->assertSame($first['latitude'], $first['lat']);
+        $this->assertEqualsCanonicalizing(['latitude', 'longitude', 'heading', 'speed_kmh', 'updated_at'], array_keys($first));
         $this->assertContains($first['heading'], range(0, 360));
 
-        foreach (['MB-102', 'CP-201', 'CP-202', 'LG-301', 'LG-302'] as $plate) {
+        foreach (['MB102', 'CP201', 'CP202', 'LG301', 'LG302'] as $plate) {
             $this->assertNotNull(Cache::get("driver_location_{$plate}"), $plate);
         }
 
         $this->artisan('demo:simulate-buses --ticks=3 --interval=0 --speed=3600')->assertSuccessful();
-        $this->assertNotEquals([$first['lat'], $first['lng']], [Cache::get('driver_location_MB-101')['lat'], Cache::get('driver_location_MB-101')['lng']]);
+        $moved = Cache::get('driver_location_MB101');
+        $this->assertNotEquals([$first['latitude'], $first['longitude']], [$moved['latitude'], $moved['longitude']]);
     }
 
     public function test_simulate_without_demo_data_fails_with_hint(): void
