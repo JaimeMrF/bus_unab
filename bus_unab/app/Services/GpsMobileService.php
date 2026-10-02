@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Bus;
+use App\Support\DriverLocation;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -47,9 +49,11 @@ class GpsMobileService
 
         $cacheKey = "gps_buses_{$this->codUserInc}";
 
-        return Cache::remember($cacheKey, self::CACHE_BUSES_TTL, function () use ($lat, $lng) {
+        $vehicles = Cache::remember($cacheKey, self::CACHE_BUSES_TTL, function () use ($lat, $lng) {
             return $this->fetchAllBuses($lat, $lng);
         });
+
+        return $this->overlaySimulatedBuses($vehicles);
     }
 
     /**
@@ -60,9 +64,78 @@ class GpsMobileService
     {
         $cacheKey = "gps_detail_{$externalVehicleId}";
 
-        return Cache::remember($cacheKey, self::CACHE_DETAIL_TTL, function () use ($externalVehicleId) {
+        $detail = Cache::remember($cacheKey, self::CACHE_DETAIL_TTL, function () use ($externalVehicleId) {
             return $this->fetchBusDetail($externalVehicleId);
         });
+
+        return $this->overlaySimulatedDetail($externalVehicleId, $detail);
+    }
+
+    // -------------------------------------------------------------------------
+    // Demo local: posiciones en vivo del simulador / teléfono (DriverLocation)
+    // -------------------------------------------------------------------------
+
+    private function usesLiveLocations(): bool
+    {
+        return app()->environment('local', 'testing');
+    }
+
+    /**
+     * Solo local/testing: los buses con DriverLocation activa reemplazan (o
+     * añaden) su entrada, aunque el GPS externo no responda. Sin ubicaciones
+     * activas el resultado original (incluido null) no se toca.
+     */
+    private function overlaySimulatedBuses(?array $vehicles): ?array
+    {
+        if (! $this->usesLiveLocations()) {
+            return $vehicles;
+        }
+
+        $live = [];
+        foreach (Bus::active()->get(['plate']) as $bus) {
+            if ($loc = DriverLocation::get($bus->plate)) {
+                $live[$bus->plate] = $loc;
+            }
+        }
+
+        if ($live === []) {
+            return $vehicles;
+        }
+
+        $merged = collect($vehicles ?? [])->reject(fn ($v) => isset($live[$v['Placa'] ?? '']))->values()->all();
+
+        foreach ($live as $plate => $loc) {
+            $merged[] = [
+                'Placa' => $plate,
+                'Latitud' => $loc['latitude'],
+                'Longitud' => $loc['longitude'],
+                'Sentido' => $loc['heading'],
+            ];
+        }
+
+        return $merged;
+    }
+
+    private function overlaySimulatedDetail(int $externalVehicleId, ?array $detail): ?array
+    {
+        if (! $this->usesLiveLocations()) {
+            return $detail;
+        }
+
+        $plate = Bus::where('external_vehicle_id', $externalVehicleId)->value('plate');
+        $loc = $plate ? DriverLocation::get($plate) : null;
+
+        if (! $loc) {
+            return $detail;
+        }
+
+        return array_merge($detail ?? ['Info' => '', 'Cond' => null, 'NEv' => null], [
+            'Lt' => $loc['latitude'],
+            'Lg' => $loc['longitude'],
+            'Std' => $loc['heading'],
+            'Vel' => $loc['speed_kmh'] ?? ($detail['Vel'] ?? 0),
+            'FdS' => $loc['updated_at'],
+        ]);
     }
 
     // -------------------------------------------------------------------------
