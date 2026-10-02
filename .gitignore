@@ -16,3 +16,17 @@ __pycache__/
 *.pem
 *.jks
 *.keystore
+
+# Cachés de Kotlin/Gradle y config local de herramientas — NUNCA versionar
+.kotlin/
+**/.kotlin/
+.gradle/
+build/
+local.properties
+**/google-services.json
+**/GoogleService-Info.plist
+.claude/settings.local.json
+**/.claude/settings.local.json
+.env
+.env.*
+!.env.example
