@@ -2,11 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Tenant\Pages\BrandingPage;
+use App\Models\Transportadora;
+use App\Models\User;
 use App\Rules\SafeSvg;
 use App\Services\BrandingService;
 use App\Support\ColorContrast;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
@@ -14,6 +19,8 @@ use Tests\TestCase;
  */
 class BrandingValidationTest extends TestCase
 {
+    use RefreshDatabase;
+
     private function valid(): array
     {
         return [
@@ -212,8 +219,36 @@ class BrandingValidationTest extends TestCase
         $this->assertTrue(Validator::make(['f' => $ok], ['f' => $rules])->passes(), 'png válido');
     }
 
-    public function test_tenant_admin_cannot_edit_other_tenant_branding(): void
+    public function test_tenant_admin_edits_only_own_tenant_branding(): void
     {
-        $this->markTestIncomplete('Pendiente backend (T2): Filament Tenant branding page/policy aún no existe; escribir test cross-tenant (403/404) al aterrizar.');
+        $a = Transportadora::create(['nombre' => 'A', 'slug' => 'a', 'branding' => ['app_name' => 'Marca A']]);
+        $b = Transportadora::create(['nombre' => 'B', 'slug' => 'b', 'branding' => ['app_name' => 'Marca B']]);
+        $adminB = User::factory()->create(['email' => 'adminb@test.co', 'role' => 'tenant_admin', 'transportadora_id' => $b->id]);
+
+        $payload = $this->valid();
+        $payload['app_name'] = 'Editada';
+
+        Livewire::actingAs($adminB)
+            ->test(BrandingPage::class)
+            ->fillForm(['branding' => $payload])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame('Editada', $b->fresh()->branding['app_name']);
+        $this->assertSame('Marca A', $a->fresh()->branding['app_name']);
+        $this->assertSame(1, $a->fresh()->branding_version, 'versión de otro tenant intacta');
+    }
+
+    public function test_non_admin_roles_and_tenantless_users_cannot_access_branding_page(): void
+    {
+        $t = Transportadora::create(['nombre' => 'T', 'slug' => 't']);
+
+        foreach (['pasajero', 'driver'] as $i => $role) {
+            $this->actingAs(User::factory()->create(['email' => "r$i@test.co", 'role' => $role, 'transportadora_id' => $t->id]));
+            $this->assertFalse(BrandingPage::canAccess(), $role);
+        }
+
+        $this->actingAs(User::factory()->create(['email' => 'sin@test.co', 'role' => 'tenant_admin', 'transportadora_id' => null]));
+        $this->assertFalse(BrandingPage::canAccess(), 'tenant_admin sin tenant asignado');
     }
 }
