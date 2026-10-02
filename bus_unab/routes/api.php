@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BrandingController;
 use App\Http\Controllers\Api\V1\BusController;
 use App\Http\Controllers\Api\V1\BusRequestController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
@@ -39,6 +40,14 @@ Route::prefix('v1')->group(function () {
         // H3 · POST /api/v1/auth/register — solo pasajeros (autogestión app)
         Route::post('register', [AuthController::class, 'register']);
     });
+
+    // ------------------------------------------------------------------
+    // Branding white-label — público (el cliente aún no conoce el tenant)
+    // ------------------------------------------------------------------
+    // GET /api/v1/branding/{slug}
+    Route::get('branding/{slug}', [BrandingController::class, 'show'])
+        ->middleware('throttle:60,1')
+        ->where('slug', '[A-Za-z0-9_-]{1,60}');
 
     // ------------------------------------------------------------------
     // Rutas protegidas — requieren token Sanctum válido
