@@ -10,7 +10,7 @@ data class DirectionsResponse(
 )
 
 /**
- * Envoltorio estándar para las respuestas de la API de VibraBus
+ * Envoltorio estándar para las respuestas de la API
  */
 @Serializable
 data class BusRouteResponse(

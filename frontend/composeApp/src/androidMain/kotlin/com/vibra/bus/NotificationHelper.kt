@@ -11,19 +11,19 @@ import androidx.core.app.NotificationManagerCompat
 
 internal object NotificationHelper {
 
-    const val CHANNEL_FOREGROUND = "vibra_bus_foreground"  // notificación persistente (silenciosa)
-    const val CHANNEL_BUS   = "vibra_bus_tracking"         // alertas de llegada (con sonido)
-    const val CHANNEL_ALERT = "vibra_bus_alerts"
-    const val CHANNEL_INFO  = "vibra_general"
+    const val CHANNEL_FOREGROUND = "transit_foreground"  // notificación persistente (silenciosa)
+    const val CHANNEL_BUS   = "transit_tracking"         // alertas de llegada (con sonido)
+    const val CHANNEL_ALERT = "transit_alerts"
+    const val CHANNEL_INFO  = "transit_general"
 
     private const val ID_APPROACHING = 101
     private const val ID_ARRIVED     = 102
     private const val ID_FULL        = 103
     private const val ID_GENERAL     = 104
 
-    private val COLOR_GOLD = Color.parseColor("#E8A33D")
+    private val COLOR_ACCENT = Color.parseColor("#2F4B7C")
     private val COLOR_GREEN  = Color.parseColor("#2EBE6C")
-    private val COLOR_ORANGE = Color.parseColor("#E8A33D")
+    private val COLOR_ORANGE = Color.parseColor("#F2A33A")
 
     // ── Canales (llamar una sola vez al arrancar el servicio) ─────────────────
 
@@ -51,7 +51,7 @@ internal object NotificationHelper {
             ).apply {
                 description      = "Alertas en tiempo real cuando tu bus se acerca o llega"
                 enableLights(true)
-                lightColor       = COLOR_GOLD
+                lightColor       = COLOR_ACCENT
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 200, 80, 200)
             }
@@ -73,7 +73,7 @@ internal object NotificationHelper {
                 "Información general",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Noticias y anuncios de VibraBus"
+                description = "Noticias y anuncios"
             }
         )
     }
@@ -109,14 +109,14 @@ internal object NotificationHelper {
         notify(
             context, ID_APPROACHING,
             base(context, CHANNEL_BUS)
-                .setColor(COLOR_GOLD)
+                .setColor(COLOR_ACCENT)
                 .setColorized(true)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(
                     NotificationCompat.BigTextStyle()
                         .bigText("$body\n¡Prepárate para abordar!")
-                        .setSummaryText("VibraBus · $etaLabel para llegar")
+                        .setSummaryText("$etaLabel para llegar")
                 )
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
@@ -138,7 +138,7 @@ internal object NotificationHelper {
                 .setStyle(
                     NotificationCompat.BigTextStyle()
                         .bigText(body)
-                        .setSummaryText("VibraBus · ¡Aborda ahora!")
+                        .setSummaryText("¡Aborda ahora!")
                 )
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
@@ -167,7 +167,7 @@ internal object NotificationHelper {
         notify(
             context, ID_GENERAL,
             base(context, CHANNEL_INFO)
-                .setColor(COLOR_GOLD)
+                .setColor(COLOR_ACCENT)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))

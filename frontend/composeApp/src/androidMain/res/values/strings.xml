@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nombre neutro del launcher; el nombre visible dentro de la app viene del BrandConfig. -->
+    <string name="app_name">Transporte</string>
+</resources>

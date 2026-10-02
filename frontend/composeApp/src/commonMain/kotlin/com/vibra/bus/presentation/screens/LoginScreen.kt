@@ -1,28 +1,25 @@
 package com.vibra.bus.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -44,30 +41,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import com.vibra.bus.presentation.components.LoginInputField
-import com.vibra.bus.presentation.components.PrimaryGlassButton
-import com.vibra.bus.presentation.components.SecondaryGlassButton
-import com.vibra.bus.presentation.theme.rubikGlitchFamily
+import com.vibra.bus.data.repository.BrandRepository
+import com.vibra.bus.presentation.components.AppTextField
+import com.vibra.bus.presentation.components.BrandLogo
+import com.vibra.bus.presentation.components.GoogleSignInButton
+import com.vibra.bus.presentation.components.PrimaryButton
+import com.vibra.bus.presentation.components.Staggered
+import com.vibra.bus.presentation.theme.LocalBrand
+import com.vibra.bus.presentation.theme.Sizing
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.util.UiState
-import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.leopardo_saludo
-import vibrabus.composeapp.generated.resources.logo_bucaratransit
 
 class LoginScreen : Screen {
 
@@ -75,22 +71,18 @@ class LoginScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel = koinViewModel<AuthViewModel>()
+        val brandRepository = koinInject<BrandRepository>()
+        val brand = LocalBrand.current
         val uiState by viewModel.uiState.collectAsState()
         val event by viewModel.event.collectAsState()
         val snackbarState = remember { SnackbarHostState() }
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
-        var isFormVisible by remember { mutableStateOf(false) }
         var showDriverForm by remember { mutableStateOf(false) }
 
         val isLoading = uiState is UiState.Loading
-
-        val logoScale by animateFloatAsState(
-            targetValue = if (isFormVisible) 1f else 0.8f,
-            animationSpec = tween(durationMillis = 800),
-            label = "logo_scale"
-        )
+        val canSubmit = email.isNotBlank() && password.isNotBlank() && !isLoading
 
         LaunchedEffect(event) {
             when (val e = event) {
@@ -106,265 +98,144 @@ class LoginScreen : Screen {
             }
         }
 
-        LaunchedEffect(Unit) {
-            isFormVisible = true
-        }
-
+        val glow = MaterialTheme.colorScheme.primary
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarState) },
             containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
-
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.primary
+                    // Resplandor sutil del color primario del tenant, dibujado una sola vez.
+                    .drawBehind {
+                        drawRect(
+                            Brush.radialGradient(
+                                colors = listOf(glow.copy(alpha = 0.16f), glow.copy(alpha = 0f)),
+                                center = Offset(size.width / 2f, 0f),
+                                radius = size.width * 0.95f,
                             )
                         )
-                    )
+                    }
                     .padding(padding)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = if (showDriverForm) Arrangement.Top else Arrangement.Center
+                    .imePadding(),
+                contentAlignment = Alignment.Center,
             ) {
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = 480.dp)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 28.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Staggered(0) {
+                        BrandLogo(Modifier.size(width = 168.dp, height = 112.dp))
+                    }
 
-                if (showDriverForm) {
                     Spacer(Modifier.height(24.dp))
-                }
 
-                // ── Logo BUCARATRANSIT ────────────────────────────────────────────
-                AnimatedVisibility(
-                    visible = isFormVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { -it / 3 },
-                        animationSpec = tween(durationMillis = 800)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 800)),
-                    exit = fadeOut(animationSpec = tween(durationMillis = 300))
-                ) {
-                    Image(
-                        painter = painterResource(Res.drawable.logo_bucaratransit),
-                        contentDescription = "Logo BUCARATRANSIT",
-                        modifier = Modifier
-                            .size(width = 200.dp, height = 134.dp)
-                            .clip(RoundedCornerShape(18.dp)),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                // ── Mascota Búho ──────────────────────────────────────────────────
-                AnimatedVisibility(
-                    visible = isFormVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { -it },
-                        animationSpec = tween(durationMillis = 800)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 800)),
-                    exit = slideOutVertically(
-                        targetOffsetY = { -it },
-                        animationSpec = tween(durationMillis = 300)
-                    ) + fadeOut(animationSpec = tween(durationMillis = 300))
-                ) {
-                    Image(
-                        painter = painterResource(Res.drawable.leopardo_saludo),
-                        contentDescription = "Búho Saludando",
-                        modifier = Modifier
-                            .size(220.dp) // ← ligeramente más pequeño para que quepa todo
-                            .scale(logoScale),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-
-                Spacer(Modifier.height(4.dp)) // ← era 8dp
-
-                // ── Logo + BUCARATRANSIT ───────────────────────────────────
-                AnimatedVisibility(
-                    visible = isFormVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 1000, delayMillis = 200)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 1000, delayMillis = 200)),
-                    exit = fadeOut(animationSpec = tween(durationMillis = 300))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.Start
-                        ) {
+                    Staggered(1) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "BUCARATRANSIT",
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                letterSpacing = 1.sp
+                                text = brand.appName,
+                                style = MaterialTheme.typography.displayMedium,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                textAlign = TextAlign.Center,
                             )
-                            Text(
-                                text = "Plataforma de Movilidad",
-                                fontSize = 48.sp,
-                                fontFamily = rubikGlitchFamily(),
-                                color = MaterialTheme.colorScheme.secondary,
-                                letterSpacing = 2.sp,
-                                lineHeight = 50.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(24.dp))
-
-                // ── Botón Google (principal) ──────────────────────────────────────
-                AnimatedVisibility(
-                    visible = isFormVisible,
-                    enter = slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 1000, delayMillis = 400)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 1000, delayMillis = 400))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 32.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xFFFCBB01).copy(alpha = 0.18f),
-                                        Color(0xFFFCBB01).copy(alpha = 0.08f)
-                                    )
+                            brand.tagline?.takeIf { it.isNotBlank() }?.let {
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = it,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
                                 )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(40.dp))
+
+                    Staggered(2) {
+                        GoogleSignInButton(
+                            text = "Continuar con Google",
+                            onClick = { viewModel.loginWithGoogle() },
+                            loading = isLoading && !showDriverForm,
+                            enabled = !isLoading,
+                        )
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Staggered(3) {
+                        TextButton(
+                            onClick = { showDriverForm = !showDriverForm },
+                            modifier = Modifier.heightIn(min = Sizing.touchTarget),
+                        ) {
+                            Text(
+                                text = if (showDriverForm) "Ocultar acceso de conductores" else "Acceso de conductores",
+                                style = MaterialTheme.typography.labelLarge,
                             )
-                            .border(
-                                width = 1.5.dp,
-                                brush = Brush.horizontalGradient(
-                                    colors = listOf(
-                                        Color(0xFFFCBB01).copy(alpha = 0.8f),
-                                        Color(0xFFFCBB01).copy(alpha = 0.4f)
-                                    )
-                                ),
-                                shape = RoundedCornerShape(18.dp)
-                            )
-                            .padding(horizontal = 16.dp, vertical = 14.dp)
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = showDriverForm,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut(),
                     ) {
                         Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                            modifier = Modifier.padding(top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text(
-                                text = "⭐  TODA BUCARAMANGA",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFFFCBB01),
-                                letterSpacing = 2.sp
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            AppTextField(
+                                value = email,
+                                onValueChange = { email = it },
+                                label = "Correo electrónico",
+                                icon = Icons.Default.Email,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Email,
+                                    imeAction = ImeAction.Next,
+                                ),
                             )
-                            SecondaryGlassButton(
-                                text = "Ingresa con Google",
-                                onClick = { viewModel.loginWithGoogle() },
-                                showRecommendedBadge = false,
-                                loading = isLoading,
-                                enabled = !isLoading
+                            AppTextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                label = "Contraseña",
+                                icon = Icons.Default.Lock,
+                                isPassword = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                keyboardActions = KeyboardActions(onDone = {
+                                    if (canSubmit) viewModel.login(email, password)
+                                }),
+                            )
+                            PrimaryButton(
+                                text = "Iniciar sesión",
+                                onClick = { viewModel.login(email, password) },
+                                loading = isLoading && showDriverForm,
+                                enabled = canSubmit,
                             )
                         }
                     }
-                }
 
-                Spacer(Modifier.height(20.dp))
+                    Spacer(Modifier.height(24.dp))
 
-                // ── Formulario conductor (oculto por defecto) ─────────────────────
-                AnimatedVisibility(
-                    visible = showDriverForm,
-                    enter = slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 400)
-                    ) + fadeIn(animationSpec = tween(durationMillis = 400)),
-                    exit = slideOutVertically(
-                        targetOffsetY = { it / 2 },
-                        animationSpec = tween(durationMillis = 300)
-                    ) + fadeOut(animationSpec = tween(durationMillis = 300))
-                ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            HorizontalDivider(
-                                modifier = Modifier.weight(1f),
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                            )
-                            Text(
-                                text = "  Acceso conductores  ",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-                            )
-                            HorizontalDivider(
-                                modifier = Modifier.weight(1f),
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                            )
-                        }
-
-                        LoginInputField(
-                            value = email,
-                            onValueChange = { email = it },
-                            placeholder = "Correo electrónico",
-                            icon = Icons.Default.Email,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-                        )
-
-                        LoginInputField(
-                            value = password,
-                            onValueChange = { password = it },
-                            placeholder = "Contraseña",
-                            icon = Icons.Default.Lock,
-                            isPassword = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-                        )
-
-                        PrimaryGlassButton(
-                            text = "Iniciar Sesión",
-                            onClick = { viewModel.login(email, password) },
-                            loading = isLoading,
-                            enabled = email.isNotBlank() && password.isNotBlank()
-                        )
-                    }
-                }
-
-                // ── Botón ¿Eres conductor? ────────────────────────────────────────
-                AnimatedVisibility(
-                    visible = isFormVisible,
-                    enter = fadeIn(animationSpec = tween(durationMillis = 800, delayMillis = 600))
-                ) {
                     TextButton(
-                        onClick = { showDriverForm = !showDriverForm },
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        onClick = {
+                            brandRepository.clearOrganization()
+                            navigator.replaceAll(OrganizationCodeScreen())
+                        },
                     ) {
                         Text(
-                            text = if (showDriverForm) "← No soy conductor" else "¿Eres conductor?",
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
+                            text = "Cambiar organización",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                }
-
-                if (showDriverForm) {
-                    Spacer(Modifier.height(24.dp))
                 }
             }
         }
     }
 }
+

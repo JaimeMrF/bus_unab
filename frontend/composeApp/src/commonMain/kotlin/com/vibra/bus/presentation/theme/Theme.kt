@@ -6,175 +6,89 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.vibra.bus.domain.brand.BrandConfig
 
-// CompositionLocal for theme-specific values
-data class VibraBusColors(
-    val glassSurface: Color,
-    val glassBorder: Color,
-    val glassHighlight: Color,
-    val busAvailable: Color,
-    val busFull: Color,
-    val busApproaching: Color,
-    val routeActive: Color,
-    val routeInactive: Color,
-    val occupancyLow: Color,
-    val occupancyMedium: Color,
-    val occupancyHigh: Color,
-)
-
-val LocalVibraBusColors = staticCompositionLocalOf<VibraBusColors> {
-    error("No VibraBusColors provided")
+val LocalAppColors = staticCompositionLocalOf<AppColors> {
+    error("No AppColors provided")
 }
+
+/** Marca activa: nombre, logo, mascota, features. Siempre disponible dentro de [AppTheme]. */
+val LocalBrand = staticCompositionLocalOf { BrandConfig.Neutral }
 
 val LocalIsDarkTheme = compositionLocalOf { true }
 val LocalThemeToggle = compositionLocalOf<(Boolean) -> Unit> { {} }
 
-// Light Theme Colors
-private val LightVibraBusColors = VibraBusColors(
-    glassSurface = GlassColors.Surface,
-    glassBorder = GlassColors.Border,
-    glassHighlight = GlassColors.Highlight,
-    busAvailable = TransportColors.BusAvailable,
-    busFull = TransportColors.BusFull,
-    busApproaching = TransportColors.BusApproaching,
-    routeActive = TransportColors.RouteActive,
-    routeInactive = TransportColors.RouteInactive,
-    occupancyLow = TransportColors.OccupancyLow,
-    occupancyMedium = TransportColors.OccupancyMedium,
-    occupancyHigh = TransportColors.OccupancyHigh,
-)
-
-// Dark Theme Colors
-private val DarkVibraBusColors = VibraBusColors(
-    glassSurface = GlassColors.SurfaceDark,
-    glassBorder = GlassColors.BorderDark,
-    glassHighlight = GlassColors.HighlightDark,
-    busAvailable = TransportColors.BusAvailable,
-    busFull = TransportColors.BusFull,
-    busApproaching = TransportColors.BusApproaching,
-    routeActive = TransportColors.RouteActive,
-    routeInactive = TransportColors.RouteInactive,
-    occupancyLow = TransportColors.OccupancyLow,
-    occupancyMedium = TransportColors.OccupancyMedium,
-    occupancyHigh = TransportColors.OccupancyHigh,
-)
-
 /**
- * Main theme for VibraBus app with Material 3 design system
- * 
- * @param darkTheme Whether to use dark theme (defaults to system setting)
- * @param dynamicColor Whether to use dynamic colors (Android 12+)
- * @param content The composable content to be themed
+ * Tema único de la app. Todo el aspecto (color, tipografía, radios) se deriva de [brand];
+ * cambiar el BrandConfig cambia toda la interfaz.
  */
 @Composable
-fun VibraBusTheme(
+fun AppTheme(
+    brand: BrandConfig = BrandConfig.Neutral,
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Disabled for brand consistency
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-    
-    val vibraBusColors = when {
-        darkTheme -> DarkVibraBusColors
-        else -> LightVibraBusColors
-    }
+    val palette = if (darkTheme) brand.colors.dark else brand.colors.light
+    val colorScheme = remember(palette, darkTheme) { palette.toColorScheme(darkTheme) }
+    val appColors = remember(palette, darkTheme) { palette.toAppColors(darkTheme, colorScheme) }
+    val scale = radiusScale(brand.cornerRadius)
+    val shapeSet = remember(scale) { AppShapeSet(scale) }
+    val shapes = remember(scale) { materialShapes(scale) }
+    val family = brandFontFamily(brand.fontFamily)
+    val typography = remember(family) { appTypography(family) }
 
-    CompositionLocalProvider(LocalVibraBusColors provides vibraBusColors) {
+    CompositionLocalProvider(
+        LocalBrand provides brand,
+        LocalAppColors provides appColors,
+        LocalAppShapes provides shapeSet,
+        LocalIsDarkTheme provides darkTheme,
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = appTypography(),
-            shapes = AppShapes,
+            typography = typography,
+            shapes = shapes,
             content = content,
         )
     }
 }
 
-/**
- * Extension property to access custom colors from MaterialTheme
- */
-val MaterialTheme.vibraBusColors: VibraBusColors
+val MaterialTheme.appColors: AppColors
     @Composable
     @ReadOnlyComposable
-    get() = LocalVibraBusColors.current
+    get() = LocalAppColors.current
 
-/**
- * Preview themes for composables
- */
-@Composable
-fun VibraBusLightTheme(
-    content: @Composable () -> Unit
-) {
-    VibraBusTheme(
-        darkTheme = false,
-        dynamicColor = false,
-        content = content
-    )
-}
-
-@Composable
-fun VibraBusDarkTheme(
-    content: @Composable () -> Unit
-) {
-    VibraBusTheme(
-        darkTheme = true,
-        dynamicColor = false,
-        content = content
-    )
-}
-
-/**
- * Theme utilities for consistent color access
- */
-object VibraBusThemeUtils {
-    
-    /**
-     * Get appropriate glass colors based on theme
-     */
+val MaterialTheme.brand: BrandConfig
     @Composable
-    fun glassColors() = MaterialTheme.vibraBusColors.let {
+    @ReadOnlyComposable
+    get() = LocalBrand.current
+
+object AppThemeUtils {
+
+    @Composable
+    fun glassColors() = MaterialTheme.appColors.let {
         Triple(it.glassSurface, it.glassBorder, it.glassHighlight)
     }
-    
-    /**
-     * Get bus status color
-     */
+
     @Composable
-    fun busStatusColor(isAvailable: Boolean, isFull: Boolean): Color {
-        return when {
-            isFull -> MaterialTheme.vibraBusColors.busFull
-            isAvailable -> MaterialTheme.vibraBusColors.busAvailable
-            else -> MaterialTheme.vibraBusColors.busApproaching
-        }
+    fun busStatusColor(isAvailable: Boolean, isFull: Boolean): Color = when {
+        isFull -> MaterialTheme.appColors.busFull
+        isAvailable -> MaterialTheme.appColors.busAvailable
+        else -> MaterialTheme.appColors.busApproaching
     }
-    
-    /**
-     * Get occupancy color
-     */
+
     @Composable
-    fun occupancyColor(level: String): Color {
-        return when (level.lowercase()) {
-            "low" -> MaterialTheme.vibraBusColors.occupancyLow
-            "medium" -> MaterialTheme.vibraBusColors.occupancyMedium
-            "high" -> MaterialTheme.vibraBusColors.occupancyHigh
-            "full" -> MaterialTheme.vibraBusColors.busFull
-            else -> MaterialTheme.colorScheme.outline
-        }
+    fun occupancyColor(level: String): Color = when (level.lowercase()) {
+        "low" -> MaterialTheme.appColors.occupancyLow
+        "medium" -> MaterialTheme.appColors.occupancyMedium
+        "high" -> MaterialTheme.appColors.occupancyHigh
+        "full" -> MaterialTheme.appColors.busFull
+        else -> MaterialTheme.colorScheme.outline
     }
-    
-    /**
-     * Get route color
-     */
+
     @Composable
-    fun routeColor(isActive: Boolean): Color {
-        return if (isActive) {
-            MaterialTheme.vibraBusColors.routeActive
-        } else {
-            MaterialTheme.vibraBusColors.routeInactive
-        }
-    }
+    fun routeColor(isActive: Boolean): Color =
+        if (isActive) MaterialTheme.appColors.routeActive else MaterialTheme.appColors.routeInactive
 }

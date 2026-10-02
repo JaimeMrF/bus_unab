@@ -51,11 +51,9 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.StopWithPivotDto
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.leopardo_triste
-import vibrabus.composeapp.generated.resources.leopardo_curioso
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -137,7 +135,6 @@ data class StopsListScreen(val plate: String) : Screen {
                                 EmptyState(
                                     message = "Sin paradas disponibles",
                                     subtitle = "No hay paradas registradas para esta ruta",
-                                    image = Res.drawable.leopardo_curioso,
                                     ctaLabel = "Reintentar",
                                     onCtaClick = { viewModel.loadStops(plate) }
                                 )
@@ -160,7 +157,6 @@ data class StopsListScreen(val plate: String) : Screen {
                             EmptyState(
                                 message = "Error al cargar paradas",
                                 subtitle = state.message,
-                                image = Res.drawable.leopardo_triste,
                                 ctaLabel = "Reintentar",
                                 onCtaClick = { viewModel.loadStops(plate) }
                             )
@@ -183,13 +179,13 @@ private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boole
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        shape = VibraBusShapes.Card,
+        shape = AppShape.Card,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Row(modifier = Modifier.padding(16.dp)) {
             Card(
-                shape = VibraBusShapes.StatusBadge,
+                shape = AppShape.StatusBadge,
                 colors = CardDefaults.cardColors(containerColor = dotColor),
             ) {
                 Text(

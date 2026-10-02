@@ -168,7 +168,7 @@ class BusTrackingService : Service(), KoinComponent {
         // sea silenciosa y permanente, sin interrumpir al usuario.
         return NotificationCompat.Builder(this, NotificationHelper.CHANNEL_FOREGROUND)
             .setSmallIcon(R.mipmap.ic_notification)
-            .setContentTitle("VibraBus — Siguiendo tu bus")
+            .setContentTitle("Siguiendo tu bus")
             .setContentText(contentText)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

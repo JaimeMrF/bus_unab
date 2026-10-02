@@ -1,87 +1,144 @@
 package com.vibra.bus.presentation.theme
 
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
+import com.vibra.bus.domain.brand.BrandPalette
+import com.vibra.bus.domain.brand.parseHexColor
 
-// ── BUCARATRANSIT · Bucaramanga — identidad ─────────────────────────────────
-// Colores tomados del logo oficial: azul rey (marca) + amarillo (acento del bus).
-val ReyBlue       = Color(0xFF01265A)  // azul rey — color de marca
-val ReyBlueDeep   = Color(0xFF001A3D)  // azul rey profundo (fondo oscuro)
-val TransitYellow = Color(0xFFFCBB01)  // amarillo BUCARATRANSIT (acento)
+// ── Utilidades de contraste (WCAG) ──────────────────────────────────────────
 
-// Light theme — fondo claro, azul rey primario, amarillo acento
-val LightColorScheme = lightColorScheme(
-    primary = ReyBlue,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFDCE6F5),
-    onPrimaryContainer = Color(0xFF001A3D),
-    secondary = TransitYellow,
-    onSecondary = Color(0xFF241A00),
-    secondaryContainer = Color(0xFFFFE7A3),
-    onSecondaryContainer = Color(0xFF241A00),
-    tertiary = Color(0xFF2A6FD6),
-    onTertiary = Color.White,
-    background = Color(0xFFF7F9FC),
-    onBackground = Color(0xFF0E1622),
-    surface = Color.White,
-    onSurface = Color(0xFF0E1622),
-    surfaceVariant = Color(0xFFE4E9F2),
-    onSurfaceVariant = Color(0xFF454F5E),
-    outline = Color(0xFF737C8C),
-    outlineVariant = Color(0xFFC6CEDB),
-    error = Color(0xFFBA1A1A),
-    onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002),
-    scrim = Color(0xFF000000),
-)
-
-// Dark theme — azul rey profundo, amarillo primario (acento visible), azul claro secundario
-val DarkColorScheme = darkColorScheme(
-    primary = TransitYellow,
-    onPrimary = Color(0xFF241A00),
-    primaryContainer = Color(0xFF3A2C00),
-    onPrimaryContainer = Color(0xFFFFE7A3),
-    secondary = Color(0xFFA9C6F0),
-    onSecondary = Color(0xFF0A2A5C),
-    secondaryContainer = Color(0xFF1E3763),
-    onSecondaryContainer = Color(0xFFDCE6F5),
-    tertiary = Color(0xFFFFD27A),
-    onTertiary = Color(0xFF241A00),
-    background = ReyBlueDeep,
-    onBackground = Color(0xFFE6EBF3),
-    surface = Color(0xFF0A2148),
-    onSurface = Color(0xFFE6EBF3),
-    surfaceVariant = Color(0xFF1E3763),
-    onSurfaceVariant = Color(0xFFC2CDE0),
-    outline = Color(0xFF8A96A8),
-    outlineVariant = Color(0xFF2C3E5C),
-    error = Color(0xFFE5484D),
-    onError = Color.White,
-    errorContainer = Color(0xFF4D1B1B),
-    onErrorContainer = Color(0xFFFF8A80),
-    scrim = Color(0xFF000000),
-)
-
-object GlassColors {
-    val Surface = Color(0x1AFFFFFF)
-    val Border = Color(0x33FFFFFF)
-    val Highlight = Color(0x4DFFFFFF)
-    val SurfaceDark = Color(0xB3001A3D)   // 70% azul rey glass
-    val BorderDark = Color(0x33FFFFFF)    // 20% White Border
-    val HighlightDark = Color(0x1AFFFFFF) // 10% White Highlight
+fun contrastRatio(a: Color, b: Color): Float {
+    val la = a.luminance()
+    val lb = b.luminance()
+    val hi = maxOf(la, lb)
+    val lo = minOf(la, lb)
+    return (hi + 0.05f) / (lo + 0.05f)
 }
 
-object TransportColors {
-    val Success = Color(0xFF2EBE6C)
-    val Warning = Color(0xFFFFB020)
-    val BusAvailable = Color(0xFF2EBE6C)
-    val BusFull = Color(0xFFE5484D)
-    val BusApproaching = TransitYellow
-    val RouteActive = TransitYellow
-    val RouteInactive = Color(0xFF94A3B8)
-    val OccupancyLow = Color(0xFF2EBE6C)
-    val OccupancyMedium = TransitYellow
-    val OccupancyHigh = Color(0xFFF59E0B)
+/** Negro o blanco, el que mejor se lea sobre [bg]. */
+fun readableOn(bg: Color): Color =
+    if (contrastRatio(Color.White, bg) >= contrastRatio(Color.Black, bg)) Color.White else Color.Black
+
+/** Acerca [fg] a negro/blanco hasta alcanzar [min]:1 sobre [bg] (garantiza AA aunque la marca no lo cumpla). */
+fun ensureContrast(fg: Color, bg: Color, min: Float = 4.5f): Color {
+    if (contrastRatio(fg, bg) >= min) return fg
+    val target = readableOn(bg)
+    for (step in 1..20) {
+        val c = lerp(fg, target, step / 20f)
+        if (contrastRatio(c, bg) >= min) return c
+    }
+    return target
+}
+
+// ── Colores semánticos propios de la app (no existen en Material) ───────────
+
+data class AppColors(
+    val glassSurface: Color,
+    val glassBorder: Color,
+    val glassHighlight: Color,
+    val accent: Color,
+    val onAccent: Color,
+    val success: Color,
+    val warning: Color,
+    val busAvailable: Color,
+    val busFull: Color,
+    val busApproaching: Color,
+    val routeActive: Color,
+    val routeInactive: Color,
+    val occupancyLow: Color,
+    val occupancyMedium: Color,
+    val occupancyHigh: Color,
+)
+
+private fun BrandPalette.c(hex: String, fallback: Color) = parseHexColor(hex, fallback)
+
+/** Genera el ColorScheme Material 3 completo a partir de las 11 claves de marca. */
+fun BrandPalette.toColorScheme(dark: Boolean): ColorScheme {
+    val fb = if (dark) Color(0xFF9DB6EA) else Color(0xFF2F4B7C)
+    val primary = c(primary, fb)
+    val onPrimary = ensureContrast(c(onPrimary, readableOn(primary)), primary)
+    val secondary = c(secondary, fb)
+    val onSecondary = ensureContrast(c(onSecondary, readableOn(secondary)), secondary)
+    val background = c(background, if (dark) Color(0xFF0D1117) else Color(0xFFF6F7FA))
+    val surface = c(surface, if (dark) Color(0xFF161B24) else Color.White)
+    val onSurface = ensureContrast(c(onSurface, readableOn(surface)), surface, 7f)
+    val accent = c(accent, primary)
+    val error = c(error, Color(0xFFBA1A1A))
+
+    val containerMix = if (dark) 0.78f else 0.86f
+    val primaryContainer = lerp(primary, surface, containerMix)
+    val secondaryContainer = lerp(secondary, surface, containerMix)
+    val tertiaryContainer = lerp(accent, surface, containerMix)
+    val errorContainer = lerp(error, surface, containerMix)
+    val surfaceVariant = lerp(surface, onSurface, if (dark) 0.10f else 0.06f)
+
+    fun tone(a: Float) = lerp(surface, onSurface, a)
+
+    val base = if (dark) darkColorScheme() else lightColorScheme()
+    return base.copy(
+        primary = primary,
+        onPrimary = onPrimary,
+        primaryContainer = primaryContainer,
+        onPrimaryContainer = ensureContrast(primary, primaryContainer),
+        inversePrimary = ensureContrast(primary, onSurface),
+        secondary = secondary,
+        onSecondary = onSecondary,
+        secondaryContainer = secondaryContainer,
+        onSecondaryContainer = ensureContrast(secondary, secondaryContainer),
+        tertiary = accent,
+        onTertiary = readableOn(accent),
+        tertiaryContainer = tertiaryContainer,
+        onTertiaryContainer = ensureContrast(accent, tertiaryContainer),
+        background = background,
+        onBackground = onSurface,
+        surface = surface,
+        onSurface = onSurface,
+        surfaceVariant = surfaceVariant,
+        onSurfaceVariant = ensureContrast(lerp(onSurface, surface, 0.28f), surfaceVariant),
+        surfaceTint = primary,
+        inverseSurface = onSurface,
+        inverseOnSurface = surface,
+        outline = ensureContrast(lerp(onSurface, surface, 0.5f), surface, 3f),
+        outlineVariant = tone(if (dark) 0.18f else 0.12f),
+        error = error,
+        onError = readableOn(error),
+        errorContainer = errorContainer,
+        onErrorContainer = ensureContrast(error, errorContainer),
+        scrim = Color.Black,
+        surfaceDim = if (dark) tone(0f) else lerp(surface, onSurface, 0.08f),
+        surfaceBright = if (dark) tone(0.10f) else surface,
+        surfaceContainerLowest = if (dark) lerp(background, Color.Black, 0.3f) else Color.White,
+        surfaceContainerLow = tone(0.02f),
+        surfaceContainer = tone(0.04f),
+        surfaceContainerHigh = tone(0.07f),
+        surfaceContainerHighest = tone(0.10f),
+    )
+}
+
+fun BrandPalette.toAppColors(dark: Boolean, scheme: ColorScheme): AppColors {
+    val success = c(success, Color(0xFF1E8E55))
+    val warning = c(warning, Color(0xFFB26A00))
+    val accent = c(accent, scheme.primary)
+    val error = scheme.error
+    return AppColors(
+        glassSurface = if (dark) scheme.surface.copy(alpha = 0.72f) else Color.White.copy(alpha = 0.78f),
+        glassBorder = if (dark) Color.White.copy(alpha = 0.12f) else scheme.onSurface.copy(alpha = 0.08f),
+        glassHighlight = if (dark) Color.White.copy(alpha = 0.06f) else Color.White.copy(alpha = 0.9f),
+        accent = accent,
+        onAccent = readableOn(accent),
+        success = success,
+        warning = warning,
+        busAvailable = success,
+        busFull = error,
+        busApproaching = warning,
+        routeActive = scheme.primary,
+        routeInactive = scheme.outline,
+        occupancyLow = success,
+        occupancyMedium = warning,
+        occupancyHigh = lerp(warning, error, 0.5f),
+    )
 }

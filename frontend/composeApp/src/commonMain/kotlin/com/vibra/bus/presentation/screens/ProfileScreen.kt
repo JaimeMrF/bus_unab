@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.theme.LocalBrand
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -109,10 +110,9 @@ class ProfileScreen : Screen {
             ) {
 
                 // ── Header con gradiente ──────────────────────────────────────
-                val headerGradient = if (isDark)
-                    Brush.verticalGradient(listOf(Color(0xFF001A3D), Color(0xFF01265A)))
-                else
-                    Brush.verticalGradient(listOf(Color(0xFF2A6FD6), Color(0xFF01265A)))
+                val headerGradient = Brush.verticalGradient(
+                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.82f))
+                )
 
                 Box(
                     modifier = Modifier
@@ -133,10 +133,9 @@ class ProfileScreen : Screen {
                                     .border(3.dp, MaterialTheme.colorScheme.secondary, CircleShape),
                             )
                         } else {
-                            val avatarGradient = if (isDark)
-                                Brush.radialGradient(listOf(Color(0xFF001A3D), Color(0xFF01265A)))
-                            else
-                                Brush.radialGradient(listOf(Color(0xFFFCBB01), Color(0xFFC99400)))
+                            val avatarGradient = Brush.radialGradient(
+                                listOf(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f))
+                            )
                             Box(
                                 modifier = Modifier
                                     .size(96.dp)
@@ -283,7 +282,7 @@ class ProfileScreen : Screen {
                             fontSize   = 15.sp,
                         )
                         Text(
-                            text     = if (isDark) "Morado (oscuro)" else "Naranja (cálido)",
+                            text     = if (isDark) "Oscuro" else "Claro",
                             color    = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp,
                         )
@@ -329,13 +328,7 @@ class ProfileScreen : Screen {
                         modifier            = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text("BUCARATRANSIT v1.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            "Universidad Autónoma de Bucaramanga",
-                            fontSize = 11.sp,
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                        )
+                        Text("${LocalBrand.current.appName} v1.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                         Spacer(Modifier.height(20.dp))
                     }
                 }

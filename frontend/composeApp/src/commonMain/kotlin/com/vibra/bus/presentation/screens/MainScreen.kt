@@ -18,7 +18,7 @@ import cafe.adriel.voyager.transitions.SlideTransition
 import com.vibra.bus.presentation.components.BottomNavBar
 import com.vibra.bus.presentation.components.driverNavItems
 import com.vibra.bus.presentation.components.studentNavItems
-import com.vibra.bus.presentation.theme.VibraBusTheme
+import com.vibra.bus.presentation.theme.LocalBrand
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.AppSettings
 import org.koin.compose.koinInject
@@ -31,9 +31,15 @@ class MainScreen : Screen {
         val settings         = koinInject<AppSettings>()
         val profileViewModel = koinViewModel<ProfileViewModel>()
         val profile   by profileViewModel.profile.collectAsState()
-        val isDark by settings.isDarkThemeFlow.collectAsState()
-        val isDriver  = profile.role == "driver"
-        val navItems  = if (isDriver) driverNavItems() else studentNavItems()
+        val features = LocalBrand.current.features
+        val isDriver  = profile.role == "driver" && features.driverMode
+        val navItems  = (if (isDriver) driverNavItems() else studentNavItems()).filter {
+            when (it.route) {
+                "qr"      -> features.wallet
+                "scanner" -> features.qrPayments
+                else      -> true
+            }
+        }
         var selectedRoute by remember { mutableStateOf("home") }
 
         Scaffold(
@@ -48,15 +54,15 @@ class MainScreen : Screen {
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                 when (selectedRoute) {
-                    "home"          -> Navigator(HomeScreen())          { VibraBusTheme(isDark) { SlideTransition(it) } }
+                    "home"          -> Navigator(HomeScreen())          { SlideTransition(it) }
                     "trips"         -> if (isDriver)
-                                           Navigator(DriverModeScreen()) { VibraBusTheme(isDark) { SlideTransition(it) } }
+                                           Navigator(DriverModeScreen()) { SlideTransition(it) }
                                        else
-                                           Navigator(MyTripsScreen())    { VibraBusTheme(isDark) { SlideTransition(it) } }
-                    "qr"            -> Navigator(WalletScreen())         { VibraBusTheme(isDark) { SlideTransition(it) } }
-                    "scanner"       -> Navigator(QRScannerScreen())      { VibraBusTheme(isDark) { SlideTransition(it) } }
-                    "notifications" -> Navigator(NotificationsScreen())  { VibraBusTheme(isDark) { SlideTransition(it) } }
-                    "profile"       -> Navigator(ProfileScreen())        { VibraBusTheme(isDark) { SlideTransition(it) } }
+                                           Navigator(MyTripsScreen())    { SlideTransition(it) }
+                    "qr"            -> Navigator(WalletScreen())         { SlideTransition(it) }
+                    "scanner"       -> Navigator(QRScannerScreen())      { SlideTransition(it) }
+                    "notifications" -> Navigator(NotificationsScreen())  { SlideTransition(it) }
+                    "profile"       -> Navigator(ProfileScreen())        { SlideTransition(it) }
                 }
             }
         }

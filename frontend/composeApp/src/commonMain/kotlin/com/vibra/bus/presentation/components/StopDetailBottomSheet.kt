@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vibra.bus.data.model.StopDto
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +35,7 @@ fun StopDetailBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Color.White,
-        shape = VibraBusShapes.BottomSheet,
+        shape = AppShape.BottomSheet,
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Text(

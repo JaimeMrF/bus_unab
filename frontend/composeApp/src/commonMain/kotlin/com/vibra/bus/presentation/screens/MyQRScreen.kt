@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.components.BrandMascot
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -51,14 +52,13 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.viewmodel.MyQRViewModel
 import com.vibra.bus.util.AppSettings
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.leopardo_saludo
 
 class MyQRScreen : Screen {
 
@@ -141,12 +141,12 @@ class MyQRScreen : Screen {
                     Box(
                         modifier = Modifier
                             .size(100.dp)
-                            .clip(VibraBusShapes.OwlAvatar)
+                            .clip(AppShape.Avatar)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                             .border(
                                 width = 2.dp,
                                 color = MaterialTheme.colorScheme.primary,
-                                shape = VibraBusShapes.OwlAvatar,
+                                shape = AppShape.Avatar,
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -158,12 +158,7 @@ class MyQRScreen : Screen {
                                 contentScale       = ContentScale.Crop,
                             )
                         } else {
-                            Image(
-                                painter            = painterResource(Res.drawable.leopardo_saludo),
-                                contentDescription = "Mascota BUCARATRANSIT",
-                                modifier           = Modifier.fillMaxSize().padding(8.dp),
-                                contentScale       = ContentScale.Fit,
-                            )
+                            BrandMascot(modifier = Modifier.fillMaxSize().padding(8.dp))
                         }
                     }
 
@@ -190,7 +185,7 @@ class MyQRScreen : Screen {
                     // QR card — spring bounce al entrar
                     Card(
                         modifier  = Modifier.size(240.dp).scale(qrScale),
-                        shape     = VibraBusShapes.QRContainer,
+                        shape     = AppShape.QRContainer,
                         colors    = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
                     ) {
@@ -213,7 +208,7 @@ class MyQRScreen : Screen {
                                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                                 else
                                     MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
-                                shape = VibraBusShapes.StatusBadge,
+                                shape = AppShape.StatusBadge,
                             )
                             .border(
                                 width = 1.dp,
@@ -221,7 +216,7 @@ class MyQRScreen : Screen {
                                     MaterialTheme.colorScheme.primary
                                 else
                                     MaterialTheme.colorScheme.error,
-                                shape = VibraBusShapes.StatusBadge,
+                                shape = AppShape.StatusBadge,
                             )
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                     ) {

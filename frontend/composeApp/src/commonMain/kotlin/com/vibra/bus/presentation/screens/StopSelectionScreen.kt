@@ -67,10 +67,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.data.model.StopWithPivotDto
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.leopardo_triste
 import com.vibra.bus.util.UiState
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
@@ -172,9 +171,9 @@ data class StopSelectionScreen(val plate: String) : Screen {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(VibraBusShapes.BottomSheet)
+                        .clip(AppShape.BottomSheet)
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), VibraBusShapes.BottomSheet)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), AppShape.BottomSheet)
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Row(
@@ -247,7 +246,6 @@ data class StopSelectionScreen(val plate: String) : Screen {
                             EmptyState(
                                 message = "Error al cargar paradas",
                                 subtitle = state.message,
-                                image = Res.drawable.leopardo_triste,
                             )
                         }
                         else -> {}
@@ -268,7 +266,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
-                        shape  = VibraBusShapes.ButtonPrimary,
+                        shape  = AppShape.ButtonPrimary,
                         colors = ButtonDefaults.buttonColors(
                             containerColor         = MaterialTheme.colorScheme.primary,
                             disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
@@ -300,7 +298,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     modifier = Modifier
                         .padding(vertical = 12.dp)
                         .size(width = 32.dp, height = 4.dp)
-                        .clip(VibraBusShapes.RouteIndicator)
+                        .clip(AppShape.RouteIndicator)
                         .background(MaterialTheme.colorScheme.outline)
                 )
             },

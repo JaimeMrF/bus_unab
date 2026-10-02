@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopWithPivotDto
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +50,7 @@ fun RouteDetailBottomSheet(
         onDismissRequest = onDismiss,
         sheetState       = sheetState,
         containerColor   = MaterialTheme.colorScheme.surface,
-        shape            = VibraBusShapes.BottomSheet,
+        shape            = AppShape.BottomSheet,
     ) {
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
 

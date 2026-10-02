@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.theme.LocalBrand
+import com.vibra.bus.presentation.components.BrandMascot
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -27,15 +29,13 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.StopDto
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.viewmodel.WaitingBusViewModel
 import com.vibra.bus.util.AppSettings
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.leopardo_celular
-import vibrabus.composeapp.generated.resources.leopardo_mapa
 
 expect fun startBusTracking(plate: String, stopLat: Double, stopLng: Double, stopName: String)
 expect fun stopBusTracking()
@@ -75,12 +75,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                     showBatteryDialog = false
                 },
                 icon = {
-                    Image(
-                        painter = painterResource(Res.drawable.leopardo_celular),
-                        contentDescription = null,
-                        modifier = Modifier.size(96.dp),
-                        contentScale = ContentScale.Fit,
-                    )
+                    BrandMascot(modifier = Modifier.size(96.dp))
                 },
                 title = {
                     Text(
@@ -92,7 +87,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                 text = {
                     Text(
                         "Para que la notificación del bus siga visible aunque cierres la app, " +
-                        "necesitamos que desactives la optimización de batería para BUCARATRANSIT. " +
+                        "necesitamos que desactives la optimización de batería para ${LocalBrand.current.appName}. " +
                         "Toca \"Activar\" y selecciona \"No restringir\".",
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -197,9 +192,9 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(VibraBusShapes.BottomSheet)
+                            .clip(AppShape.BottomSheet)
                             .background(MaterialTheme.colorScheme.surface)
-                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), VibraBusShapes.BottomSheet)
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), AppShape.BottomSheet)
                             .padding(20.dp)
                     ) {
                         Row(
@@ -221,12 +216,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 )
                             }
                             if (bus == null) {
-                                Image(
-                                    painter = painterResource(Res.drawable.leopardo_mapa),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(56.dp),
-                                    contentScale = ContentScale.Fit,
-                                )
+                                BrandMascot(modifier = Modifier.size(56.dp))
                             }
 
                             // ETA Circle
@@ -282,7 +272,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 navigator.push(MyQRScreen())
                             },
                             modifier = Modifier.fillMaxWidth().height(52.dp),
-                            shape = VibraBusShapes.ButtonPrimary,
+                            shape = AppShape.ButtonPrimary,
                         ) {
                             Icon(
                                 Icons.Default.QrCode,
@@ -307,7 +297,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 navigator.pop()
                             },
                             modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = VibraBusShapes.ButtonPrimary,
+                            shape = AppShape.ButtonPrimary,
                             colors = ButtonDefaults.outlinedButtonColors(
                                 contentColor = MaterialTheme.colorScheme.error
                             ),

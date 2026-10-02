@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.components.BrandMascot
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -81,7 +82,7 @@ import com.vibra.bus.data.model.BusCatalogItem
 import com.vibra.bus.data.model.StopWithPivotDto
 import androidx.compose.foundation.Image
 import androidx.compose.ui.layout.ContentScale
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.viewmodel.DriverModeViewModel
 import com.vibra.bus.presentation.viewmodel.LocationSource
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
@@ -89,7 +90,6 @@ import com.vibra.bus.util.UiState
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.leopardo_conductor
 
 private val ButtonShape = RoundedCornerShape(14.dp)
 
@@ -163,9 +163,9 @@ class DriverModeScreen : Screen {
                             Spacer(Modifier.width(12.dp))
                             Box(
                                 modifier = Modifier
-                                    .clip(VibraBusShapes.StatusBadge)
+                                    .clip(AppShape.StatusBadge)
                                     .background(MaterialTheme.colorScheme.secondary.copy(alpha = pulseAlpha))
-                                    .border(1.dp, MaterialTheme.colorScheme.secondary, VibraBusShapes.StatusBadge)
+                                    .border(1.dp, MaterialTheme.colorScheme.secondary, AppShape.StatusBadge)
                                     .padding(horizontal = 8.dp, vertical = 4.dp),
                             ) {
                                 Text(
@@ -179,7 +179,7 @@ class DriverModeScreen : Screen {
                     },
                     navigationIcon = {
                         if (canPop) {
-                            IconButton(onClick = { navigator.pop() }, modifier = Modifier.clip(VibraBusShapes.MapButton)) {
+                            IconButton(onClick = { navigator.pop() }, modifier = Modifier.clip(AppShape.MapButton)) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar", tint = MaterialTheme.colorScheme.onPrimary)
                             }
                         }
@@ -232,12 +232,7 @@ class DriverModeScreen : Screen {
                                     modifier = Modifier.padding(top = 2.dp),
                                 )
                             }
-                            Image(
-                                painter = painterResource(Res.drawable.leopardo_conductor),
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                contentScale = ContentScale.Fit,
-                            )
+                            BrandMascot(modifier = Modifier.size(64.dp))
                         }
                     }
                 }
@@ -459,7 +454,7 @@ class DriverModeScreen : Screen {
                 onDismissRequest = { showStopSelector = false },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
                 containerColor = MaterialTheme.colorScheme.surface,
-                shape = VibraBusShapes.BottomSheet,
+                shape = AppShape.BottomSheet,
             ) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                     Text("¿En qué parada llegaste?", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 12.dp))
@@ -508,12 +503,7 @@ private fun BusSelectorSheet(
                     Text("Hola, $driverName", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                     Text("¿Qué ruta estás conduciendo hoy?", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp, bottom = 20.dp))
                 }
-                Image(
-                    painter = painterResource(Res.drawable.leopardo_conductor),
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    contentScale = ContentScale.Fit,
-                )
+                BrandMascot(modifier = Modifier.size(80.dp))
             }
 
             when (val state = catalogState) {

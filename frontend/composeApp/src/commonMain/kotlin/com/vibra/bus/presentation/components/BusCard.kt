@@ -40,9 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.OccupancyDto
-import com.vibra.bus.presentation.theme.VibraBusShapes
-import com.vibra.bus.presentation.theme.VibraBusThemeUtils
-import com.vibra.bus.presentation.theme.vibraBusColors
+import com.vibra.bus.presentation.theme.AppShape
+import com.vibra.bus.presentation.theme.AppThemeUtils
+import com.vibra.bus.presentation.theme.appColors
 
 @Composable
 fun BusCard(
@@ -67,8 +67,8 @@ fun BusCard(
     )
 
     // Use Material 3 theme utilities for colors
-    val statusColor = VibraBusThemeUtils.busStatusColor(isAvailable, isFull)
-    val occupancyColor = occupancy?.level?.let { VibraBusThemeUtils.occupancyColor(it) }
+    val statusColor = AppThemeUtils.busStatusColor(isAvailable, isFull)
+    val occupancyColor = occupancy?.level?.let { AppThemeUtils.occupancyColor(it) }
         ?: MaterialTheme.colorScheme.outline
     
     val statusLabel = when {
@@ -87,15 +87,15 @@ fun BusCard(
             )
             .shadow(
                 elevation = 6.dp,
-                shape = VibraBusShapes.Card,
+                shape = AppShape.Card,
                 spotColor = Color.Black.copy(alpha = 0.12f)
             )
-            .clip(VibraBusShapes.Card)
+            .clip(AppShape.Card)
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.vibraBusColors.glassSurface,
-                        MaterialTheme.vibraBusColors.glassBorder
+                        MaterialTheme.appColors.glassSurface,
+                        MaterialTheme.appColors.glassBorder
                     )
                 )
             )
@@ -103,11 +103,11 @@ fun BusCard(
                 width = 1.dp,
                 brush = Brush.horizontalGradient(
                     colors = listOf(
-                        MaterialTheme.vibraBusColors.glassHighlight,
-                        MaterialTheme.vibraBusColors.glassBorder
+                        MaterialTheme.appColors.glassHighlight,
+                        MaterialTheme.appColors.glassBorder
                     )
                 ),
-                shape = VibraBusShapes.Card
+                shape = AppShape.Card
             )
             .clickable(
                 onClick = onClick,
@@ -125,7 +125,7 @@ fun BusCard(
             Box(
                 modifier = Modifier
                     .size(46.dp)
-                    .clip(VibraBusShapes.BusMarker)
+                    .clip(AppShape.BusMarker)
                     .background(
                         brush = Brush.radialGradient(
                             colors = listOf(

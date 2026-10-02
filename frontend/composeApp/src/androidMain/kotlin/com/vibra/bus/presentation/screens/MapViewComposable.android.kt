@@ -31,6 +31,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.vibra.bus.R
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
+import androidx.compose.ui.graphics.toArgb
 import com.vibra.bus.presentation.theme.LocalIsDarkTheme
 import com.vibra.bus.util.LatLng
 import org.maplibre.android.MapLibre
@@ -58,10 +59,10 @@ import org.maplibre.geojson.Point
 private const val STYLE_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
 private const val STYLE_DARK = "https://tiles.openfreemap.org/styles/dark"
 
-// Centro de Bucaramanga (Parque Santander aprox.)
-private const val CITY_LAT = 7.1166
-private const val CITY_LNG = -73.1056
-private const val CITY_ZOOM = 15.0
+// Vista inicial genérica (sin ubicación del usuario); se recentra en cuanto hay GPS o buses.
+private const val CITY_LAT = 4.6
+private const val CITY_LNG = -74.08
+private const val CITY_ZOOM = 11.0
 
 private const val SRC_ROUTE = "src-route"
 private const val LYR_ROUTE_HALO = "lyr-route-halo"
@@ -77,9 +78,8 @@ private const val SRC_BUSES = "src-buses"
 private const val LYR_BUSES = "lyr-buses"
 private const val IMG_BUS = "img-bus"
 
-private val BRAND_BLUE = 0xFF01265A.toInt()
-private val BRAND_YELLOW = 0xFFFCBB01.toInt()
-private val USER_BLUE = 0xFF2A6FD6.toInt()
+/** Colores del mapa derivados del tema/marca activos (ya no hay colores de marca fijos). */
+private class MapColors(val primary: Int, val accent: Int, val onPrimary: Int)
 
 private fun MlLatLng.toGeoPoint(): Point = Point.fromLngLat(longitude, latitude)
 
@@ -132,7 +132,7 @@ private fun busBitmap(context: Context): Bitmap {
 }
 
 /** Instala fuentes y capas una sola vez por style (setStyle resetea todo). */
-private fun Style.installLayers(bus: Bitmap) {
+private fun Style.installLayers(bus: Bitmap, colors: MapColors) {
     if (getSourceAs<GeoJsonSource>(SRC_BUSES) != null) return
 
     // ── Ruta: halo + línea + guía punteada ───────────────────────────────────
@@ -150,7 +150,7 @@ private fun Style.installLayers(bus: Bitmap) {
     addLayer(
         LineLayer(LYR_ROUTE_MAIN, SRC_ROUTE).apply {
             setProperties(
-                PropertyFactory.lineColor(BRAND_BLUE),
+                PropertyFactory.lineColor(colors.primary),
                 PropertyFactory.lineWidth(4f),
                 PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
                 PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
@@ -160,7 +160,7 @@ private fun Style.installLayers(bus: Bitmap) {
     addLayer(
         LineLayer(LYR_ROUTE_DASH, SRC_ROUTE).apply {
             setProperties(
-                PropertyFactory.lineColor(BRAND_YELLOW),
+                PropertyFactory.lineColor(colors.onPrimary),
                 PropertyFactory.lineWidth(1.5f),
                 PropertyFactory.lineDasharray(arrayOf(2f, 2f)),
             )
@@ -174,7 +174,7 @@ private fun Style.installLayers(bus: Bitmap) {
             setProperties(
                 PropertyFactory.circleRadius(6f),
                 PropertyFactory.circleColor(0xFFFFFFFF.toInt()),
-                PropertyFactory.circleStrokeColor(BRAND_BLUE),
+                PropertyFactory.circleStrokeColor(colors.primary),
                 PropertyFactory.circleStrokeWidth(2.5f),
             )
         },
@@ -184,8 +184,8 @@ private fun Style.installLayers(bus: Bitmap) {
         CircleLayer(LYR_STOP_SEL, SRC_STOP_SEL).apply {
             setProperties(
                 PropertyFactory.circleRadius(9f),
-                PropertyFactory.circleColor(BRAND_YELLOW),
-                PropertyFactory.circleStrokeColor(BRAND_BLUE),
+                PropertyFactory.circleColor(colors.accent),
+                PropertyFactory.circleStrokeColor(colors.primary),
                 PropertyFactory.circleStrokeWidth(3f),
             )
         },
@@ -197,7 +197,7 @@ private fun Style.installLayers(bus: Bitmap) {
         CircleLayer(LYR_USER, SRC_USER).apply {
             setProperties(
                 PropertyFactory.circleRadius(7f),
-                PropertyFactory.circleColor(USER_BLUE),
+                PropertyFactory.circleColor(colors.accent),
                 PropertyFactory.circleStrokeColor(0xFFFFFFFF.toInt()),
                 PropertyFactory.circleStrokeWidth(3f),
             )
@@ -211,6 +211,9 @@ private fun Style.installLayers(bus: Bitmap) {
         SymbolLayer(LYR_BUSES, SRC_BUSES).apply {
             setProperties(
                 PropertyFactory.iconImage(IMG_BUS),
+                PropertyFactory.iconColor(colors.primary),
+                PropertyFactory.iconHaloColor(colors.onPrimary),
+                PropertyFactory.iconHaloWidth(1.5f),
                 PropertyFactory.iconRotate(Expression.get("heading")),
                 PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER),
@@ -236,6 +239,10 @@ actual fun MapViewComposable(
     path: List<LatLng>?,
 ) {
     val isDark = LocalIsDarkTheme.current
+    val scheme = MaterialTheme.colorScheme
+    val mapColors = remember(scheme.primary, scheme.tertiary, scheme.onPrimary) {
+        MapColors(scheme.primary.toArgb(), scheme.tertiary.toArgb(), scheme.onPrimary.toArgb())
+    }
     val context = LocalContext.current
     val lifecycleOwner = remember(context) { context as? LifecycleOwner }
 
@@ -351,11 +358,11 @@ actual fun MapViewComposable(
     }
 
     // ── Estilo (se re-aplica si cambia el tema) ──────────────────────────────
-    LaunchedEffect(map, isDark) {
+    LaunchedEffect(map, isDark, mapColors) {
         val mlMap = map ?: return@LaunchedEffect
         mapLoaded = false
         mlMap.setStyle(Style.Builder().fromUri(if (isDark) STYLE_DARK else STYLE_LIGHT)) { loaded ->
-            loaded.installLayers(busSprite)
+            loaded.installLayers(busSprite, mapColors)
             style = loaded
             mapLoaded = true
         }

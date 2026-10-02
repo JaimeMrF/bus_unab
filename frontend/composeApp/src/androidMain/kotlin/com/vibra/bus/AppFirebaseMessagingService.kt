@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
 
-class VibraFirebaseMessagingService : FirebaseMessagingService() {
+class AppFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onCreate() {
         super.onCreate()
@@ -28,7 +28,7 @@ class VibraFirebaseMessagingService : FirebaseMessagingService() {
         val notif = remoteMessage.notification
 
         val type  = data["type"]  ?: "general"
-        val title = notif?.title  ?: data["title"] ?: "BUCARATRANSIT"
+        val title = notif?.title  ?: data["title"] ?: applicationInfo.loadLabel(packageManager).toString()
         val body  = notif?.body   ?: data["body"]  ?: ""
 
         // 1. Guardar en la lista local (visible en NotificationsScreen)

@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.components.BrandMascot
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -74,10 +75,9 @@ import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
 import androidx.compose.foundation.Image
 import com.vibra.bus.presentation.components.BusCard
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 import org.jetbrains.compose.resources.painterResource
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.leopardo_curioso
 import com.vibra.bus.presentation.viewmodel.HomeViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.AppSettings
@@ -168,7 +168,7 @@ class HomeScreen : Screen {
                         onClick = { /* centrar mapa */ },
                         containerColor = MaterialTheme.colorScheme.primary,
                         elevation = FloatingActionButtonDefaults.elevation(8.dp, 12.dp),
-                        shape = VibraBusShapes.FloatingActionButton,
+                        shape = AppShape.FloatingActionButton,
                         modifier = Modifier.scale(fabScale)
                     ) {
                         Icon(
@@ -303,7 +303,7 @@ class HomeScreen : Screen {
                                     "driver" -> Button(
                                         onClick  = { navigator.push(DriverModeScreen()) },
                                         modifier = Modifier.fillMaxWidth().height(50.dp),
-                                        shape    = VibraBusShapes.ButtonPrimary,
+                                        shape    = AppShape.ButtonPrimary,
                                     ) {
                                         Text("Entrar a Modo Conductor", fontWeight = FontWeight.SemiBold)
                                     }
@@ -314,7 +314,7 @@ class HomeScreen : Screen {
                                         OutlinedButton(
                                             onClick  = { navigator.push(BusRouteScreen(selectedBus!!.plate)) },
                                             modifier = Modifier.weight(1f).height(50.dp),
-                                            shape    = VibraBusShapes.ButtonPrimary,
+                                            shape    = AppShape.ButtonPrimary,
                                             border   = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
                                         ) {
                                             Icon(Icons.Default.Map, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
@@ -324,7 +324,7 @@ class HomeScreen : Screen {
                                         Button(
                                             onClick  = { navigator.push(StopSelectionScreen(selectedBus!!.plate)) },
                                             modifier = Modifier.weight(1f).height(50.dp),
-                                            shape    = VibraBusShapes.ButtonPrimary,
+                                            shape    = AppShape.ButtonPrimary,
                                         ) {
                                             Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
                                             Spacer(Modifier.width(6.dp))
@@ -341,7 +341,7 @@ class HomeScreen : Screen {
                                                 stopBusTracking()
                                             },
                                             modifier = Modifier.weight(1f).height(50.dp),
-                                            shape    = VibraBusShapes.ButtonPrimary,
+                                            shape    = AppShape.ButtonPrimary,
                                             border   = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
                                         ) {
                                             Text("Cancelar", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold)
@@ -360,7 +360,7 @@ class HomeScreen : Screen {
                                                 navigator.push(WaitingBusScreen(settings.trackingPlate, stop))
                                             },
                                             modifier = Modifier.weight(1f).height(50.dp),
-                                            shape    = VibraBusShapes.ButtonPrimary,
+                                            shape    = AppShape.ButtonPrimary,
                                         ) {
                                             Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
                                             Spacer(Modifier.width(6.dp))
@@ -370,7 +370,7 @@ class HomeScreen : Screen {
                                     else -> Button(
                                         onClick  = { showBusSheet = true },
                                         modifier = Modifier.fillMaxWidth().height(50.dp),
-                                        shape    = VibraBusShapes.ButtonPrimary,
+                                        shape    = AppShape.ButtonPrimary,
                                     ) {
                                         Text("Buscar Rutas", fontWeight = FontWeight.SemiBold)
                                     }
@@ -470,11 +470,7 @@ class HomeScreen : Screen {
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Image(
-                                    painter = painterResource(Res.drawable.leopardo_curioso),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(90.dp),
-                                )
+                                BrandMascot(modifier = Modifier.size(90.dp))
                                 Text(
                                     text = "No hay buses activos ahora",
                                     fontSize = 15.sp,

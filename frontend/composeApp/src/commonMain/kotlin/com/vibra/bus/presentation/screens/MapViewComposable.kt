@@ -49,7 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.vibra.bus.data.model.StopDto
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.util.LatLng
 import org.jetbrains.compose.resources.painterResource
 import vibrabus.composeapp.generated.resources.Res
@@ -89,8 +89,9 @@ fun BusMarker(
         animationSpec = tween(durationMillis = 500),
         label = "bus_marker_rotation"
     )
-    val bgColor = if (isSelected) Color(0xFFFCBB01) else Color.White
-    val iconColor = if (isSelected) Color(0xFF001A3D) else Color(0xFFFCBB01)
+    val primary = MaterialTheme.colorScheme.primary
+    val bgColor = if (isSelected) primary else MaterialTheme.colorScheme.surface
+    val iconColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else primary
 
     Box(
         modifier = modifier
@@ -103,7 +104,7 @@ fun BusMarker(
                 center = Offset(size.width / 2, size.height / 2 + 3.dp.toPx()))
             drawCircle(color = bgColor, radius = size.minDimension / 2)
             if (!isSelected) {
-                drawCircle(color = Color(0xFFFCBB01), radius = size.minDimension / 2,
+                drawCircle(color = primary, radius = size.minDimension / 2,
                     style = Stroke(width = 2.5.dp.toPx()))
             }
         }
@@ -232,7 +233,7 @@ fun UserLocationMarker(
             modifier = Modifier
                 .size(16.dp)
                 .scale(pulseScale)
-                .background(Color(0xFF2196F3).copy(alpha = pulseAlpha), CircleShape)
+                .background(MaterialTheme.colorScheme.tertiary.copy(alpha = pulseAlpha), CircleShape)
         )
         
         // Punto central con borde de alta visibilidad
@@ -246,7 +247,7 @@ fun UserLocationMarker(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(2.dp)
-                    .background(Color(0xFF2196F3), CircleShape)
+                    .background(MaterialTheme.colorScheme.tertiary, CircleShape)
             )
         }
     }
@@ -282,7 +283,7 @@ fun MapOverlayControls(
                 FloatingActionButton(
                     onClick = onCenterLocation,
                     modifier = Modifier.size(48.dp),
-                    shape = VibraBusShapes.MapButton,
+                    shape = AppShape.MapButton,
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface
                 ) {
@@ -297,7 +298,7 @@ fun MapOverlayControls(
                 FloatingActionButton(
                     onClick = onToggleStops,
                     modifier = Modifier.size(48.dp),
-                    shape = VibraBusShapes.MapButton,
+                    shape = AppShape.MapButton,
                     containerColor = if (showStops) 
                         MaterialTheme.colorScheme.primary 
                     else 

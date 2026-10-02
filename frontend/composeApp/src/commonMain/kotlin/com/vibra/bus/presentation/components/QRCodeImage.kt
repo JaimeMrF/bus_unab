@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 
 /**
  * QR Code Image component with Material 3 styling
@@ -25,7 +25,7 @@ fun QRCodeImage(
     Box(
         modifier = modifier
             .size(200.dp)
-            .clip(VibraBusShapes.QRContainer)
+            .clip(AppShape.QRContainer)
             .background(Color.White),
         contentAlignment = Alignment.Center
     ) {

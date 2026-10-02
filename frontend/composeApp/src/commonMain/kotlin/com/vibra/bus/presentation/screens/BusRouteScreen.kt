@@ -64,11 +64,9 @@ import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.data.model.StopWithPivotDto
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.theme.VibraBusShapes
+import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
 import vibrabus.composeapp.generated.resources.Res
-import vibrabus.composeapp.generated.resources.leopardo_triste
-import vibrabus.composeapp.generated.resources.leopardo_mapa
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -110,7 +108,7 @@ data class BusRouteScreen(val plate: String) : Screen {
                     modifier = Modifier
                         .padding(vertical = 12.dp)
                         .size(width = 32.dp, height = 4.dp)
-                        .clip(VibraBusShapes.RouteIndicator)
+                        .clip(AppShape.RouteIndicator)
                         .background(MaterialTheme.colorScheme.outline)
                 )
             },
@@ -151,9 +149,9 @@ data class BusRouteScreen(val plate: String) : Screen {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(VibraBusShapes.BottomSheet)
+                        .clip(AppShape.BottomSheet)
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), VibraBusShapes.BottomSheet)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), AppShape.BottomSheet)
                         .padding(16.dp)
                 ) {
                     // Bus info card
@@ -266,7 +264,6 @@ data class BusRouteScreen(val plate: String) : Screen {
                                 EmptyState(
                                     message  = "Sin paradas asignadas",
                                     subtitle = "Esta ruta aún no tiene paradas configuradas",
-                                    image    = Res.drawable.leopardo_mapa,
                                 )
                             } else {
                                 LazyColumn(
@@ -287,7 +284,6 @@ data class BusRouteScreen(val plate: String) : Screen {
                             EmptyState(
                                 message  = "Error al cargar paradas",
                                 subtitle = (state as UiState.Error).message,
-                                image    = Res.drawable.leopardo_triste,
                             )
                         }
                         else -> {}
@@ -302,7 +298,7 @@ data class BusRouteScreen(val plate: String) : Screen {
                             .fillMaxWidth()
                             .height(52.dp)
                             .navigationBarsPadding(),
-                        shape    = VibraBusShapes.ButtonPrimary,
+                        shape    = AppShape.ButtonPrimary,
                     ) {
                         Icon(
                             Icons.Default.DirectionsBus,
