@@ -66,3 +66,8 @@ GPS externo.
 Todo se resuelve por claves naturales (slug, email, placa, parada, `reference` del
 ledger). Re-ejecutar no duplica filas, no cambia contraseñas ni saldos y no sube
 `branding_version`.
+
+## App móvil: servidor de desarrollo
+- **Android:** en la pantalla de código de organización, *Opciones avanzadas > Servidor* acepta `http://192.168.x.x:8000` o `10.0.2.2:8000` solo en builds **debug**; el release exige HTTPS.
+- **iOS:** el servidor de dev debe ser **https** (ATS bloquea http), o bien definir la clave `ApiBaseUrl` (y opcionalmente `DefaultOrgSlug`) en el `Info.plist` del target. Sin `ApiBaseUrl`, el campo *Servidor* es obligatorio en el primer arranque. El cliente iOS nunca acepta http (`ALLOW_CLEARTEXT = false`).
+- Android también admite fijar el backend por build: `-PapiBaseUrl=https://.../api/v1`.
