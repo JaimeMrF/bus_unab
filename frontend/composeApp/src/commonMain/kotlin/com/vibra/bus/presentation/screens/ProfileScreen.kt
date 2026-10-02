@@ -1,9 +1,7 @@
 package com.vibra.bus.presentation.screens
 
-import com.vibra.bus.presentation.theme.LocalBrand
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,27 +10,27 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Switch
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,16 +43,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
+import com.vibra.bus.presentation.components.AppCard
+import com.vibra.bus.presentation.components.AppTopBar
+import com.vibra.bus.presentation.components.PillTone
+import com.vibra.bus.presentation.components.SecondaryButton
+import com.vibra.bus.presentation.components.StatusPill
+import com.vibra.bus.presentation.theme.LocalBrand
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
@@ -64,16 +68,18 @@ import org.koin.compose.viewmodel.koinViewModel
 
 class ProfileScreen : Screen {
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val navigator     = LocalNavigator.currentOrThrow
         val viewModel     = koinViewModel<ProfileViewModel>()
         val authViewModel = koinViewModel<AuthViewModel>()
         val settings      = koinInject<AppSettings>()
+        val brand         = LocalBrand.current
         val profile       by viewModel.profile.collectAsState()
         val authEvent     by authViewModel.event.collectAsState()
+        val themeMode     by settings.themeModeFlow.collectAsState()
         var showLogout    by remember { mutableStateOf(false) }
-        val isDark        by settings.isDarkThemeFlow.collectAsState()
 
         LaunchedEffect(authEvent) {
             if (authEvent is AuthEvent.NavigateToLogin) {
@@ -85,333 +91,224 @@ class ProfileScreen : Screen {
         if (showLogout) {
             AlertDialog(
                 onDismissRequest = { showLogout = false },
-                title            = { Text("Cerrar sesión", color = MaterialTheme.colorScheme.onSurface) },
-                text             = { Text("¿Estás seguro de que deseas cerrar sesión?", color = MaterialTheme.colorScheme.onSurfaceVariant) },
-                confirmButton    = {
+                title = { Text("Cerrar sesión") },
+                text = { Text("¿Estás seguro de que deseas cerrar sesión?") },
+                confirmButton = {
                     TextButton(onClick = { showLogout = false; authViewModel.logout() }) {
                         Text("Sí, cerrar", color = MaterialTheme.colorScheme.error)
                     }
                 },
-                dismissButton    = {
-                    TextButton(onClick = { showLogout = false }) {
-                        Text("Cancelar", color = MaterialTheme.colorScheme.primary)
-                    }
+                dismissButton = {
+                    TextButton(onClick = { showLogout = false }) { Text("Cancelar") }
                 },
                 containerColor = MaterialTheme.colorScheme.surface,
             )
         }
 
-        Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
+        Scaffold(
+            contentWindowInsets = WindowInsets(0),
+            topBar = { AppTopBar(title = "Perfil") },
+            containerColor = MaterialTheme.colorScheme.background,
+        ) { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-
-                // ── Header con gradiente ──────────────────────────────────────
-                val headerGradient = Brush.verticalGradient(
-                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.82f))
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(headerGradient)
-                        .padding(top = 36.dp, bottom = 28.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        // Avatar
-                        if (profile.avatar.isNotEmpty()) {
-                            AsyncImage(
-                                model              = profile.avatar,
-                                contentDescription = "Avatar",
-                                modifier           = Modifier
-                                    .size(96.dp)
-                                    .clip(CircleShape)
-                                    .border(3.dp, MaterialTheme.colorScheme.secondary, CircleShape),
-                            )
-                        } else {
-                            val avatarGradient = Brush.radialGradient(
-                                listOf(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f))
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .size(96.dp)
-                                    .clip(CircleShape)
-                                    .background(avatarGradient)
-                                    .border(3.dp, Color.White.copy(alpha = 0.5f), CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text       = profile.name.firstOrNull()?.uppercase() ?: "U",
-                                    fontSize   = 40.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color      = Color.White,
-                                )
-                            }
-                        }
-                        Spacer(Modifier.height(14.dp))
-                        Text(
-                            text       = profile.name,
-                            fontSize   = 21.sp,
-                            fontWeight = FontWeight.Bold,
-                            color      = Color.White,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text  = profile.email,
-                            fontSize = 13.sp,
-                            color = Color.White.copy(alpha = 0.65f),
-                        )
-                        Spacer(Modifier.height(14.dp))
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
-                                    RoundedCornerShape(20.dp)
-                                )
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.secondary.copy(alpha = 0.55f),
-                                    RoundedCornerShape(20.dp)
-                                )
-                                .padding(horizontal = 18.dp, vertical = 5.dp),
-                        ) {
+                // ── Identidad ────────────────────────────────────────────────
+                AppCard(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Avatar(url = profile.avatar, name = profile.name)
+                        Spacer(Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text       = if (profile.role == "driver") "Conductor" else "Pasajero",
-                                color      = MaterialTheme.colorScheme.secondary,
-                                fontSize   = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
+                                text = profile.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = profile.email,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            StatusPill(
+                                text = if (profile.role == "driver") "Conductor" else "Pasajero",
+                                tone = PillTone.Brand,
                             )
                         }
                     }
                 }
 
-                // ── Franja de info rápida ─────────────────────────────────────
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f))
-                        .padding(vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    QuickStat(value = "BGA", label = "Ciudad")
-                    Box(
-                        Modifier
-                            .width(1.dp)
-                            .height(32.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant)
+                // ── Opciones ─────────────────────────────────────────────────
+                SectionLabel("Opciones")
+                AppCard(modifier = Modifier.fillMaxWidth()) {
+                    ProfileItem(
+                        icon = Icons.Filled.Notifications,
+                        label = "Notificaciones",
+                        subtitle = "Alertas y avisos de tu bus",
+                        onClick = { navigator.push(NotificationsScreen()) },
                     )
-                    QuickStat(
-                        value = if (profile.role == "driver") "Conductor" else "Pasajero",
-                        label = "Rol"
+                    ProfileItem(
+                        icon = Icons.Filled.History,
+                        label = "Mis viajes",
+                        subtitle = "Historial de trayectos",
+                        onClick = { navigator.push(MyTripsScreen()) },
                     )
-                    Box(
-                        Modifier
-                            .width(1.dp)
-                            .height(32.dp)
-                            .background(MaterialTheme.colorScheme.outlineVariant)
-                    )
-                    QuickStat(value = "Activo", label = "Estado")
-                }
-
-                Spacer(Modifier.height(10.dp))
-
-                // ── Opciones ──────────────────────────────────────────────────
-                ProfileSectionLabel("Opciones")
-
-                ProfileItem(
-                    icon     = Icons.Filled.Notifications,
-                    label    = "Notificaciones",
-                    subtitle = "Alertas y avisos de tu bus",
-                    iconBg   = Color(0xFF155A38),
-                    onClick  = { navigator.push(NotificationsScreen()) },
-                )
-                ProfileItem(
-                    icon     = Icons.Filled.History,
-                    label    = "Mis viajes",
-                    subtitle = "Historial de trayectos",
-                    iconBg   = Color(0xFF0C4F7A),
-                    onClick  = { navigator.push(MyTripsScreen()) },
-                )
-                ProfileItem(
-                    icon     = Icons.Filled.QrCode,
-                    label    = "Mi código QR",
-                    subtitle = "Acceso rápido al código de viaje",
-                    iconBg   = Color(0xFF6B4000),
-                    onClick  = { navigator.push(MyQRScreen()) },
-                )
-
-                Spacer(Modifier.height(10.dp))
-
-                // ── Apariencia ────────────────────────────────────────
-                ProfileSectionLabel("Apariencia")
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 3.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                        .padding(horizontal = 14.dp, vertical = 13.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            Icons.Filled.Palette,
-                            contentDescription = null,
-                            tint     = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.size(20.dp),
+                    if (brand.features.qrPayments) {
+                        ProfileItem(
+                            icon = Icons.Filled.QrCode,
+                            label = "Mi código QR",
+                            subtitle = "Acceso rápido al código de viaje",
+                            onClick = { navigator.push(MyQRScreen()) },
                         )
-                    }
-                    Spacer(Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text       = "Tema de color",
-                            color      = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium,
-                            fontSize   = 15.sp,
-                        )
-                        Text(
-                            text     = if (isDark) "Oscuro" else "Claro",
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp,
-                        )
-                    }
-                    Switch(
-                        checked         = !isDark,
-                        onCheckedChange = { checked -> settings.isDarkTheme = !checked },
-                    )
-                }
-
-                Spacer(Modifier.height(20.dp))
-
-                // ── Cerrar sesión ─────────────────────────────────────────────
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
-                ) {
-                    Button(
-                        onClick  = { showLogout = true },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        shape    = RoundedCornerShape(14.dp),
-                        colors   = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.10f),
-                        ),
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Default.ExitToApp,
-                            contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.error,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "Cerrar sesión",
-                            color      = MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-
-                    Spacer(Modifier.height(22.dp))
-
-                    Column(
-                        modifier            = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text("${LocalBrand.current.appName} v1.0.0", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
-                        Spacer(Modifier.height(20.dp))
                     }
                 }
+
+                // ── Apariencia ───────────────────────────────────────────────
+                SectionLabel("Apariencia")
+                AppCard(modifier = Modifier.fillMaxWidth()) {
+                    val options = listOf("system" to "Sistema", "light" to "Claro", "dark" to "Oscuro")
+                    SingleChoiceSegmentedButtonRow(
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                    ) {
+                        options.forEachIndexed { index, (key, label) ->
+                            SegmentedButton(
+                                selected = themeMode == key,
+                                onClick = { settings.themeMode = key },
+                                shape = SegmentedButtonDefaults.itemShape(index, options.size),
+                                modifier = Modifier.heightIn(min = 48.dp),
+                            ) { Text(label) }
+                        }
+                    }
+                }
+
+                // ── Soporte ──────────────────────────────────────────────────
+                brand.supportEmail?.takeIf { it.isNotBlank() }?.let { email ->
+                    SectionLabel("Soporte")
+                    AppCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                "¿Necesitas ayuda?",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                email,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                }
+
+                SecondaryButton(
+                    text = "Cerrar sesión",
+                    leadingIcon = Icons.AutoMirrored.Filled.ExitToApp,
+                    onClick = { showLogout = true },
+                )
+
+                Text(
+                    text = "${brand.appName} v1.0.0",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun QuickStat(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
-        Spacer(Modifier.height(3.dp))
-        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f))
+private fun Avatar(url: String, name: String) {
+    val size = 64.dp
+    val initial = @Composable {
+        Box(
+            modifier = Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = name.firstOrNull()?.uppercase() ?: "U",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+    }
+    if (url.isEmpty()) {
+        initial()
+    } else {
+        SubcomposeAsyncImage(
+            model = url,
+            contentDescription = "Foto de perfil",
+            modifier = Modifier.size(size).clip(CircleShape),
+            contentScale = ContentScale.Crop,
+            loading = { initial() },
+            error = { initial() },
+        )
     }
 }
 
 @Composable
-private fun ProfileSectionLabel(title: String) {
+private fun SectionLabel(title: String) {
     Text(
-        text          = title.uppercase(),
-        fontSize      = 11.sp,
-        fontWeight    = FontWeight.SemiBold,
-        color         = MaterialTheme.colorScheme.onSurfaceVariant,
-        letterSpacing = 1.1.sp,
-        modifier      = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+        text = title,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 4.dp).semantics { heading() },
     )
 }
 
 @Composable
 private fun ProfileItem(
-    icon    : ImageVector,
-    label   : String,
+    icon: ImageVector,
+    label: String,
     subtitle: String,
-    iconBg  : Color,
-    onClick : () -> Unit,
+    onClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 3.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
+    androidx.compose.material3.Surface(onClick = onClick, color = MaterialTheme.colorScheme.surface) {
+        Row(
             modifier = Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(iconBg),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .heightIn(min = 64.dp)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint               = Color.White,
-                modifier           = Modifier.size(20.dp),
-            )
-        }
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text       = label,
-                color      = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Medium,
-                fontSize   = 15.sp,
-            )
-            if (subtitle.isNotEmpty()) {
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text     = subtitle,
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp,
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(20.dp),
                 )
             }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(2.dp))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(14.dp),
+            )
         }
-        Icon(
-            Icons.AutoMirrored.Default.ArrowForwardIos,
-            contentDescription = null,
-            tint               = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            modifier           = Modifier.size(13.dp),
-        )
     }
 }

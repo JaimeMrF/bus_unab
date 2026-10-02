@@ -1,5 +1,16 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.foundation.layout.WindowInsets
+import com.vibra.bus.presentation.theme.readableOn
+import com.vibra.bus.presentation.theme.appColors
+import com.vibra.bus.presentation.theme.AppShape
+import com.vibra.bus.presentation.components.PrimaryButton
+import com.vibra.bus.presentation.components.AppTextField
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.material3.Surface
+import com.vibra.bus.presentation.components.AppTopBar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -67,22 +78,11 @@ class QRScannerScreen : Screen {
         val manualCode by viewModel.manualCode.collectAsState()
 
         Scaffold(
+            contentWindowInsets = WindowInsets(0),
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            if (mode == ScanMode.PAY) "Cobro a bordo (mPOS)" else "Escanear QR",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    },
-                    navigationIcon = {
-                        if (navigator.canPop) {
-                            IconButton(onClick = { navigator.pop() }) {
-                                Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = MaterialTheme.colorScheme.onPrimary)
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.primary),
+                AppTopBar(
+                    title = if (mode == ScanMode.PAY) "Cobro a bordo" else "Escanear QR",
+                    onBack = if (navigator.canPop) ({ navigator.pop() }) else null,
                 )
             },
             containerColor = MaterialTheme.colorScheme.background,
@@ -117,7 +117,7 @@ class QRScannerScreen : Screen {
                         else
                             "Escanea el código QR del pasajero para validar su acceso",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 13.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
@@ -132,20 +132,19 @@ class QRScannerScreen : Screen {
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            OutlinedTextField(
+                            AppTextField(
                                 value = manualCode,
                                 onValueChange = { viewModel.onManualCodeChange(it) },
+                                label = "Código del pasajero",
                                 modifier = Modifier.weight(1f),
-                                placeholder = { Text("Pegar/escribir código del pasajero", fontSize = 12.sp) },
-                                singleLine = true,
                             )
                             Spacer(Modifier.width(8.dp))
-                            Button(
+                            PrimaryButton(
+                                text = "Cobrar",
                                 onClick = { viewModel.onManualSubmit() },
                                 enabled = manualCode.isNotBlank() && state !is ScanState.Validating,
-                            ) {
-                                Text("Cobrar")
-                            }
+                                modifier = Modifier.width(112.dp),
+                            )
                         }
                     }
                 }
@@ -159,27 +158,28 @@ class QRScannerScreen : Screen {
                             .padding(horizontal = 32.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .background(
-                                    color = Color.Black.copy(alpha = 0.7f),
-                                    shape = RoundedCornerShape(12.dp),
-                                )
-                                .padding(horizontal = 24.dp, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
+                        Surface(
+                            shape = AppShape.Card,
+                            color = MaterialTheme.colorScheme.inverseSurface,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp,
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Text(
-                                text = if (mode == ScanMode.PAY) "Cobrando pasaje..." else "Validando acceso...",
-                                color = Color.White,
-                                fontSize = 15.sp,
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                                    strokeWidth = 2.dp,
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Text(
+                                    text = if (mode == ScanMode.PAY) "Cobrando pasaje…" else "Validando acceso…",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                                )
+                            }
                         }
                     }
                 }
@@ -203,62 +203,64 @@ private fun ResultBanner(result: ScanResult) {
     val (icon, title, subtitle, bgColor) = when (result) {
         is ScanResult.Valid -> BannerData(
             icon = Icons.Default.CheckCircle,
-            title = "Acceso autorizado — ${result.data.user.name}",
+            title = "Acceso autorizado: ${result.data.user.name}",
             subtitle = "${result.data.stop} · ${result.data.bus}",
-            color = Color(0xFF2E7D32),
+            color = MaterialTheme.appColors.success,
         )
         is ScanResult.Charged -> BannerData(
             icon = Icons.Default.CheckCircle,
-            title = "Cobrado ${formatCentavosCop(result.data.montoCentavos)} — ${result.data.pasajero ?: "pasajero"}",
+            title = "Cobrado ${formatCentavosCop(result.data.montoCentavos)}: ${result.data.pasajero ?: "pasajero"}",
             subtitle = "Saldo restante: ${formatCentavosCop(result.data.saldoRestante)}",
-            color = Color(0xFF1B5E20),
+            color = MaterialTheme.appColors.success,
         )
         is ScanResult.Expired -> BannerData(
             icon = Icons.Default.HourglassEmpty,
             title = "QR expirado",
             subtitle = "Pide al pasajero que genere un código nuevo",
-            color = Color(0xFFE65100),
+            color = MaterialTheme.appColors.warning,
         )
         is ScanResult.Invalid -> BannerData(
             icon = Icons.Default.Error,
             title = "QR inválido",
             subtitle = "El código no pertenece a esta aplicación",
-            color = Color(0xFFC62828),
+            color = MaterialTheme.colorScheme.error,
         )
         is ScanResult.Error -> BannerData(
             icon = Icons.Default.Error,
             title = "Error de validación",
             subtitle = result.message,
-            color = Color(0xFFC62828),
+            color = MaterialTheme.colorScheme.error,
         )
     }
 
+    // Texto siempre legible (AA) sobre el color semántico de la marca
+    val onBanner = readableOn(bgColor)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(bgColor)
+            .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Assertive }
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color.White,
+            tint = onBanner,
             modifier = Modifier.size(28.dp),
         )
         Spacer(Modifier.width(12.dp))
         Column {
             Text(
                 text = title,
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                color = onBanner,
+                style = MaterialTheme.typography.titleSmall,
             )
             if (subtitle.isNotBlank()) {
                 Text(
                     text = subtitle,
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 12.sp,
+                    color = onBanner,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
         }
