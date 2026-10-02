@@ -39,9 +39,18 @@ class BrandRepository(
     }
 
     /** Valida el código de organización contra la API y, si existe, lo fija como activo. */
-    suspend fun selectOrganization(rawCode: String): ApiResult<BrandConfig> {
+    suspend fun selectOrganization(rawCode: String, serverUrl: String? = null): ApiResult<BrandConfig> {
         val slug = normalizeSlug(rawCode)
         if (slug.isEmpty()) return ApiResult.HttpError(422, "Ingresa el código de tu organización")
+        // Servidor de prueba: se aplica solo mientras valida y se revierte si no responde.
+        val previousServer = settings.serverUrl
+        if (serverUrl != null) settings.serverUrl = serverUrl
+        val outcome = selectOrganizationInternal(slug)
+        if (serverUrl != null && outcome !is ApiResult.Success) settings.serverUrl = previousServer
+        return outcome
+    }
+
+    private suspend fun selectOrganizationInternal(slug: String): ApiResult<BrandConfig> {
         return when (val result = fetch(slug)) {
             is ApiResult.Success -> {
                 settings.orgSlug = slug
@@ -76,6 +85,9 @@ class BrandRepository(
         val result = fetch(clean)
         if (result is ApiResult.Success) apply(result.data)
     }
+
+    /** Servidor guardado por el usuario (vacío = el del build). */
+    val serverUrl: String get() = settings.serverUrl
 
     fun clearOrganization() {
         settings.orgSlug = ""

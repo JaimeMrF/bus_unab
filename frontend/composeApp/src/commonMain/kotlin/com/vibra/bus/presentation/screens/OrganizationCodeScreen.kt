@@ -1,5 +1,13 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.TextButton
+import androidx.compose.animation.AnimatedVisibility
+import com.vibra.bus.data.api.normalizeServerUrl
+import com.vibra.bus.data.api.ServerUrlResult
+import com.vibra.bus.data.api.ALLOW_CLEARTEXT
+import com.vibra.bus.data.api.BUILD_BASE_URL
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,12 +64,34 @@ class OrganizationCodeScreen : Screen {
         var loading by remember { mutableStateOf(false) }
         var error by remember { mutableStateOf<String?>(null) }
 
+        // Servidor avanzado: sin URL de build (p. ej. iOS) es obligatorio y se muestra abierto.
+        val serverRequired = BUILD_BASE_URL.isBlank() && repository.serverUrl.isBlank()
+        var showAdvanced by remember { mutableStateOf(serverRequired) }
+        var server by remember { mutableStateOf(repository.serverUrl) }
+        var serverError by remember { mutableStateOf<String?>(null) }
+
         fun submit() {
             if (loading || code.isBlank()) return
-            loading = true
             error = null
+            serverError = null
+            var normalized: String? = null
+            if (server.isNotBlank()) {
+                when (val r = normalizeServerUrl(server, ALLOW_CLEARTEXT)) {
+                    is ServerUrlResult.Valid -> normalized = r.url
+                    is ServerUrlResult.Invalid -> {
+                        showAdvanced = true
+                        serverError = r.reason
+                        return
+                    }
+                }
+            } else if (serverRequired) {
+                showAdvanced = true
+                serverError = "Ingresa la dirección del servidor"
+                return
+            }
+            loading = true
             scope.launch {
-                when (val result = repository.selectOrganization(code)) {
+                when (val result = repository.selectOrganization(code, normalized)) {
                     is ApiResult.Success -> navigator.replaceAll(SplashScreen())
                     is ApiResult.HttpError -> error = result.message
                     is ApiResult.NetworkError -> error = "Sin conexión. Revisa tu internet e inténtalo de nuevo."
@@ -118,6 +148,30 @@ class OrganizationCodeScreen : Screen {
                                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                                 keyboardActions = KeyboardActions(onGo = { submit() }),
                             )
+                            TextButton(
+                                onClick = { showAdvanced = !showAdvanced },
+                                modifier = Modifier.heightIn(min = 48.dp),
+                            ) {
+                                Text(
+                                    text = if (showAdvanced) "Ocultar opciones avanzadas" else "Opciones avanzadas",
+                                    style = MaterialTheme.typography.labelLarge,
+                                )
+                            }
+                            AnimatedVisibility(visible = showAdvanced) {
+                                AppTextField(
+                                    value = server,
+                                    onValueChange = { server = it; serverError = null },
+                                    label = "Servidor",
+                                    error = serverError,
+                                    supportingText = "Ej.: api.miempresa.com (se agrega /api/v1)",
+                                    enabled = !loading,
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Uri,
+                                        imeAction = ImeAction.Go,
+                                    ),
+                                    keyboardActions = KeyboardActions(onGo = { submit() }),
+                                )
+                            }
                             PrimaryButton(
                                 text = "Continuar",
                                 onClick = ::submit,

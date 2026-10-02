@@ -1,5 +1,12 @@
 package com.vibra.bus.data.api
 
-actual val BASE_URL: String = "http://localhost:8000/api/v1"
+import platform.Foundation.NSBundle
 
-actual val DEFAULT_ORG_SLUG: String = ""
+/** Se define en el Info.plist de la app (ApiBaseUrl); sin él, el usuario fija el servidor en runtime. */
+actual val BUILD_BASE_URL: String =
+    (NSBundle.mainBundle.objectForInfoDictionaryKey("ApiBaseUrl") as? String).orEmpty()
+
+actual val DEFAULT_ORG_SLUG: String =
+    (NSBundle.mainBundle.objectForInfoDictionaryKey("DefaultOrgSlug") as? String).orEmpty()
+
+actual val ALLOW_CLEARTEXT: Boolean = false

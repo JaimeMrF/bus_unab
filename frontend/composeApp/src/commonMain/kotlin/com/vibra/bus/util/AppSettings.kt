@@ -1,5 +1,6 @@
 package com.vibra.bus.util
 
+import com.vibra.bus.data.api.ServerConfig
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,21 @@ class AppSettings(private val settings: Settings) {
 
     private val _hasActiveTrackingFlow = MutableStateFlow(settings.getString("tracking_plate", "").isNotEmpty())
     val hasActiveTrackingFlow: StateFlow<Boolean> = _hasActiveTrackingFlow.asStateFlow()
+
+    /**
+     * Servidor de la API elegido por el usuario (ya normalizado, termina en /api/v1).
+     * Vacío = se usa la URL del build. Se propaga a [ServerConfig] para todas las peticiones.
+     */
+    var serverUrl: String
+        get() = settings.getString("server_url", "")
+        set(value) {
+            settings.putString("server_url", value)
+            ServerConfig.override = value
+        }
+
+    init {
+        ServerConfig.override = settings.getString("server_url", "")
+    }
 
     /** Organización (tenant) elegida y su último BrandConfig serializado, para arranque offline. */
     var orgSlug: String
