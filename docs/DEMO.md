@@ -37,7 +37,7 @@ Contraseña de todos: `Demo12345!`
 | `logistica` | admin.logistica@demo.test | driver.logistica@demo.test | pasajero.logistica@demo.test |
 
 Super admin (`/admin`): superadmin@demo.test. Pasajero de ciudad (sin org): pasajero@demo.test.
-Buses: MB-101/102, CP-201/202, LG-301/302.
+Buses: MB101/MB102, CP201/CP202, LG301/LG302. Con `-Simulate`, `/api/v1/buses` usa las posiciones del simulador (no requiere gpsmobile.co).
 
 ## App Android
 Desde `frontend/` (teléfono físico en la misma red; con emulador usa `10.0.2.2` como IP):
