@@ -232,4 +232,20 @@ class BrandingTest extends TestCase
 
         $this->getJson('/api/v1/branding/acme')->assertStatus(429);
     }
+
+    /**
+     * Regresión (hallazgo QA): throttle:N,M inline comparte contador por IP entre rutas, así que
+     * leer el branding (60/min) agotaba el cupo de login (10/min) y devolvía 429 al usuario legítimo.
+     */
+    public function test_branding_requests_do_not_consume_login_rate_limit(): void
+    {
+        $this->tenant();
+
+        for ($i = 0; $i < 10; $i++) {
+            $this->getJson('/api/v1/branding/acme')->assertOk();
+        }
+
+        $this->postJson('/api/v1/auth/login', ['email' => 'nadie@test.co', 'password' => 'x'])
+            ->assertStatus(401);
+    }
 }
