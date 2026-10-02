@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Transportadora;
 use App\Services\BrandingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 /**
