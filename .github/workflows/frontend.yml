@@ -42,7 +42,7 @@ jobs:
            "configuration_version":"1"}
           JSON
       - run: gradle :composeApp:assembleDebug --stacktrace
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: app-debug-apk
           path: frontend/composeApp/build/outputs/apk/debug/*.apk
