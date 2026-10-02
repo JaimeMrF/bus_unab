@@ -103,7 +103,7 @@ class MyTripsScreen : Screen {
                                         )
                                     } else {
                                         LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                                            itemsIndexed(state.data, key = { _, t -> t.id }) { index, trip ->
+                                            itemsIndexed(state.data, key = { _, t -> t.id }, contentType = { _, _ -> "trip" }) { index, trip ->
                                                 val canResume = trip.status == "pending" &&
                                                     settings.hasActiveTracking() &&
                                                     settings.trackingPlate == trip.bus.plate

@@ -5,6 +5,11 @@ import com.vibra.bus.data.api.DEFAULT_ORG_SLUG
 import com.vibra.bus.domain.brand.BrandConfig
 import com.vibra.bus.util.ApiResult
 import com.vibra.bus.util.AppSettings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +25,9 @@ class BrandRepository(
     /** Solo desarrollo: resuelve el slug "demo" localmente sin backend (API real ya disponible). */
     private val useMockForDemo: Boolean = false,
 ) {
+    /** Ambito propio: el refresco en segundo plano sobrevive a la pantalla que lo pidio. */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
     init {
@@ -64,6 +72,11 @@ class BrandRepository(
             }
             is ApiResult.NetworkError -> result
         }
+    }
+
+    /** Refresco sin bloquear al llamador (arranque): corre en segundo plano con tope de 8 s. */
+    fun refreshAsync() {
+        scope.launch { withTimeoutOrNull(8_000) { refresh() } }
     }
 
     /** Refresca la marca de la organización ya elegida; ante fallo conserva la cacheada. */

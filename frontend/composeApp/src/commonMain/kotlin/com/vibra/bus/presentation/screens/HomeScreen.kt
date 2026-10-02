@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.motion.platformAppActive
 import com.vibra.bus.presentation.motion.staggerIn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.animation.AnimatedContent
@@ -108,7 +109,11 @@ class HomeScreen : Screen {
         LaunchedEffect(sessionExpired) {
             if (sessionExpired) navigator.replaceAll(LoginScreen())
         }
-        LaunchedEffect(Unit) { viewModel.startPolling() }
+        // Polling solo con la app en primer plano y esta pantalla visible.
+        val appActive = platformAppActive()
+        LaunchedEffect(appActive) {
+            if (appActive) viewModel.startPolling() else viewModel.stopPolling()
+        }
         LaunchedEffect(selectedBus) {
             val bus = selectedBus
             if (bus != null) {
@@ -131,8 +136,8 @@ class HomeScreen : Screen {
         val busesLoading = busesState is UiState.Loading
         val busesError = busesState is UiState.Error
         val allStops = (stopsState as? UiState.Success)?.data ?: emptyList()
-        val routeStops = busStops.map { s ->
-            StopDto(s.id, s.name, s.address, s.latitude, s.longitude, s.radiusMeters)
+        val routeStops = remember(busStops) {
+            busStops.map { s -> StopDto(s.id, s.name, s.address, s.latitude, s.longitude, s.radiusMeters) }
         }
         val stopList = if (selectedBus != null) routeStops else allStops
 
@@ -348,7 +353,7 @@ class HomeScreen : Screen {
                             modifier = Modifier.fillMaxWidth(),
                             contentPadding = PaddingValues(bottom = 16.dp),
                         ) {
-                            itemsIndexed(busList, key = { _, b -> b.plate }) { index, bus ->
+                            itemsIndexed(busList, key = { _, b -> b.plate }, contentType = { _, _ -> "bus" }) { index, bus ->
                                 BusCard(
                                     modifier = Modifier.animateItem().staggerIn(index),
                                     bus = bus,

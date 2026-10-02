@@ -83,7 +83,7 @@ data class StopsListScreen(val plate: String) : Screen {
                                 contentPadding = PaddingValues(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                itemsIndexed(state.data, key = { _, s -> s.id }) { index, stop ->
+                                itemsIndexed(state.data, key = { _, s -> s.id }, contentType = { _, _ -> "stop" }) { index, stop ->
                                     StopListItem(
                                         modifier = Modifier.staggerIn(index),
                                         stop = stop,

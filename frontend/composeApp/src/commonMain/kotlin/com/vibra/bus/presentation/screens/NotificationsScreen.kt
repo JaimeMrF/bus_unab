@@ -91,7 +91,7 @@ class NotificationsScreen : Screen {
                     )
                 } else {
                     LazyColumn(contentPadding = PaddingValues(16.dp)) {
-                        itemsIndexed(notifications, key = { _, n -> n.id }) { index, notif ->
+                        itemsIndexed(notifications, key = { _, n -> n.id }, contentType = { _, _ -> "notification" }) { index, notif ->
                             SwipeToDeleteNotification(
                                 modifier = Modifier.staggerIn(index),
                                 notif    = notif,

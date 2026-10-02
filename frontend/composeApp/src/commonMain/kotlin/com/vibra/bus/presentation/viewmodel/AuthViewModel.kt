@@ -36,27 +36,14 @@ class AuthViewModel(
             _event.value = AuthEvent.NavigateToLogin
             return
         }
+        // Sesion optimista: con token guardado se entra de inmediato (sin esperar a la red) y se
+        // valida en segundo plano. Si el token ya no sirve (401), el polling de Home detecta la
+        // sesion expirada y vuelve al login; aqui ademas se limpia la sesion local.
+        _event.value = AuthEvent.NavigateToHome
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
             when (val result = authRepository.getMe()) {
-                is ApiResult.Success -> {
-                    val userData = result.data.data
-                    if (userData != null) {
-                        _uiState.value = UiState.Success(userData)
-                        _event.value = AuthEvent.NavigateToHome
-                    } else {
-                        _event.value = AuthEvent.NavigateToLogin
-                    }
-                }
-                is ApiResult.HttpError -> {
-                    if (result.code == 401) {
-                        settings.clearSession()
-                        _event.value = AuthEvent.NavigateToLogin
-                    } else {
-                        _event.value = AuthEvent.NavigateToLogin
-                    }
-                }
-                is ApiResult.NetworkError -> _event.value = AuthEvent.NavigateToLogin
+                is ApiResult.HttpError -> if (result.code == 401) settings.clearSession()
+                else -> Unit
             }
         }
     }

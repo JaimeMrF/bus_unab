@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import kotlinx.coroutines.launch
 import com.vibra.bus.presentation.theme.Motion
 import com.vibra.bus.presentation.motion.auroraBackground
 import com.vibra.bus.presentation.motion.MotionSpec
@@ -68,8 +69,8 @@ class SplashScreen : Screen {
                 navigator.replaceAll(OrganizationCodeScreen())
                 return@LaunchedEffect
             }
-            // Refresco de marca acotado: si la red tarda, se arranca con la marca cacheada.
-            withTimeoutOrNull(2_500) { brandRepository.refresh() }
+            // La marca cacheada ya esta aplicada: el refresco corre en paralelo y no retrasa el arranque.
+            brandRepository.refreshAsync()
             viewModel.checkSession()
         }
 

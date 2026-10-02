@@ -306,7 +306,7 @@ class WalletScreen : Screen {
 
                 val txs = wallet?.transactions ?: emptyList()
                 when {
-                    txs.isNotEmpty() -> items(txs, key = { it.id }) { tx -> TxRow(tx) }
+                    txs.isNotEmpty() -> items(txs, key = { it.id }, contentType = { "tx" }) { tx -> TxRow(tx) }
                     loading -> item {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             repeat(3) { ShimmerBox(height = 44.dp) }

@@ -1,5 +1,8 @@
 package com.vibra.bus.presentation.viewmodel
 
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.async
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vibra.bus.data.model.BusSummaryDto
@@ -68,9 +71,11 @@ class HomeViewModel(
         pollingJob?.cancel()
         locationManager.startLocationUpdates { updateLocation(it) }
         pollingJob = viewModelScope.launch {
+            var cycle = 0
             while (true) {
-                loadBuses()
-                delay(30_000)
+                loadBusesOnce(withOccupancy = cycle % OCCUPANCY_EVERY == 0)
+                cycle++
+                delay(POLL_INTERVAL_MS)
             }
         }
     }
@@ -103,38 +108,46 @@ class HomeViewModel(
     }
 
     private fun loadBuses() {
-        viewModelScope.launch {
-            when (val result = busRepository.getBuses(currentLocation.latitude, currentLocation.longitude)) {
-                is ApiResult.Success -> {
-                    _busesState.value = UiState.Success(result.data.data)
-                    loadOccupancy(result.data.data.map { it.plate })
+        viewModelScope.launch { loadBusesOnce(withOccupancy = true) }
+    }
+
+    /** Una consulta de buses. Es suspend para que el bucle de polling no solape peticiones lentas. */
+    private suspend fun loadBusesOnce(withOccupancy: Boolean) {
+        val wasError = _busesState.value is UiState.Error
+        when (val result = busRepository.getBuses(currentLocation.latitude, currentLocation.longitude)) {
+            is ApiResult.Success -> {
+                // StateFlow descarta valores iguales: si nada cambio, no hay recomposicion.
+                _busesState.value = UiState.Success(result.data.data)
+                if (withOccupancy) loadOccupancy(result.data.data.map { it.plate })
+            }
+            is ApiResult.HttpError -> {
+                when (result.code) {
+                    401 -> { settings.clearSession(); _sessionExpired.value = true }
+                    503 -> if (!wasError) _snackbarMessage.value = "GPS no disponible temporalmente"
+                    else -> _busesState.value = UiState.Error(result.message)
                 }
-                is ApiResult.HttpError -> {
-                    when (result.code) {
-                        401 -> { settings.clearSession(); _sessionExpired.value = true }
-                        503 -> _snackbarMessage.value = "GPS no disponible temporalmente"
-                        else -> _busesState.value = UiState.Error(result.message)
-                    }
-                }
-                is ApiResult.NetworkError -> {
-                    _snackbarMessage.value = "Sin conexión a internet"
-                    _busesState.value = UiState.Error(result.message)
-                }
+            }
+            is ApiResult.NetworkError -> {
+                // El aviso solo sale al pasar de "bien" a "sin red", no en cada ciclo.
+                if (!wasError) _snackbarMessage.value = "Sin conexión a internet"
+                _busesState.value = UiState.Error(result.message)
             }
         }
     }
 
-    private fun loadOccupancy(plates: List<String>) {
-        viewModelScope.launch {
-            val newMap = mutableMapOf<String, OccupancyDto>()
-            plates.forEach { plate ->
-                when (val result = busRepository.getBusOccupancy(plate)) {
-                    is ApiResult.Success -> result.data.data?.let { newMap[plate] = it }
-                    else -> {}
-                }
-            }
-            _occupancyMap.value = newMap
+    /** Ocupacion de todos los buses en paralelo (antes era una peticion tras otra). */
+    private suspend fun loadOccupancy(plates: List<String>) = coroutineScope {
+        val results = plates.map { plate -> async { plate to busRepository.getBusOccupancy(plate) } }.awaitAll()
+        val newMap = mutableMapOf<String, OccupancyDto>()
+        for ((plate, result) in results) {
+            if (result is ApiResult.Success) result.data.data?.let { newMap[plate] = it }
         }
+        _occupancyMap.value = newMap
+    }
+
+    private companion object {
+        const val POLL_INTERVAL_MS = 5_000L
+        const val OCCUPANCY_EVERY = 3
     }
 
     private fun loadStops() {

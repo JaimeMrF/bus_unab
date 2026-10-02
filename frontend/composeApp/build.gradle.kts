@@ -197,7 +197,10 @@ android {
             // avanzadas) o con -PapiBaseUrl. Cleartext http solo se permite en debug.
         }
         getByName("release") {
-            isMinifyEnabled = false
+            // R8 + recorte de recursos: APK mas pequeno y arranque mas rapido. Reglas en proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
         }
     }
