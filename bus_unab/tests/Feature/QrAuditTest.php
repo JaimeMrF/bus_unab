@@ -312,11 +312,7 @@ class QrAuditTest extends TestCase
 
         $driverB = User::factory()->create(['role' => 'driver', 'transportadora_id' => $b->id]);
 
-        $r = $this->pay($qr, $driverB);
-        fwrite(STDERR, '
-DBG '.$r->status().' '.$r->getContent().'
-');
-        $r->assertStatus(422)->assertJsonMissingPath('data.pasajero');
+        $this->pay($qr, $driverB)->assertStatus(422)->assertJsonMissingPath('data.pasajero');
         $this->assertNull($token->fresh()->used_at);
         $this->assertSame(500000, $this->balance());
     }
