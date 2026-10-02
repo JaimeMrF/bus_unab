@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Transportadora;
 use App\Rules\ContrastsWith;
 use App\Rules\HexColor;
+use App\Rules\SafeSvg;
 use App\Support\ColorContrast;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Support\Arr;
@@ -148,6 +149,12 @@ class BrandingService
         }
 
         return $rules;
+    }
+
+    /** Reglas de subida de imagen: png/webp/svg por mime real, <= 1 MB, SVG sin contenido activo. */
+    public static function imageRules(): array
+    {
+        return ['file', 'mimes:png,webp,svg', 'max:1024', new SafeSvg];
     }
 
     /** Valida el array completo, incluido el contraste de texto sobre fondo (WCAG AA). */

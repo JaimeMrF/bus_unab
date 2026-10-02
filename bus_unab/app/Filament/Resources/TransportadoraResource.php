@@ -70,6 +70,9 @@ class TransportadoraResource extends Resource
                     ->maxLength(30),
             ])->columns(2),
 
+            // Branding white-label (mismo esquema que el panel /empresa).
+            ...\App\Filament\Support\BrandingForm::schema(),
+
             Forms\Components\Section::make('SaaS')->schema([
                 Forms\Components\Select::make('plan')
                     ->label('Plan')
