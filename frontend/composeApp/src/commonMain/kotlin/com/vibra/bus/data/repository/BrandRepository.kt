@@ -75,11 +75,11 @@ class BrandRepository(
     }
 
     /**
-     * El backend es la fuente de verdad del tenant del usuario: si el slug de /auth/* difiere
+     * El backend es la fuente de verdad del tenant del usuario: si el slug de /auth/... difiere
      * del activo, se adopta y se recarga la marca.
      */
     suspend fun adoptOrganization(slug: String?) {
-        val clean = slug?.let(::normalizeSlug).orEmpty()
+        val clean = slug?.let { normalizeSlug(it) }.orEmpty()
         if (clean.isEmpty() || clean == settings.orgSlug) return
         settings.orgSlug = clean
         val result = fetch(clean)

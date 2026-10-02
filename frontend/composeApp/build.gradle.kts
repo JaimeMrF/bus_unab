@@ -107,7 +107,7 @@ kotlin {
             implementation(libs.play.services.location)
 
             // Firebase Android
-            implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.7.0"))
             implementation(libs.firebase.messaging.android)
 
             // Credential Manager
