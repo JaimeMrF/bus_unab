@@ -27,6 +27,10 @@ class Transportadora extends Model
         'razon_social',
         'nit',
         'logo_path',
+        'logo_dark_path',
+        'icon_path',
+        'mascot_path',
+        'branding',
         'contacto_nombre',
         'contacto_email',
         'contacto_telefono',
@@ -40,6 +44,7 @@ class Transportadora extends Model
      */
     protected $attributes = [
         'plan' => 'basico',
+        'branding_version' => 1,
         'activo' => true,
     ];
 
@@ -47,7 +52,19 @@ class Transportadora extends Model
     {
         return [
             'activo' => 'boolean',
+            'branding' => 'array',
+            'branding_version' => 'integer',
         ];
+    }
+
+    /** Cada cambio visual incrementa la versión que el cliente usa para cachear. */
+    protected static function booted(): void
+    {
+        static::updating(function (self $t): void {
+            if ($t->isDirty(['branding', 'logo_path', 'logo_dark_path', 'icon_path', 'mascot_path'])) {
+                $t->branding_version = ((int) ($t->getOriginal('branding_version') ?? 1)) + 1;
+            }
+        });
     }
 
     public function buses(): HasMany
