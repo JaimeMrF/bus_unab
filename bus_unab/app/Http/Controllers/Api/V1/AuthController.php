@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\Transportadora;
 use App\Models\User;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends BaseController
 {
@@ -89,13 +91,27 @@ class AuthController extends BaseController
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|max:190|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
+            'organization' => 'nullable|string|max:60',
         ]);
+
+        // Organización opcional: solo se acepta un tenant existente y activo.
+        $organizationId = null;
+        if (! empty($data['organization'])) {
+            $organizationId = Transportadora::where('slug', $data['organization'])
+                ->where('activo', true)
+                ->value('id');
+
+            if (! $organizationId) {
+                throw ValidationException::withMessages(['organization' => 'Organización no válida.']);
+            }
+        }
 
         $user = User::create([
             'name'     => $data['name'],
             'email'    => $data['email'],
             'password' => Hash::make($data['password']),
             'role'     => 'pasajero',
+            'transportadora_id' => $organizationId,
         ]);
 
         $token = $this->authService->generateToken($user);
@@ -111,13 +127,7 @@ class AuthController extends BaseController
         return $this->success([
             'access_token' => $token,
             'token_type'   => 'Bearer',
-            'user'         => [
-                'id'     => $user->id,
-                'name'   => $user->name,
-                'email'  => $user->email,
-                'avatar' => $user->avatar,
-                'role'   => $user->role,
-            ],
+            'user'         => $this->userPayload($user),
         ], 'Autenticación exitosa');
     }
 
@@ -138,12 +148,21 @@ class AuthController extends BaseController
     {
         $user = $request->user();
 
-        return $this->success([
+        return $this->success($this->userPayload($user));
+    }
+
+    /** Datos públicos del usuario; organization_slug = tenant del usuario o null. */
+    private function userPayload(User $user): array
+    {
+        return [
             'id'     => $user->id,
             'name'   => $user->name,
             'email'  => $user->email,
             'avatar' => $user->avatar,
             'role'   => $user->role,
-        ]);
+            'organization_slug' => $user->transportadora_id
+                ? Transportadora::whereKey($user->transportadora_id)->value('slug')
+                : null,
+        ];
     }
 }
