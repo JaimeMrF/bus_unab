@@ -46,7 +46,7 @@ Password de **todos** los usuarios: `Demo12345!`
 ## Datos operativos
 
 - Buses (2 por organización, el segundo recorre la ruta al revés):
-  `MB-101/102`, `CP-201/202`, `LG-301/302`.
+  `MB101/102`, `CP201/202`, `LG301/302`.
 - 4–5 paradas por organización en zonas distintas de Bucaramanga, rutas con
   waypoints y una tarifa (`DEMO-ORD`, `DEMO-EST`, `DEMO-CARGA`).
 - Wallets con saldo inicial 5.000.000 centavos; el ledger cuadra con el saldo.

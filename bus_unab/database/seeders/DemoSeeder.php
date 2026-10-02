@@ -71,7 +71,7 @@ class DemoSeeder extends Seeder
                 'mascot' => true,
                 'logo_color' => '#0F766E',
                 'fare' => ['DEMO-ORD', 'Tarifa ordinaria', 280_000],
-                'plates' => ['MB-101', 'MB-102'],
+                'plates' => ['MB101', 'MB102'],
                 'ext_id' => 900001,
                 'stops' => [
                     ['Parque San Pío', 7.1193, -73.1227],
@@ -95,7 +95,7 @@ class DemoSeeder extends Seeder
                 'mascot' => true,
                 'logo_color' => '#6D28D9',
                 'fare' => ['DEMO-EST', 'Tarifa estudiantil', 100_000],
-                'plates' => ['CP-201', 'CP-202'],
+                'plates' => ['CP201', 'CP202'],
                 'ext_id' => 900003,
                 'stops' => [
                     ['Biblioteca Central', 7.1218, -73.1158],
@@ -118,7 +118,7 @@ class DemoSeeder extends Seeder
                 'mascot' => false,
                 'logo_color' => '#C2410C',
                 'fare' => ['DEMO-CARGA', 'Tarifa operativa', 350_000],
-                'plates' => ['LG-301', 'LG-302'],
+                'plates' => ['LG301', 'LG302'],
                 'ext_id' => 900005,
                 'stops' => [
                     ['Bodega Girón', 7.0640, -73.0860],
