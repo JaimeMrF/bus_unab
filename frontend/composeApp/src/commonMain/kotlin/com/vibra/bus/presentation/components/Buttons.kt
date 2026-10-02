@@ -1,11 +1,9 @@
 package com.vibra.bus.presentation.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import com.vibra.bus.presentation.motion.pressScale
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,34 +18,19 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.vibra.bus.presentation.theme.AppShape
-import com.vibra.bus.presentation.theme.Motion
 import com.vibra.bus.presentation.theme.Sizing
 import org.jetbrains.compose.resources.painterResource
 import vibrabus.composeapp.generated.resources.Res
 import vibrabus.composeapp.generated.resources.google_icon
-
-/** Escala sutil al presionar. Lee el estado dentro de graphicsLayer: no provoca recomposición. */
-@Composable
-fun Modifier.pressScale(source: MutableInteractionSource, pressedScale: Float = 0.97f): Modifier {
-    val pressed by source.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) pressedScale else 1f,
-        animationSpec = tween(Motion.fast, easing = Motion.easeOut),
-        label = "press_scale",
-    )
-    return this.graphicsLayer { scaleX = scale; scaleY = scale }
-}
 
 @Composable
 private fun ButtonContent(

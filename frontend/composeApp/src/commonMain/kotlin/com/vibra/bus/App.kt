@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.FadeTransition
 import com.vibra.bus.data.repository.BrandRepository
+import com.vibra.bus.presentation.motion.ProvideMotion
 import com.vibra.bus.presentation.screens.SplashScreen
 import com.vibra.bus.presentation.theme.AppTheme
 import com.vibra.bus.presentation.theme.LocalThemeToggle
@@ -30,11 +31,13 @@ fun App() {
 
         // Un solo AppTheme en la raíz: cualquier cambio de BrandConfig reestiliza toda la app.
         AppTheme(brand = brand, darkTheme = isDark) {
-            CompositionLocalProvider(
-                LocalThemeToggle provides { newValue -> settings.themeMode = if (newValue) "dark" else "light" },
-            ) {
-                Navigator(SplashScreen()) { navigator ->
-                    FadeTransition(navigator)
+            ProvideMotion {
+                CompositionLocalProvider(
+                    LocalThemeToggle provides { newValue -> settings.themeMode = if (newValue) "dark" else "light" },
+                ) {
+                    Navigator(SplashScreen()) { navigator ->
+                        FadeTransition(navigator)
+                    }
                 }
             }
         }

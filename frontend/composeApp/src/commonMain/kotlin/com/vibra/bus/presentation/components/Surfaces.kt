@@ -1,5 +1,16 @@
 package com.vibra.bus.presentation.components
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.LinearEasing
+import com.vibra.bus.presentation.motion.LocalMotion
+import com.vibra.bus.presentation.motion.pressScale
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,12 +48,14 @@ fun AppCard(
 ) {
     val colors = MaterialTheme.colorScheme
     if (onClick != null) {
+        val source = remember { MutableInteractionSource() }
         Surface(
             onClick = onClick,
-            modifier = modifier,
+            modifier = modifier.pressScale(source, 0.985f),
             shape = AppShape.Card,
             color = colors.surface,
             border = BorderStroke(1.dp, colors.outlineVariant),
+            interactionSource = source,
         ) { Column(content = content) }
     } else {
         Surface(
@@ -94,7 +107,7 @@ fun StatusPill(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (showDot) {
-                Box(Modifier.size(6.dp).background(content, CircleShape))
+                PulseDot(color = content)
                 Spacer(Modifier.width(6.dp))
             }
             Text(text = text, style = MaterialTheme.typography.labelMedium, color = content)
@@ -139,4 +152,24 @@ fun ScreenHeader(
         }
         trailing?.invoke()
     }
+}
+
+/** Punto de estado "en vivo": pulsa suavemente solo con movimiento ambiental; si no, queda fijo. */
+@Composable
+private fun PulseDot(color: Color) {
+    val env = LocalMotion.current
+    val pulse = if (env.ambient) {
+        rememberInfiniteTransition(label = "dot").animateFloat(
+            initialValue = 1f,
+            targetValue = 0.35f,
+            animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Reverse),
+            label = "dot_alpha",
+        )
+    } else null
+    Box(
+        Modifier
+            .size(6.dp)
+            .graphicsLayer { alpha = pulse?.value ?: 1f }
+            .background(color, CircleShape),
+    )
 }
