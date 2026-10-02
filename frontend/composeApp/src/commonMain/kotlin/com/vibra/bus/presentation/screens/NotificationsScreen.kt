@@ -1,5 +1,13 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.DirectionsBus
+import com.vibra.bus.presentation.components.AppCard
+import com.vibra.bus.presentation.theme.AppShape
+import androidx.compose.material.icons.filled.NotificationsNone
+import com.vibra.bus.presentation.components.AppTopBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,40 +71,22 @@ class NotificationsScreen : Screen {
         val notifications by viewModel.notifications.collectAsState()
 
         Scaffold(
+            contentWindowInsets = WindowInsets(0),
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "Notificaciones",
-                            color      = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        }
-                    },
+                AppTopBar(
+                    title = "Notificaciones",
                     actions = {
                         if (notifications.isNotEmpty()) {
                             IconButton(onClick = { viewModel.clearAll() }) {
                                 Icon(
                                     Icons.Default.DeleteSweep,
-                                    contentDescription = "Borrar todo",
-                                    tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
+                                    contentDescription = "Borrar todas las notificaciones",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    windowInsets = WindowInsets(0, 0, 0, 0),
                 )
             },
         ) { padding ->
@@ -105,6 +95,7 @@ class NotificationsScreen : Screen {
                     EmptyState(
                         message  = "Sin notificaciones",
                         subtitle = "Aquí verás las alertas de tu bus",
+                        icon     = Icons.Default.NotificationsNone,
                     )
                 } else {
                     LazyColumn(contentPadding = PaddingValues(16.dp)) {
@@ -137,13 +128,13 @@ private fun SwipeToDeleteNotification(notif: NotificationItem, onDelete: () -> U
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(vertical = 5.dp)
-                    .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.errorContainer, AppShape.Card)
                     .padding(end = 20.dp),
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 Icon(
                     imageVector        = Icons.Default.Delete,
-                    contentDescription = "Eliminar",
+                    contentDescription = null,
                     tint               = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
@@ -156,38 +147,32 @@ private fun SwipeToDeleteNotification(notif: NotificationItem, onDelete: () -> U
 
 @Composable
 private fun NotificationCard(notif: NotificationItem) {
-    val (icon, color) = when (notif.type) {
-        "bus_arrival"     -> Pair("🚌", MaterialTheme.colorScheme.primary)
-        "bus_approaching" -> Pair("⏰", MaterialTheme.colorScheme.secondary)
-        "bus_almost_full" -> Pair("⚠️", Color(0xFFF97316))
-        else              -> Pair("🔔", MaterialTheme.colorScheme.primary)
+    val scheme = MaterialTheme.colorScheme
+    val (icon, container, content) = when (notif.type) {
+        "bus_arrival"     -> Triple(Icons.Default.DirectionsBus, scheme.primaryContainer, scheme.onPrimaryContainer)
+        "bus_approaching" -> Triple(Icons.Default.Schedule, scheme.secondaryContainer, scheme.onSecondaryContainer)
+        "bus_almost_full" -> Triple(Icons.Default.Warning, scheme.errorContainer, scheme.onErrorContainer)
+        else              -> Triple(Icons.Default.Notifications, scheme.surfaceVariant, scheme.onSurfaceVariant)
     }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(14.dp), ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.07f)),
-        shape  = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier          = Modifier.padding(16.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Box(
-                modifier         = Modifier
-                    .size(42.dp)
-                    .background(color.copy(alpha = 0.12f), CircleShape),
+                modifier         = Modifier.size(42.dp).background(container, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(icon, fontSize = 20.sp)
+                Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(notif.title, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, fontSize = 14.sp)
-                Text(notif.body,  color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                Text(notif.title, style = MaterialTheme.typography.titleSmall, color = scheme.onSurface)
+                Text(notif.body, style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant)
             }
-            Text(notif.timestamp.toRelativeTime(), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp)
+            Spacer(Modifier.width(8.dp))
+            Text(notif.timestamp.toRelativeTime(), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
         }
     }
 }

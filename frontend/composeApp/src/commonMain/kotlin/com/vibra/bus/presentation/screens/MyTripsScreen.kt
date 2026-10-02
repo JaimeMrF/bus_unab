@@ -1,5 +1,13 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.components.PillTone
+import com.vibra.bus.presentation.components.StatusPill
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.TextButton
+import com.vibra.bus.presentation.components.PrimaryButton
+import com.vibra.bus.presentation.components.AppCard
+import com.vibra.bus.presentation.components.ShimmerList
+import com.vibra.bus.presentation.components.AppTopBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -86,40 +94,10 @@ class MyTripsScreen : Screen {
         }
 
         Scaffold(
+            contentWindowInsets = WindowInsets(0),
             snackbarHost = { SnackbarHost(snackbarState) },
             containerColor = MaterialTheme.colorScheme.background,
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(
-                                text       = "Mis Viajes",
-                                color      = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize   = 17.sp,
-                            )
-                            Text(
-                                text     = "Historial de solicitudes",
-                                color    = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                                fontSize = 12.sp,
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver",
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    windowInsets = WindowInsets(0, 0, 0, 0),
-                )
-            },
+            topBar = { AppTopBar(title = "Mis viajes", subtitle = "Historial de solicitudes") },
         ) { padding ->
             Column(modifier = Modifier.fillMaxSize().padding(padding)) {
 
@@ -130,17 +108,7 @@ class MyTripsScreen : Screen {
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
                             when (val state = tripsState) {
-                                is UiState.Loading -> {
-                                    Box(
-                                        modifier         = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator(
-                                            color       = MaterialTheme.colorScheme.primary,
-                                            strokeWidth = 2.5.dp,
-                                        )
-                                    }
-                                }
+                                is UiState.Loading -> ShimmerList(count = 4, itemHeight = 120.dp)
                                 is UiState.Success -> {
                                     if (state.data.isEmpty()) {
                                         EmptyState(
@@ -175,7 +143,12 @@ class MyTripsScreen : Screen {
                                         }
                                     }
                                 }
-                                is UiState.Error -> EmptyState(message = state.message)
+                                is UiState.Error -> EmptyState(
+                                    message = "No pudimos cargar tus viajes",
+                                    subtitle = state.message,
+                                    ctaLabel = "Reintentar",
+                                    onCtaClick = { viewModel.refresh() },
+                                )
                                 else -> {}
                             }
                         }
@@ -201,10 +174,7 @@ class MyTripsScreen : Screen {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(
-                            MaterialTheme.colorScheme.errorContainer,
-                            RoundedCornerShape(14.dp)
-                        )
+                        .background(MaterialTheme.colorScheme.errorContainer, AppShape.Card)
                         .padding(end = 20.dp),
                     contentAlignment = Alignment.CenterEnd,
                 ) {
@@ -217,71 +187,47 @@ class MyTripsScreen : Screen {
             },
             modifier = Modifier.padding(vertical = 6.dp),
         ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(
-                        elevation = 3.dp,
-                        shape = RoundedCornerShape(14.dp),
-                        ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-                    ),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+            AppCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = trip.bus.name,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = 15.sp,
                             modifier = Modifier.weight(1f),
                         )
                         StatusChip(status = trip.status)
                     }
-                    Spacer(Modifier.height(6.dp))
                     Text(
                         "Parada: ${trip.stop.name}",
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 13.sp
                     )
                     Text(
                         trip.stop.address,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 12.sp
                     )
                     if (trip.status == "pending") {
+                        Spacer(Modifier.height(8.dp))
                         if (onResume != null) {
-                            Spacer(Modifier.height(10.dp))
-                            Button(
+                            PrimaryButton(
+                                text = "Ver en mapa",
+                                leadingIcon = Icons.Default.DirectionsBus,
                                 onClick = onResume,
-                                modifier = Modifier.fillMaxWidth().height(42.dp),
-                                shape = RoundedCornerShape(10.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                ),
-                            ) {
-                                Icon(
-                                    Icons.Default.DirectionsBus,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(15.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                )
-                                Spacer(Modifier.width(6.dp))
-                                Text(
-                                    "Ver en mapa",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                )
-                            }
-                            Spacer(Modifier.height(4.dp))
+                            )
                         }
-                        Text(
-                            text = "← Desliza para cancelar",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        )
+                        // Alternativa explícita al gesto de deslizar (accesibilidad)
+                        TextButton(
+                            onClick = onCancel,
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                        ) {
+                            Text(
+                                "Cancelar viaje",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
                 }
             }
@@ -290,36 +236,10 @@ class MyTripsScreen : Screen {
 
     @Composable
     private fun StatusChip(status: String) {
-        val (bg, textColor, label) = when (status) {
-            "pending" -> Triple(
-                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.15f),
-                MaterialTheme.colorScheme.onSecondaryContainer,
-                "Pendiente"
-            )
-            "active" -> Triple(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
-                MaterialTheme.colorScheme.primary,
-                "Activo"
-            )
-            else -> Triple(
-                MaterialTheme.colorScheme.surfaceVariant,
-                MaterialTheme.colorScheme.onSurfaceVariant,
-                "Completado"
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(bg)
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = label,
-                color = textColor,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold
-            )
+        when (status) {
+            "pending" -> StatusPill("Pendiente", PillTone.Warning, showDot = true)
+            "active" -> StatusPill("Activo", PillTone.Success, showDot = true)
+            else -> StatusPill("Completado", PillTone.Neutral)
         }
     }
 }

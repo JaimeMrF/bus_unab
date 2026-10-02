@@ -1,5 +1,14 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import com.vibra.bus.presentation.components.PillTone
+import com.vibra.bus.presentation.components.StatusPill
+import com.vibra.bus.presentation.components.ShimmerBox
+import androidx.compose.material3.Surface
+import com.vibra.bus.presentation.components.AppTopBar
 import com.vibra.bus.presentation.components.BrandMascot
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -85,30 +94,9 @@ class MyQRScreen : Screen {
         LaunchedEffect(Unit) { isVisible = true }
 
         Scaffold(
+            contentWindowInsets = WindowInsets(0),
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "Mi QR",
-                            color      = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    },
-                    navigationIcon = {
-                        if (navigator.canPop) {
-                            IconButton(onClick = { navigator.pop() }) {
-                                Icon(
-                                    Icons.AutoMirrored.Default.ArrowBack,
-                                    contentDescription = "Volver",
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                )
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                    ),
-                )
+                AppTopBar(title = "Mi QR", onBack = if (navigator.canPop) ({ navigator.pop() }) else null)
             },
             containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
@@ -129,7 +117,6 @@ class MyQRScreen : Screen {
                 ) {
                     Text(
                         text      = "Presenta este código para abordar el bus",
-                        fontSize  = 14.sp,
                         color     = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         style     = MaterialTheme.typography.bodyMedium,
@@ -167,14 +154,11 @@ class MyQRScreen : Screen {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text       = settings.userName,
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 18.sp,
                             color      = MaterialTheme.colorScheme.onSurface,
-                            style      = MaterialTheme.typography.titleMedium,
+                            style      = MaterialTheme.typography.titleLarge,
                         )
                         Text(
                             text  = "ID: ${settings.userId}",
-                            fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                         )
@@ -183,11 +167,11 @@ class MyQRScreen : Screen {
                     Spacer(Modifier.height(24.dp))
 
                     // QR card — spring bounce al entrar
-                    Card(
-                        modifier  = Modifier.size(240.dp).scale(qrScale),
-                        shape     = AppShape.QRContainer,
-                        colors    = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
+                    Surface(
+                        modifier        = Modifier.size(240.dp).scale(qrScale),
+                        shape           = AppShape.QRContainer,
+                        color           = Color.White,
+                        shadowElevation = 8.dp,
                     ) {
                         Box(
                             modifier         = Modifier.fillMaxSize().padding(16.dp),
@@ -195,44 +179,25 @@ class MyQRScreen : Screen {
                         ) {
                             if (qrContent.isNotEmpty()) {
                                 QRCodeImage(content = qrContent, modifier = Modifier.fillMaxSize())
+                            } else {
+                                ShimmerBox(height = 200.dp)
                             }
                         }
                     }
 
                     Spacer(Modifier.height(16.dp))
 
-                    Box(
-                        modifier = Modifier
-                            .background(
-                                color = if (countdown > 10)
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                                else
-                                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
-                                shape = AppShape.StatusBadge,
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = if (countdown > 10)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.error,
-                                shape = AppShape.StatusBadge,
-                            )
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                    ) {
-                        Text(
-                            text       = "Expira en ${countdown}s",
-                            color      = if (countdown > 10) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                            fontWeight = FontWeight.SemiBold,
-                            style      = MaterialTheme.typography.labelMedium,
-                        )
-                    }
+                    StatusPill(
+                        text = "Expira en ${countdown}s",
+                        tone = if (countdown > 10) PillTone.Brand else PillTone.Error,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
 
                     Spacer(Modifier.height(20.dp))
 
                     Text(
-                        text      = "ⓘ Este código es personal e intransferible",
-                        fontSize  = 12.sp,
+                        text      = "Este código es personal e intransferible",
+                        style     = MaterialTheme.typography.bodySmall,
                         color     = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                     )
