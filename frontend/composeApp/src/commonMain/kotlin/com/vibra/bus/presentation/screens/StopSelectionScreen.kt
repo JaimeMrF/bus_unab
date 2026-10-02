@@ -1,5 +1,17 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.material3.Surface
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.BorderStroke
+import com.vibra.bus.presentation.components.StatusPill
+import com.vibra.bus.presentation.components.ShimmerList
+import com.vibra.bus.presentation.components.PrimaryButton
+import com.vibra.bus.presentation.components.PillTone
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.material3.BottomSheetDefaults
+import com.vibra.bus.presentation.components.AppTopBar
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -136,35 +148,10 @@ data class StopSelectionScreen(val plate: String) : Screen {
             scaffoldState = bottomSheetState,
             snackbarHost  = { SnackbarHost(snackbarHostState) },
             topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(
-                                text       = busDetail?.name ?: "Seleccionar parada",
-                                color      = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.Bold,
-                                fontSize   = 17.sp
-                            )
-                            Text(
-                                text     = "Elige dónde subirte",
-                                color    = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                                fontSize = 12.sp
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Volver",
-                                tint = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    windowInsets = WindowInsets(0, 0, 0, 0)
+                AppTopBar(
+                    title = busDetail?.name ?: "Seleccionar parada",
+                    subtitle = "Elige dónde subirte",
+                    onBack = { navigator.pop() },
                 )
             },
             sheetContent = {
@@ -173,7 +160,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         .fillMaxWidth()
                         .clip(AppShape.BottomSheet)
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), AppShape.BottomSheet)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, AppShape.BottomSheet)
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Row(
@@ -182,26 +169,13 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         verticalAlignment     = Alignment.CenterVertically
                     ) {
                         Text(
-                            text       = "¿Dónde subes?",
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 18.sp,
-                            color      = MaterialTheme.colorScheme.onSurface
+                            text  = "¿Dónde subes?",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.semantics { heading() },
                         )
                         if (selectedStop != null) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(Color(0xFF2EBE6C).copy(alpha = 0.2f))
-                                    .border(1.dp, Color(0xFF2EBE6C).copy(alpha = 0.5f), RoundedCornerShape(20.dp))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text      = "✓ Seleccionada",
-                                    fontSize  = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color     = Color(0xFF2EBE6C)
-                                )
-                            }
+                            StatusPill("Parada elegida", PillTone.Success, showDot = true)
                         }
                     }
 
@@ -210,15 +184,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                     // Lista de paradas con altura máxima — nunca empuja el botón fuera
                     when (val state = stopsState) {
                         is UiState.Loading -> {
-                            Box(
-                                modifier         = Modifier.fillMaxWidth().height(160.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    color       = MaterialTheme.colorScheme.primary,
-                                    strokeWidth = 2.5.dp,
-                                )
-                            }
+                            ShimmerList(count = 3, itemHeight = 64.dp)
                         }
                         is UiState.Success -> {
                             if (state.data.isEmpty()) {
@@ -232,7 +198,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                                     modifier = Modifier.heightIn(max = 280.dp),
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    items(state.data) { stop ->
+                                    items(state.data, key = { it.id }) { stop ->
                                         StopSelectionRow(
                                             stop       = stop,
                                             isSelected = selectedStop?.id == stop.id,
@@ -244,8 +210,10 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         }
                         is UiState.Error -> {
                             EmptyState(
-                                message = "Error al cargar paradas",
+                                message = "No pudimos cargar las paradas",
                                 subtitle = state.message,
+                                ctaLabel = "Reintentar",
+                                onCtaClick = { viewModel.loadStops(plate) },
                             )
                         }
                         else -> {}
@@ -255,53 +223,21 @@ data class StopSelectionScreen(val plate: String) : Screen {
 
                     // Botón siempre visible al fondo del sheet
                     val isLoading = requestState is UiState.Loading
-                    Button(
+                    PrimaryButton(
+                        text = selectedStop?.let { "Confirmar: ${it.name}" } ?: "Elige una parada",
+                        loading = isLoading,
+                        enabled = selectedStop != null,
                         onClick = {
                             selectedStop?.let { stop ->
-                                busDetail?.let { bus ->
-                                    viewModel.confirmStop(bus.id, stop.id)
-                                }
+                                busDetail?.let { bus -> viewModel.confirmStop(bus.id, stop.id) }
                             }
                         },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape  = AppShape.ButtonPrimary,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor         = MaterialTheme.colorScheme.primary,
-                            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
-                        ),
-                        enabled = selectedStop != null && !isLoading,
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier    = Modifier.size(20.dp),
-                                color       = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Text(
-                                if (selectedStop != null) "Confirmar — ${selectedStop!!.name}"
-                                else "Elige una parada",
-                                color      = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize   = 15.sp
-                            )
-                        }
-                    }
+                    )
                     Spacer(Modifier.height(8.dp))
                 }
             },
             sheetPeekHeight      = 380.dp,
-            sheetDragHandle = {
-                Box(
-                    modifier = Modifier
-                        .padding(vertical = 12.dp)
-                        .size(width = 32.dp, height = 4.dp)
-                        .clip(AppShape.RouteIndicator)
-                        .background(MaterialTheme.colorScheme.outline)
-                )
-            },
+            sheetDragHandle = { BottomSheetDefaults.DragHandle() },
             sheetContainerColor  = Color.Transparent,
             sheetTonalElevation  = 0.dp,
             containerColor       = MaterialTheme.colorScheme.background
@@ -361,12 +297,12 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         viewModel.consumeRequestState()
                         navigator.push(MyQRScreen())
                     }) {
-                        Text("Continuar", color = MaterialTheme.colorScheme.primary)
+                        Text("Continuar")
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showFullDialog = false }) {
-                        Text("Cancelar", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Cancelar")
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -381,53 +317,37 @@ private fun StopSelectionRow(
     isSelected : Boolean,
     onClick    : () -> Unit,
 ) {
-    Box(
+    val colors = MaterialTheme.colorScheme
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 5.dp)
-            .shadow(
-                elevation    = 2.dp,
-                shape        = RoundedCornerShape(12.dp),
-                ambientColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
-            )
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                else            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            )
-            .clickable(onClick = onClick)
-            .padding(12.dp),
+            .selectable(selected = isSelected, role = Role.RadioButton, onClick = onClick),
+        shape = AppShape.ListItem,
+        color = if (isSelected) colors.primaryContainer else colors.surfaceVariant,
+        border = if (isSelected) BorderStroke(1.5.dp, colors.primary) else null,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(
-                selected = isSelected,
-                onClick  = onClick,
-                colors   = RadioButtonDefaults.colors(
-                    selectedColor   = MaterialTheme.colorScheme.primary,
-                    unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 8.dp)
-            ) {
+        Row(
+            modifier = Modifier.heightIn(min = 56.dp).padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(selected = isSelected, onClick = null, modifier = Modifier.padding(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    stop.name,
-                    color      = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium
+                    text = stop.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = if (isSelected) colors.onPrimaryContainer else colors.onSurface,
                 )
                 Text(
-                    stop.address,
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp
+                    text = stop.address,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isSelected) colors.onPrimaryContainer else colors.onSurfaceVariant,
                 )
             }
             Text(
-                if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min",
-                color      = MaterialTheme.colorScheme.secondary,
-                fontSize   = 12.sp,
-                fontWeight = FontWeight.Medium,
+                text = if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (isSelected) colors.onPrimaryContainer else colors.primary,
+                modifier = Modifier.padding(horizontal = 8.dp),
             )
         }
     }

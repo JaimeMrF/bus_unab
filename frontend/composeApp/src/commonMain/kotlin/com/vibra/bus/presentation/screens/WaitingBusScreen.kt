@@ -1,5 +1,20 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.foundation.layout.width
+import com.vibra.bus.presentation.theme.Motion
+import com.vibra.bus.presentation.components.PrimaryButton
+import com.vibra.bus.presentation.components.AppTopBar
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import com.vibra.bus.presentation.theme.LocalBrand
 import com.vibra.bus.presentation.components.BrandMascot
 import androidx.compose.animation.*
@@ -74,72 +89,51 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                     settings.batteryPromptShown = true
                     showBatteryDialog = false
                 },
-                icon = {
-                    BrandMascot(modifier = Modifier.size(96.dp))
-                },
-                title = {
-                    Text(
-                        "Mantén el seguimiento activo",
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
+                icon = { BrandMascot(modifier = Modifier.size(72.dp)) },
+                title = { Text("Mantén el seguimiento activo") },
                 text = {
                     Text(
                         "Para que la notificación del bus siga visible aunque cierres la app, " +
                         "necesitamos que desactives la optimización de batería para ${LocalBrand.current.appName}. " +
-                        "Toca \"Activar\" y selecciona \"No restringir\".",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        "Toca \"Activar\" y selecciona \"No restringir\"."
                     )
                 },
                 confirmButton = {
-                    Button(onClick = {
+                    TextButton(onClick = {
                         settings.batteryPromptShown = true
                         showBatteryDialog = false
                         openBatteryOptimizationSettings()
-                    }) {
-                        Text("Activar →")
-                    }
+                    }) { Text("Activar") }
                 },
                 dismissButton = {
                     TextButton(onClick = {
                         settings.batteryPromptShown = true
                         showBatteryDialog = false
-                    }) {
-                        Text("Ahora no")
-                    }
+                    }) { Text("Ahora no") }
                 },
                 containerColor = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(20.dp),
+                shape = AppShape.Dialog,
             )
         }
 
+        val cancelTracking = {
+            settings.clearTracking()
+            stopBusTracking()
+            navigator.pop()
+        }
+
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Siguiendo bus", fontWeight = FontWeight.SemiBold) },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            settings.clearTracking()
-                            stopBusTracking()
-                            navigator.pop()
-                        }) {
-                            Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                )
-            }
+            topBar = { AppTopBar(
+                title = "Siguiendo bus",
+                subtitle = bus?.name ?: plate,
+                onBack = cancelTracking,
+                windowInsets = TopAppBarDefaults.windowInsets,
+            ) }
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                // Background Map
                 MapViewComposable(
                     modifier = Modifier.fillMaxSize(),
-                    userLocation = null, // In real app, pass current location
+                    userLocation = null,
                     showStops = true,
                     selectedStop = stop,
                     onStopSelected = {},
@@ -147,167 +141,145 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                     onBusSelected = {},
                     stops = listOf(stop),
                     buses = bus?.let { listOf(it) } ?: emptyList(),
-                    path = routePath.ifEmpty { 
-                        if (bus != null) listOf(
-                            com.vibra.bus.util.LatLng(bus!!.latitude, bus!!.longitude),
-                            com.vibra.bus.util.LatLng(stop.latitude, stop.longitude)
-                        ) else null
-                    }
+                    path = routePath.ifEmpty {
+                        bus?.let {
+                            listOf(
+                                com.vibra.bus.util.LatLng(it.latitude, it.longitude),
+                                com.vibra.bus.util.LatLng(stop.latitude, stop.longitude),
+                            )
+                        }
+                    },
                 )
 
-                // Overlay Notification when arriving
+                // Aviso de llegada: superficie de acento + icono + texto (no solo color)
                 AnimatedVisibility(
                     visible = isArriving,
                     enter = slideInVertically { -it } + fadeIn(),
                     exit = slideOutVertically { -it } + fadeOut(),
-                    modifier = Modifier.align(Alignment.TopCenter).padding(16.dp)
+                    modifier = Modifier.align(Alignment.TopCenter).padding(16.dp),
                 ) {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondary),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(8.dp)
+                    Surface(
+                        shape = AppShape.Card,
+                        color = MaterialTheme.colorScheme.primary,
+                        shadowElevation = 8.dp,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(Icons.Default.NotificationsActive, null, tint = Color.White)
+                            Icon(
+                                Icons.Default.NotificationsActive,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                            )
                             Spacer(Modifier.width(12.dp))
                             Text(
                                 "¡Tu bus está llegando!",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onPrimary,
                             )
                         }
                     }
                 }
 
-                // Bottom Info Card
                 AnimatedVisibility(
                     visible = isVisible,
                     modifier = Modifier.align(Alignment.BottomCenter),
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = fadeOut()
+                    enter = slideInVertically(tween(Motion.emphasized, easing = Motion.easeOut)) { it } + fadeIn(),
+                    exit = fadeOut(),
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(AppShape.BottomSheet)
                             .background(MaterialTheme.colorScheme.surface)
-                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), AppShape.BottomSheet)
-                            .padding(20.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, AppShape.BottomSheet)
+                            .navigationBarsPadding()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = bus?.name ?: "Buscando bus...",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    text = bus?.name ?: "Buscando bus…",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 Text(
-                                    text = "Placa: $plate",
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    text = "Placa $plate",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                            if (bus == null) {
-                                BrandMascot(modifier = Modifier.size(56.dp))
-                            }
-
-                            // ETA Circle
                             Box(
                                 modifier = Modifier
-                                    .size(60.dp)
+                                    .size(64.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.secondary),
-                                contentAlignment = Alignment.Center
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                    .semantics(mergeDescendants = true) {
+                                        contentDescription = eta?.let { "Llega en $it minutos" } ?: "Calculando tiempo de llegada"
+                                    },
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
-                                        text = eta?.toString() ?: "--",
-                                        fontSize = 20.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.onSecondary
+                                        text = eta?.toString() ?: "–",
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     )
                                     Text(
                                         text = "min",
-                                        fontSize = 10.sp,
-                                        color = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.8f)
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     )
                                 }
                             }
                         }
 
-                        Spacer(Modifier.height(16.dp))
-
-                        LinearProgressIndicator(
-                            progress = {
-                                val d = distance ?: 1000
-                                (1f - (d.toFloat() / 1000f)).coerceIn(0.1f, 1f)
-                            },
-                            modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
-                            color = MaterialTheme.colorScheme.secondary,
-                            trackColor = MaterialTheme.colorScheme.secondaryContainer
+                        val progress by animateFloatAsState(
+                            targetValue = (1f - ((distance ?: 1000).toFloat() / 1000f)).coerceIn(0.1f, 1f),
+                            animationSpec = tween(Motion.emphasized),
+                            label = "eta_progress",
                         )
-
-                        Spacer(Modifier.height(16.dp))
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.primaryContainer,
+                        )
 
                         Text(
                             text = if (isArriving) "¡Prepara tu QR para abordar!"
-                                   else "Aproximadamente a ${(distance ?: 0) / 100} cuadras",
-                            fontSize = 14.sp,
+                            else "Aproximadamente a ${(distance ?: 0) / 100} cuadras",
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(bottom = 16.dp)
                         )
 
-                        Button(
-                            onClick = {
-                                settings.clearTracking()
-                                stopBusTracking()
-                                navigator.push(MyQRScreen())
-                            },
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
-                            shape = AppShape.ButtonPrimary,
-                        ) {
-                            Icon(
-                                Icons.Default.QrCode,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onPrimary,
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            PrimaryButton(
+                                text = "Mostrar mi QR",
+                                leadingIcon = Icons.Default.QrCode,
+                                onClick = {
+                                    settings.clearTracking()
+                                    stopBusTracking()
+                                    navigator.push(MyQRScreen())
+                                },
                             )
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                "Mostrar mi QR",
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onPrimary,
-                            )
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        OutlinedButton(
-                            onClick = {
-                                settings.clearTracking()
-                                stopBusTracking()
-                                navigator.pop()
-                            },
-                            modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = AppShape.ButtonPrimary,
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
-                            ),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f))
-                        ) {
-                            Text(
-                                "Cancelar seguimiento",
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.error,
-                            )
+                            TextButton(
+                                onClick = cancelTracking,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                            ) {
+                                Text(
+                                    "Cancelar seguimiento",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
                         }
                     }
                 }

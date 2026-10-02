@@ -1,5 +1,10 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.components.ShimmerList
+import com.vibra.bus.presentation.components.PrimaryButton
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -103,29 +108,21 @@ data class BusRouteScreen(val plate: String) : Screen {
             sheetPeekHeight     = 240.dp,
             sheetContainerColor = Color.Transparent,
             sheetTonalElevation = 0.dp,
-            sheetDragHandle = {
-                Box(
-                    modifier = Modifier
-                        .padding(vertical = 12.dp)
-                        .size(width = 32.dp, height = 4.dp)
-                        .clip(AppShape.RouteIndicator)
-                        .background(MaterialTheme.colorScheme.outline)
-                )
-            },
+            sheetDragHandle = { BottomSheetDefaults.DragHandle() },
             topBar = {
                 TopAppBar(
                     title = {
                         Column {
                             Text(
                                 busDetail?.name ?: plate,
-                                color      = MaterialTheme.colorScheme.onPrimary,
-                                fontWeight = FontWeight.SemiBold
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
                             if (busDetail != null) {
                                 Text(
-                                    "Placa: $plate",
-                                    color    = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                                    fontSize = 12.sp
+                                    "Placa $plate",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
@@ -135,12 +132,12 @@ data class BusRouteScreen(val plate: String) : Screen {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Volver",
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     windowInsets = WindowInsets(0, 0, 0, 0),
                 )
@@ -151,7 +148,7 @@ data class BusRouteScreen(val plate: String) : Screen {
                         .fillMaxWidth()
                         .clip(AppShape.BottomSheet)
                         .background(MaterialTheme.colorScheme.surface)
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f), AppShape.BottomSheet)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, AppShape.BottomSheet)
                         .padding(16.dp)
                 ) {
                     // Bus info card
@@ -163,14 +160,14 @@ data class BusRouteScreen(val plate: String) : Screen {
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                                color = MaterialTheme.colorScheme.primaryContainer,
                                 modifier = Modifier.size(44.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         Icons.Default.DirectionsBus,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
@@ -178,15 +175,14 @@ data class BusRouteScreen(val plate: String) : Screen {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     bus.name,
-                                    color      = MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize   = 16.sp
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 bus.address?.let {
                                     Text(
                                         it,
-                                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 12.sp,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 1
                                     )
                                 }
@@ -227,15 +223,15 @@ data class BusRouteScreen(val plate: String) : Screen {
                     ) {
                         Text(
                             "Paradas de la ruta",
-                            color      = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize   = 15.sp
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.semantics { heading() },
                         )
                         if (stopsState is UiState.Success) {
                             Text(
                                 "${routeStops.size} paradas",
-                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 12.sp
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -249,15 +245,7 @@ data class BusRouteScreen(val plate: String) : Screen {
                     ) { state ->
                     when (state) {
                         is UiState.Loading -> {
-                            Box(
-                                modifier         = Modifier.fillMaxWidth().height(160.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    color       = MaterialTheme.colorScheme.primary,
-                                    strokeWidth = 2.5.dp,
-                                )
-                            }
+                            ShimmerList(count = 3, itemHeight = 48.dp)
                         }
                         is UiState.Success -> {
                             if (routeStops.isEmpty()) {
@@ -292,27 +280,12 @@ data class BusRouteScreen(val plate: String) : Screen {
 
                     Spacer(Modifier.height(16.dp))
 
-                    Button(
-                        onClick  = { navigator.push(StopSelectionScreen(plate)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .navigationBarsPadding(),
-                        shape    = AppShape.ButtonPrimary,
-                    ) {
-                        Icon(
-                            Icons.Default.DirectionsBus,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint     = MaterialTheme.colorScheme.onPrimary,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "Seleccionar parada",
-                            fontWeight = FontWeight.SemiBold,
-                            color      = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    }
+                    PrimaryButton(
+                        text = "Seleccionar parada",
+                        leadingIcon = Icons.Default.DirectionsBus,
+                        onClick = { navigator.push(StopSelectionScreen(plate)) },
+                        modifier = Modifier.navigationBarsPadding(),
+                    )
 
                     Spacer(Modifier.height(8.dp))
                 }
@@ -358,14 +331,14 @@ private fun BusStatChip(
 ) {
     Row(
         modifier          = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+            .clip(AppShape.Chip)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-        Text(label, color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
     }
 }
 
@@ -388,16 +361,15 @@ private fun RouteStopRow(
                     .size(28.dp)
                     .background(
                         if (index == 0) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+                        else MaterialTheme.colorScheme.secondary,
                         CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     "${index + 1}",
-                    color      = Color.White,
-                    fontSize   = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    color      = if (index == 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary,
+                    style      = MaterialTheme.typography.labelMedium
                 )
             }
             if (!isLast) {
@@ -405,7 +377,7 @@ private fun RouteStopRow(
                     modifier = Modifier
                         .width(2.dp)
                         .height(28.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                 )
             }
         }
@@ -424,21 +396,19 @@ private fun RouteStopRow(
                 Text(
                     stop.name,
                     color      = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Medium,
-                    fontSize   = 14.sp,
+                    style      = MaterialTheme.typography.titleSmall,
                     modifier   = Modifier.weight(1f)
                 )
                 Text(
                     "~${stop.estimatedMinutes} min",
-                    color    = MaterialTheme.colorScheme.secondary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
+                    color    = MaterialTheme.colorScheme.primary,
+                    style    = MaterialTheme.typography.labelMedium
                 )
             }
             Text(
                 stop.address,
                 color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 12.sp,
+                style    = MaterialTheme.typography.bodySmall,
                 maxLines = 1
             )
         }

@@ -1,11 +1,7 @@
 package com.vibra.bus.presentation.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,153 +12,93 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.StopWithPivotDto
+import com.vibra.bus.presentation.components.AppCard
+import com.vibra.bus.presentation.components.AppTopBar
 import com.vibra.bus.presentation.components.EmptyState
-import com.vibra.bus.presentation.theme.AppShape
+import com.vibra.bus.presentation.components.ShimmerList
 import com.vibra.bus.presentation.viewmodel.StopSelectionViewModel
-import vibrabus.composeapp.generated.resources.Res
 import com.vibra.bus.util.UiState
 import org.koin.compose.viewmodel.koinViewModel
 
 data class StopsListScreen(val plate: String) : Screen {
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel = koinViewModel<StopSelectionViewModel>()
         val stopsState by viewModel.stopsState.collectAsState()
         val busDetail by viewModel.busDetail.collectAsState()
-        var isVisible by remember { mutableStateOf(false) }
-
-        // Animation states
-        val listScale by animateFloatAsState(
-            targetValue = if (isVisible) 1f else 0.95f,
-            animationSpec = tween(durationMillis = 600),
-            label = "list_scale"
-        )
 
         LaunchedEffect(Unit) {
             viewModel.loadStops(plate)
             viewModel.loadBusDetail(plate)
-            isVisible = true
         }
 
         Scaffold(
+            contentWindowInsets = WindowInsets(0),
             topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Paradas - ${busDetail?.name ?: plate}",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
-                            Icon(Icons.AutoMirrored.Default.ArrowBack, "Volver", tint = MaterialTheme.colorScheme.onPrimary)
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
+                AppTopBar(
+                    title = "Paradas",
+                    subtitle = busDetail?.name ?: plate,
+                    onBack = { navigator.pop() },
                 )
             },
             containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
-            AnimatedVisibility(
-                visible = isVisible,
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(durationMillis = 600)
-                ) + fadeIn(
-                    animationSpec = tween(durationMillis = 600)
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .scale(listScale)
-                ) {
-                    when (val state = stopsState) {
-                        is UiState.Loading -> {
-                            Box(
-                                modifier         = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
+            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                when (val state = stopsState) {
+                    is UiState.Loading -> ShimmerList(count = 5, itemHeight = 72.dp)
+                    is UiState.Success -> {
+                        if (state.data.isEmpty()) {
+                            EmptyState(
+                                message = "Sin paradas disponibles",
+                                subtitle = "No hay paradas registradas para esta ruta",
+                                ctaLabel = "Reintentar",
+                                onCtaClick = { viewModel.loadStops(plate) },
+                            )
+                        } else {
+                            LazyColumn(
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                CircularProgressIndicator(
-                                    color       = MaterialTheme.colorScheme.primary,
-                                    strokeWidth = 2.5.dp,
-                                )
-                            }
-                        }
-                        is UiState.Success -> {
-                            if (state.data.isEmpty()) {
-                                EmptyState(
-                                    message = "Sin paradas disponibles",
-                                    subtitle = "No hay paradas registradas para esta ruta",
-                                    ctaLabel = "Reintentar",
-                                    onCtaClick = { viewModel.loadStops(plate) }
-                                )
-                            } else {
-                                LazyColumn(
-                                    contentPadding = PaddingValues(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    itemsIndexed(state.data) { index, stop ->
-                                        StopListItem(
-                                            stop = stop, 
-                                            isFirst = index == 0, 
-                                            isLast = index == state.data.lastIndex
-                                        )
-                                    }
+                                itemsIndexed(state.data, key = { _, s -> s.id }) { index, stop ->
+                                    StopListItem(
+                                        stop = stop,
+                                        isFirst = index == 0,
+                                        isLast = index == state.data.lastIndex,
+                                    )
                                 }
                             }
                         }
-                        is UiState.Error -> {
-                            EmptyState(
-                                message = "Error al cargar paradas",
-                                subtitle = state.message,
-                                ctaLabel = "Reintentar",
-                                onCtaClick = { viewModel.loadStops(plate) }
-                            )
-                        }
-                        else -> {}
                     }
+                    is UiState.Error -> EmptyState(
+                        message = "No pudimos cargar las paradas",
+                        subtitle = state.message,
+                        ctaLabel = "Reintentar",
+                        onCtaClick = { viewModel.loadStops(plate) },
+                    )
+                    else -> {}
                 }
             }
         }
@@ -171,49 +107,48 @@ data class StopsListScreen(val plate: String) : Screen {
 
 @Composable
 private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boolean) {
-    val dotColor = when {
-        isFirst -> MaterialTheme.colorScheme.primary
-        isLast  -> MaterialTheme.colorScheme.secondary
-        else    -> MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
-    }
+    val badge = if (isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+    val onBadge = if (isFirst) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
+    val eta = if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min"
 
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        shape = AppShape.Card,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    AppCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = "Parada ${stop.order}, ${stop.name}, ${stop.address}, $eta"
+            },
     ) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            Card(
-                shape = AppShape.StatusBadge,
-                colors = CardDefaults.cardColors(containerColor = dotColor),
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier.size(32.dp).background(badge, CircleShape),
+                contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = "${stop.order}",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = onBadge,
                 )
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stop.name, 
-                    color = MaterialTheme.colorScheme.onSurface,   
-                    fontWeight = FontWeight.Medium, 
-                    fontSize = 14.sp
+                    text = stop.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = stop.address, 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, 
-                    fontSize = 12.sp
+                    text = stop.address,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min",
-                    color = MaterialTheme.colorScheme.secondary,
-                    fontSize = 12.sp
+                    text = eta,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
         }
