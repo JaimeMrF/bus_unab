@@ -21,21 +21,32 @@ class GpsMobileService
 
     private int $timeout;
 
-    // Tiempo de caché en segundos (30 s para ubicaciones, 5 min para detalle)
-    private const CACHE_BUSES_TTL = 30;
+    // Posiciones casi en vivo: caché corta (el GPS externo reporta cada pocos segundos).
+    private const CACHE_BUSES_TTL = 5;
 
-    private const CACHE_DETAIL_TTL = 30;
+    private const CACHE_DETAIL_TTL = 5;
+
+    // Si el GPS externo falla se recuerda el fallo unos segundos para no
+    // bloquear cada request esperando el timeout (Cache::remember no cachea null).
+    private const CACHE_FAILURE_TTL = 5;
+
+    private const DEFAULT_TIMEOUT = 4;
+
+    private const MAX_TIMEOUT = 5;
 
     public function __construct()
     {
         // Casts defensivos: sin GPSMOBILE_* en .env, config() puede devolver
         // string/null y rompe las propiedades estrictamente tipadas (TypeError 500).
-        // Defaults coinciden con config/gpsmobile.php.
-        $this->baseUrl = (string) config('gpsmobile.base_url', 'http://gpsmobile.co:4000');
-        $this->codUserInc = (int) config('gpsmobile.cod_user_inc', 110571);
-        $this->defaultLat = (float) config('gpsmobile.default_lat', 7.1218);
-        $this->defaultLng = (float) config('gpsmobile.default_lng', -73.1158);
-        $this->timeout = (int) config('gpsmobile.timeout', 10);
+        // Defaults coinciden con config/gpsmobile.php; un .env con la variable
+        // vacía (GPSMOBILE_X=) llega como '' y también cae al default.
+        $this->baseUrl = (string) (config('gpsmobile.base_url') ?: 'http://gpsmobile.co:4000');
+        $this->codUserInc = (int) (config('gpsmobile.cod_user_inc') ?: 110571);
+        $this->defaultLat = (float) (config('gpsmobile.default_lat') ?: 7.1218);
+        $this->defaultLng = (float) (config('gpsmobile.default_lng') ?: -73.1158);
+        // Timeout corto: una llamada síncrona lenta bloquea el worker de PHP.
+        $timeout = (int) config('gpsmobile.timeout');
+        $this->timeout = $timeout > 0 ? min($timeout, self::MAX_TIMEOUT) : self::DEFAULT_TIMEOUT;
     }
 
     /**
@@ -49,9 +60,7 @@ class GpsMobileService
 
         $cacheKey = "gps_buses_{$this->codUserInc}";
 
-        $vehicles = Cache::remember($cacheKey, self::CACHE_BUSES_TTL, function () use ($lat, $lng) {
-            return $this->fetchAllBuses($lat, $lng);
-        });
+        $vehicles = $this->rememberOrFail($cacheKey, self::CACHE_BUSES_TTL, fn () => $this->fetchAllBuses($lat, $lng));
 
         return $this->overlaySimulatedBuses($vehicles);
     }
@@ -64,11 +73,27 @@ class GpsMobileService
     {
         $cacheKey = "gps_detail_{$externalVehicleId}";
 
-        $detail = Cache::remember($cacheKey, self::CACHE_DETAIL_TTL, function () use ($externalVehicleId) {
-            return $this->fetchBusDetail($externalVehicleId);
-        });
+        $detail = $this->rememberOrFail($cacheKey, self::CACHE_DETAIL_TTL, fn () => $this->fetchBusDetail($externalVehicleId));
 
         return $this->overlaySimulatedDetail($externalVehicleId, $detail);
+    }
+
+    /** Como Cache::remember, pero un fallo (null) se cachea CACHE_FAILURE_TTL s como `false`. */
+    private function rememberOrFail(string $key, int $ttl, callable $fetch): ?array
+    {
+        $cached = Cache::get($key);
+
+        if ($cached === false) {
+            return null;
+        }
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $value = $fetch();
+        Cache::put($key, $value ?? false, $value === null ? self::CACHE_FAILURE_TTL : $ttl);
+
+        return $value;
     }
 
     // -------------------------------------------------------------------------
