@@ -126,6 +126,10 @@ kotlin {
             implementation(libs.mlkit.barcode)
         }
 
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
         }
@@ -145,6 +149,8 @@ android {
 
         buildConfigField("String", "BASE_URL_ANDROID", "\"https://bucaratransit.duckdns.org/api/v1\"")
         buildConfigField("String", "BASE_URL_IOS", "\"https://bucaratransit.duckdns.org/api/v1\"")
+        // Slug de la organización por defecto de este build; vacío = pedir el código al primer arranque.
+        buildConfigField("String", "DEFAULT_ORG_SLUG", "\"${project.findProperty("defaultOrgSlug") ?: ""}\"")
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"887389827022-oj7di7remsi2k1avdgqp8asf65rlu2h3.apps.googleusercontent.com\"")
         
         val properties = Properties()

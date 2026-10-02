@@ -2,6 +2,7 @@ package com.vibra.bus.di
 
 import com.russhwolf.settings.Settings
 import com.vibra.bus.data.api.AuthApi
+import com.vibra.bus.data.api.BrandApi
 import com.vibra.bus.data.api.BusApi
 import com.vibra.bus.data.api.PoiApi
 import com.vibra.bus.data.api.RequestApi
@@ -9,6 +10,7 @@ import com.vibra.bus.data.api.StopApi
 import com.vibra.bus.data.api.WalletApi
 import com.vibra.bus.data.api.createKtorClient
 import com.vibra.bus.data.repository.AuthRepository
+import com.vibra.bus.data.repository.BrandRepository
 import com.vibra.bus.data.repository.BusRepository
 import com.vibra.bus.data.repository.PoiRepository
 import com.vibra.bus.data.repository.RequestRepository
@@ -45,6 +47,7 @@ val commonModule = module {
     single { RequestApi(get()) }
     single { PoiApi(get()) }
     single { WalletApi(get()) }
+    single { BrandApi(get()) }
 
     // Repositories
     single { AuthRepository(get(), get()) }
@@ -53,6 +56,7 @@ val commonModule = module {
     single { RequestRepository(get(), get()) }
     single { PoiRepository(get()) }
     single { WalletRepository(get()) }
+    single { BrandRepository(get(), get()) }
 
     // ViewModels
     viewModel { AuthViewModel(get(), get(), get()) }

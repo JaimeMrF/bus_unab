@@ -13,6 +13,15 @@ class AppSettings(private val settings: Settings) {
     private val _hasActiveTrackingFlow = MutableStateFlow(settings.getString("tracking_plate", "").isNotEmpty())
     val hasActiveTrackingFlow: StateFlow<Boolean> = _hasActiveTrackingFlow.asStateFlow()
 
+    /** Organización (tenant) elegida y su último BrandConfig serializado, para arranque offline. */
+    var orgSlug: String
+        get() = settings.getString("org_slug", "")
+        set(value) = settings.putString("org_slug", value)
+
+    var brandJson: String
+        get() = settings.getString("brand_json", "")
+        set(value) = settings.putString("brand_json", value)
+
     var token: String
         get() = settings.getString("token", "")
         set(value) = settings.putString("token", value)
