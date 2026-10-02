@@ -224,7 +224,6 @@ class BrandingTest extends TestCase
     public function test_throttle_60_per_minute(): void
     {
         $this->tenant();
-        RateLimiter::clear('branding');
 
         for ($i = 0; $i < 60; $i++) {
             $this->getJson('/api/v1/branding/acme')->assertSuccessful();
