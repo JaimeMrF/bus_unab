@@ -7,8 +7,9 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class AppSettings(private val settings: Settings) {
 
-    private val _isDarkThemeFlow = MutableStateFlow(settings.getBoolean("is_dark_theme", true))
-    val isDarkThemeFlow: StateFlow<Boolean> = _isDarkThemeFlow.asStateFlow()
+    /** Preferencia de apariencia: "system" (por defecto), "light" o "dark". */
+    private val _themeModeFlow = MutableStateFlow(settings.getString("theme_mode", "system"))
+    val themeModeFlow: StateFlow<String> = _themeModeFlow.asStateFlow()
 
     private val _hasActiveTrackingFlow = MutableStateFlow(settings.getString("tracking_plate", "").isNotEmpty())
     val hasActiveTrackingFlow: StateFlow<Boolean> = _hasActiveTrackingFlow.asStateFlow()
@@ -66,11 +67,11 @@ class AppSettings(private val settings: Settings) {
         get() = settings.getString("notifications_json", "[]")
         set(value) = settings.putString("notifications_json", value)
 
-    var isDarkTheme: Boolean
-        get() = _isDarkThemeFlow.value
+    var themeMode: String
+        get() = _themeModeFlow.value
         set(value) {
-            settings.putBoolean("is_dark_theme", value)
-            _isDarkThemeFlow.value = value
+            settings.putString("theme_mode", value)
+            _themeModeFlow.value = value
         }
 
     var driverActivePlate: String

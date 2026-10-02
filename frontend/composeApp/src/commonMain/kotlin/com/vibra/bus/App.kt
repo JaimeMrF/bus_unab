@@ -1,5 +1,6 @@
 package com.vibra.bus
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -19,13 +20,18 @@ fun App() {
     KoinContext {
         val settings = koinInject<AppSettings>()
         val brandRepository = koinInject<BrandRepository>()
-        val isDark by settings.isDarkThemeFlow.collectAsState()
+        val themeMode by settings.themeModeFlow.collectAsState()
+        val isDark = when (themeMode) {
+            "dark" -> true
+            "light" -> false
+            else -> isSystemInDarkTheme()
+        }
         val brand by brandRepository.brand.collectAsState()
 
         // Un solo AppTheme en la raíz: cualquier cambio de BrandConfig reestiliza toda la app.
         AppTheme(brand = brand, darkTheme = isDark) {
             CompositionLocalProvider(
-                LocalThemeToggle provides { newValue -> settings.isDarkTheme = newValue },
+                LocalThemeToggle provides { newValue -> settings.themeMode = if (newValue) "dark" else "light" },
             ) {
                 Navigator(SplashScreen()) { navigator ->
                     FadeTransition(navigator)
