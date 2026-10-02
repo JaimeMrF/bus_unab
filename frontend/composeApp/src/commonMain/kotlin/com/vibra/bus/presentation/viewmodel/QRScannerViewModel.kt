@@ -31,6 +31,9 @@ sealed class ScanResult {
     data object Expired : ScanResult()
     data object Invalid : ScanResult()
     data class Error(val message: String) : ScanResult()
+
+    /** Sin red: el cobro NO se confirmó. Se conserva el QR para reintentar con la misma clave. */
+    data class Offline(val message: String) : ScanResult()
 }
 
 class QRScannerViewModel(
@@ -54,6 +57,14 @@ class QRScannerViewModel(
     private var lastScanMs = 0L
     private var clearResultJob: Job? = null
 
+    /** Último contenido leído y cuándo: la cámara repite el mismo QR muchas veces por segundo. */
+    private var lastContent = ""
+    private var lastContentMs = 0L
+
+    /** QR pendiente de reintento tras un corte de red (cobro o validación). */
+    private var pendingPayQr: String? = null
+    private var pendingPayload: QRPayload? = null
+
     fun setMode(mode: ScanMode) {
         if (_mode.value == mode) return
         _mode.value = mode
@@ -70,11 +81,30 @@ class QRScannerViewModel(
         submitQr(code, fromManual = true)
     }
 
+    /** Descarta el resultado visible y cualquier reintento pendiente (cancelar). */
+    fun dismissResult() {
+        clearResultJob?.cancel()
+        _lastResult.value = null
+        pendingPayQr = null
+        pendingPayload = null
+    }
+
+    /** Reintenta el último cobro/validación que falló por red, con la misma clave de idempotencia. */
+    fun retryPending() {
+        if (_state.value is ScanState.Validating) return
+        pendingPayQr?.let { submitQr(it, fromManual = false); return }
+        pendingPayload?.let { validateAccess(it) }
+    }
+
     fun onQrScanned(content: String) {
         if (_state.value is ScanState.Validating) return
 
         val now = Clock.System.now().toEpochMilliseconds()
         if (now - lastScanMs < 2_500) return
+        // Anti doble lectura: el mismo código no se procesa de nuevo durante 10 s.
+        if (content == lastContent && now - lastContentMs < 10_000) return
+        lastContent = content
+        lastContentMs = now
 
         if (_mode.value == ScanMode.PAY) {
             // QR de pago = "selector.firma" crudo — nunca JSON de QRPayload
@@ -93,20 +123,30 @@ class QRScannerViewModel(
             return
         }
 
-        if (now - payload.ts > 60_000) {
+        // Tolerancia de reloj entre dispositivos: 15 s extra de vigencia y 30 s de adelanto.
+        if (payload.ts - now > 30_000) {
+            showResult(ScanResult.Error("El reloj del teléfono del pasajero está desfasado"))
+            return
+        }
+        if (now - payload.ts > 75_000) {
             showResult(ScanResult.Expired)
             return
         }
 
         lastScanMs = now
+        validateAccess(payload)
+    }
+
+    private fun validateAccess(payload: QRPayload) {
         viewModelScope.launch {
             _state.value = ScanState.Validating
             val result = when (val r = repository.validateQr(payload)) {
                 is ApiResult.Success      -> ScanResult.Valid(r.data)
                 is ApiResult.HttpError    -> ScanResult.Error(r.message)
-                is ApiResult.NetworkError -> ScanResult.Error(r.message)
+                is ApiResult.NetworkError -> ScanResult.Offline("Sin conexión. No se validó el acceso.")
             }
             _state.value = ScanState.Scanning
+            pendingPayload = if (result is ScanResult.Offline) payload else null
             showResult(result)
         }
     }
@@ -118,9 +158,11 @@ class QRScannerViewModel(
             val result = when (val r = walletRepository.pay(qr)) {
                 is ApiResult.Success -> ScanResult.Charged(r.data)
                 is ApiResult.HttpError -> ScanResult.Error(r.message)
-                is ApiResult.NetworkError -> ScanResult.Error(r.message)
+                is ApiResult.NetworkError -> ScanResult.Offline("Sin conexión. El cobro no se confirmó: reintenta con el mismo QR.")
             }
             _state.value = ScanState.Scanning
+            // Solo un corte de red deja el QR pendiente; cualquier otro resultado es definitivo.
+            pendingPayQr = if (result is ScanResult.Offline) qr else null
             showResult(result)
             if (fromManual && result is ScanResult.Charged) _manualCode.value = ""
         }
@@ -130,6 +172,8 @@ class QRScannerViewModel(
         clearResultJob?.cancel()
         _lastResult.value = result
         lastScanMs = Clock.System.now().toEpochMilliseconds()
+        // El aviso de "sin red" permanece hasta reintentar o cancelar.
+        if (result is ScanResult.Offline) return
         clearResultJob = viewModelScope.launch {
             delay(3_500)
             _lastResult.value = null

@@ -1,5 +1,6 @@
 package com.vibra.bus.data.api
 
+import io.ktor.client.request.header
 import com.vibra.bus.data.model.IssueQrBody
 import com.vibra.bus.data.model.IssueQrData
 import com.vibra.bus.data.model.IssueQrResponse
@@ -57,6 +58,8 @@ class WalletApi(private val client: HttpClient) {
         val dto = try {
             client.post("$BASE_URL/qr/pay") {
                 contentType(ContentType.Application.Json)
+                // Mismo QR = misma clave: un reintento tras cortarse la red no puede cobrar dos veces.
+                header("Idempotency-Key", "qr-pay-" + qr.substringBefore('.'))
                 setBody(PayQrBody(qr))
             }.body<PayQrResponse>()
         } catch (e: ClientRequestException) {

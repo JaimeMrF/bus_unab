@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.security.ProtectedQrDisplay
 import androidx.compose.foundation.lazy.rememberLazyListState
 import com.vibra.bus.presentation.motion.ConfettiBurst
 import com.vibra.bus.presentation.motion.CountdownRing
@@ -179,6 +180,7 @@ class WalletScreen : Screen {
                             )
                             Spacer(Modifier.height(4.dp))
 
+                            if (payVisible) ProtectedQrDisplay()
                             if (!payVisible) {
                                 PrimaryButton(
                                     text = "Mostrar QR de pago",

@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.security.ProtectedQrDisplay
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
 import com.vibra.bus.presentation.motion.CountdownRing
@@ -82,6 +83,7 @@ class MyQRScreen : Screen {
         )
 
         LaunchedEffect(Unit) { isVisible = true }
+        ProtectedQrDisplay()
 
         Scaffold(
             contentWindowInsets = WindowInsets(0),

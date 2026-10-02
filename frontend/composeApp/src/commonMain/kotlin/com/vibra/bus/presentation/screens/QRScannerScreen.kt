@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -203,7 +205,9 @@ class QRScannerScreen : Screen {
                     exit = slideOutVertically(targetOffsetY = { -it }),
                     modifier = Modifier.align(Alignment.TopCenter),
                 ) {
-                    lastResult?.let { ResultBanner(it) }
+                    lastResult?.let {
+                        ResultBanner(it, onRetry = { viewModel.retryPending() }, onDismiss = { viewModel.dismissResult() })
+                    }
                 }
             }
         }
@@ -211,7 +215,7 @@ class QRScannerScreen : Screen {
 }
 
 @Composable
-private fun ResultBanner(result: ScanResult) {
+private fun ResultBanner(result: ScanResult, onRetry: () -> Unit, onDismiss: () -> Unit) {
     val (icon, title, subtitle, bgColor) = when (result) {
         is ScanResult.Valid -> BannerData(
             icon = Icons.Default.CheckCircle,
@@ -239,18 +243,24 @@ private fun ResultBanner(result: ScanResult) {
         )
         is ScanResult.Error -> BannerData(
             icon = Icons.Default.Error,
-            title = "Error de validación",
+            title = "No se pudo completar",
             subtitle = result.message,
             color = MaterialTheme.colorScheme.error,
+        )
+        is ScanResult.Offline -> BannerData(
+            icon = Icons.Default.Error,
+            title = "Sin conexión",
+            subtitle = result.message,
+            color = MaterialTheme.appColors.warning,
         )
     }
 
     // Texto siempre legible (AA) sobre el color semántico de la marca
     val onBanner = readableOn(bgColor)
+    Column(modifier = Modifier.fillMaxWidth().background(bgColor)) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(bgColor)
             .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Assertive }
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -276,6 +286,20 @@ private fun ResultBanner(result: ScanResult) {
                 )
             }
         }
+    }
+    if (result is ScanResult.Offline) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("Cancelar", color = onBanner)
+            }
+            TextButton(onClick = onRetry, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("Reintentar", color = onBanner, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
     }
 }
 

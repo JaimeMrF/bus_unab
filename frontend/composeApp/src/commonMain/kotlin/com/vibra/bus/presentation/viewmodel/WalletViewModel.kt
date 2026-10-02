@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.viewmodel
 
+import kotlin.time.TimeSource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vibra.bus.data.model.IssueQrData
@@ -109,35 +110,49 @@ class WalletViewModel(
         startPayRotation(busId)
     }
 
+    /**
+     * Rota el QR: pide uno nuevo cuando faltan [RENEW_MARGIN_S] segundos para expirar (el viejo
+     * sigue visible hasta que llega el nuevo). El tiempo restante se mide con reloj monotónico,
+     * no sumando delays, así que no se desfasa si la app se pausa o el reloj del equipo cambia.
+     * Si emitir falla se reintenta con espera exponencial (5, 10, 20... máx. 60 s).
+     */
     private fun startPayRotation(busId: Int?) {
         payQrJob?.cancel()
         payQrJob = viewModelScope.launch {
+            var failures = 0
             while (payVisible) {
                 when (val r = repository.issueQr(busId)) {
                     is ApiResult.Success -> {
+                        failures = 0
                         _payQr.value = r.data
-                        var ttl = r.data.ttlSeconds.coerceAtLeast(5)
-                        _payCountdown.value = ttl
-                        while (ttl > 1 && payVisible) {
-                            delay(1_000)
-                            ttl -= 1
-                            _payCountdown.value = ttl
+                        val ttl = r.data.ttlSeconds.coerceAtLeast(RENEW_MARGIN_S + 5)
+                        val issued = TimeSource.Monotonic.markNow()
+                        var remaining = ttl
+                        _payCountdown.value = remaining
+                        while (payVisible && remaining > RENEW_MARGIN_S) {
+                            delay(250)
+                            remaining = ttl - issued.elapsedNow().inWholeSeconds.toInt()
+                            if (remaining != _payCountdown.value) _payCountdown.value = remaining.coerceAtLeast(0)
                         }
                     }
                     else -> {
-                        // issueQr falla (p.ej. tarifa no configurada / sin saldo wallet):
-                        // mostrar causa y reintentar suave para no martillar el endpoint.
-                        _payQr.value = null
+                        failures++
+                        // Con un QR vigente se mantiene visible; solo se limpia si ya expiró.
+                        if (_payCountdown.value <= 0) _payQr.value = null
                         _message.value = when (r) {
                             is ApiResult.HttpError    -> r.message
-                            is ApiResult.NetworkError -> r.message
+                            is ApiResult.NetworkError -> "Sin conexión. Reintentando…"
                             else -> "No se pudo generar el QR"
                         }
-                        delay(5_000)
+                        delay(minOf(60_000L, 5_000L shl (failures - 1).coerceAtMost(4)))
                     }
                 }
             }
         }
+    }
+
+    private companion object {
+        const val RENEW_MARGIN_S = 5
     }
 
     val transactions: List<WalletTx>
