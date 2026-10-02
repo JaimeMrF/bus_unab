@@ -114,5 +114,5 @@ class BrandRepository(
     }
 
     private fun normalizeSlug(raw: String): String =
-        raw.trim().filter { (it in 'a'..'z') || (it in 'A'..'Z') || (it in '0'..'9') || it == '-' || it == '_' }.take(60)
+        raw.trim().lowercase().filter { (it in 'a'..'z') || (it in 'A'..'Z') || (it in '0'..'9') || it == '-' || it == '_' }.take(60)
 }

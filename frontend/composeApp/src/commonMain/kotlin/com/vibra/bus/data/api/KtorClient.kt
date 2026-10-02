@@ -46,7 +46,9 @@ fun createKtorClient(settings: AppSettings): HttpClient {
         }
         install(Logging) {
             logger = Logger.SIMPLE
-            level = LogLevel.BODY
+            // Solo debug y sin cuerpos: en release no se registra nada (tokens, id_token, datos personales).
+            level = if (ALLOW_CLEARTEXT) LogLevel.INFO else LogLevel.NONE
+            sanitizeHeader { header -> header.equals("Authorization", ignoreCase = true) }
         }
     }
 }

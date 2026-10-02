@@ -19,15 +19,11 @@ import com.vibra.bus.presentation.theme.LocalBrand
 import com.vibra.bus.presentation.components.BrandMascot
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.*
@@ -35,11 +31,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -47,10 +39,8 @@ import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.viewmodel.WaitingBusViewModel
 import com.vibra.bus.util.AppSettings
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import vibrabus.composeapp.generated.resources.Res
 
 expect fun startBusTracking(plate: String, stopLat: Double, stopLng: Double, stopName: String)
 expect fun stopBusTracking()

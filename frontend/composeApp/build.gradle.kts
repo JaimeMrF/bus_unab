@@ -153,7 +153,10 @@ android {
         buildConfigField("String", "BASE_URL_IOS", "\"$apiBaseUrl\"")
         // Slug de la organización por defecto de este build; vacío = pedir el código al primer arranque.
         buildConfigField("String", "DEFAULT_ORG_SLUG", "\"${project.findProperty("defaultOrgSlug") ?: ""}\"")
-        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"887389827022-oj7di7remsi2k1avdgqp8asf65rlu2h3.apps.googleusercontent.com\"")
+        // Web client id de Google por build: -PgoogleServerClientId=... (fallback: el actual)
+        val googleClientId = (project.findProperty("googleServerClientId") as String?)
+            ?: "887389827022-oj7di7remsi2k1avdgqp8asf65rlu2h3.apps.googleusercontent.com"
+        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"$googleClientId\"")
         
         val properties = Properties()
         val localPropertiesFile = rootProject.file("local.properties")
