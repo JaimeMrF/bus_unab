@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TransportadoraResource\Pages;
+use App\Filament\Support\BrandingForm;
 use App\Models\Transportadora;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -20,12 +21,18 @@ use Filament\Tables\Table;
 class TransportadoraResource extends Resource
 {
     protected static ?string $model = Transportadora::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-building-office-2';
+
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
+
     protected static ?string $navigationLabel = 'Transportadoras';
-    protected static ?string $modelLabel      = 'Transportadora';
+
+    protected static ?string $modelLabel = 'Transportadora';
+
     protected static ?string $pluralModelLabel = 'Transportadoras';
+
     protected static ?string $navigationGroup = 'SaaS';
-    protected static ?int    $navigationSort  = 1;
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -71,15 +78,15 @@ class TransportadoraResource extends Resource
             ])->columns(2),
 
             // Branding white-label (mismo esquema que el panel /empresa).
-            ...\App\Filament\Support\BrandingForm::schema(),
+            ...BrandingForm::schema(),
 
             Forms\Components\Section::make('SaaS')->schema([
                 Forms\Components\Select::make('plan')
                     ->label('Plan')
                     ->options([
-                        'trial'      => 'Trial',
-                        'basico'     => 'Básico',
-                        'pro'        => 'Pro',
+                        'trial' => 'Trial',
+                        'basico' => 'Básico',
+                        'pro' => 'Pro',
                         'enterprise' => 'Enterprise',
                     ])
                     ->default('basico')
@@ -113,9 +120,9 @@ class TransportadoraResource extends Resource
                     ->badge()
                     ->color(fn ($state) => match ($state) {
                         'enterprise' => 'primary',
-                        'pro'        => 'info',
-                        'basico'     => 'success',
-                        default      => 'gray',
+                        'pro' => 'info',
+                        'basico' => 'success',
+                        default => 'gray',
                     })
                     ->formatStateUsing(fn ($state) => strtoupper((string) $state)),
 
@@ -145,9 +152,9 @@ class TransportadoraResource extends Resource
                 Tables\Filters\SelectFilter::make('plan')
                     ->label('Plan')
                     ->options([
-                        'trial'      => 'Trial',
-                        'basico'     => 'Básico',
-                        'pro'        => 'Pro',
+                        'trial' => 'Trial',
+                        'basico' => 'Básico',
+                        'pro' => 'Pro',
                         'enterprise' => 'Enterprise',
                     ]),
             ])
@@ -165,9 +172,9 @@ class TransportadoraResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListTransportadoras::route('/'),
+            'index' => Pages\ListTransportadoras::route('/'),
             'create' => Pages\CreateTransportadora::route('/create'),
-            'edit'   => Pages\EditTransportadora::route('/{record}/edit'),
+            'edit' => Pages\EditTransportadora::route('/{record}/edit'),
         ];
     }
 }

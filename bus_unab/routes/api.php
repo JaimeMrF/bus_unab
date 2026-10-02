@@ -5,8 +5,8 @@ use App\Http\Controllers\Api\V1\BrandingController;
 use App\Http\Controllers\Api\V1\BusController;
 use App\Http\Controllers\Api\V1\BusRequestController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
-use App\Http\Controllers\Api\V1\PointOfInterestController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\PointOfInterestController;
 use App\Http\Controllers\Api\V1\QrController;
 use App\Http\Controllers\Api\V1\StopController;
 use App\Http\Controllers\Api\V1\WalletController;
@@ -57,12 +57,12 @@ Route::prefix('v1')->group(function () {
         // Auth
         Route::prefix('auth')->middleware('throttle:30,1')->group(function () {
             Route::post('logout', [AuthController::class, 'logout']); // POST /api/v1/auth/logout
-            Route::get('me',      [AuthController::class, 'me']);     // GET  /api/v1/auth/me
+            Route::get('me', [AuthController::class, 'me']);     // GET  /api/v1/auth/me
         });
 
         // Token FCM — 5 registros por minuto máximo
         Route::prefix('device-token')->middleware('throttle:5,1')->group(function () {
-            Route::post('/',   [DeviceTokenController::class, 'store']);   // POST   /api/v1/device-token
+            Route::post('/', [DeviceTokenController::class, 'store']);   // POST   /api/v1/device-token
             Route::delete('/', [DeviceTokenController::class, 'destroy']); // DELETE /api/v1/device-token
         });
 
@@ -70,11 +70,11 @@ Route::prefix('v1')->group(function () {
         // tenant.scope: miembros de una transportadora solo ven SU flota (S3.3.3)
         Route::prefix('buses')->middleware('tenant.scope')->group(function () {
             Route::middleware('throttle:60,1')->group(function () {
-                Route::get('/',               [BusController::class, 'index']);              // GET  /api/v1/buses
-                Route::get('catalog',         [BusController::class, 'catalog']);           // GET  /api/v1/buses/catalog
-                Route::get('{plate}',         [BusController::class, 'show']);              // GET  /api/v1/buses/RUTA1
-                Route::get('{plate}/stops',   [StopController::class, 'byBus']);            // GET  /api/v1/buses/RUTA1/stops
-                Route::get('{plate}/route',   [BusController::class, 'route']);             // GET  /api/v1/buses/RUTA1/route
+                Route::get('/', [BusController::class, 'index']);              // GET  /api/v1/buses
+                Route::get('catalog', [BusController::class, 'catalog']);           // GET  /api/v1/buses/catalog
+                Route::get('{plate}', [BusController::class, 'show']);              // GET  /api/v1/buses/RUTA1
+                Route::get('{plate}/stops', [StopController::class, 'byBus']);            // GET  /api/v1/buses/RUTA1/stops
+                Route::get('{plate}/route', [BusController::class, 'route']);             // GET  /api/v1/buses/RUTA1/route
                 Route::get('{plate}/occupancy', [BusRequestController::class, 'occupancy']); // GET  /api/v1/buses/RUTA1/occupancy
             });
 
@@ -97,8 +97,8 @@ Route::prefix('v1')->group(function () {
 
         // Solicitudes de bus (aforo) — 20 solicitudes por minuto máximo
         Route::prefix('requests')->middleware(['throttle:20,1', 'tenant.scope'])->group(function () {
-            Route::get('/',        [BusRequestController::class, 'myRequests']); // GET    /api/v1/requests
-            Route::post('/',       [BusRequestController::class, 'store']);      // POST   /api/v1/requests
+            Route::get('/', [BusRequestController::class, 'myRequests']); // GET    /api/v1/requests
+            Route::post('/', [BusRequestController::class, 'store']);      // POST   /api/v1/requests
             Route::delete('{bus}', [BusRequestController::class, 'cancel']);     // DELETE /api/v1/requests/{busId}
         });
 

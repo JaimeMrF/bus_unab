@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\TransportadoraFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Transportadora extends Model
 {
-    /** @use HasFactory<\Database\Factories\TransportadoraFactory> */
+    /** @use HasFactory<TransportadoraFactory> */
     use HasFactory, SoftDeletes;
 
     protected $fillable = [

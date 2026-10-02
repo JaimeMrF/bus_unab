@@ -58,7 +58,7 @@ class AuthController extends BaseController
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email'    => 'required|string|email',
+            'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
 
@@ -88,8 +88,8 @@ class AuthController extends BaseController
     public function register(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|max:190|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:190|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'organization' => 'nullable|string|max:60',
         ]);
@@ -107,10 +107,10 @@ class AuthController extends BaseController
         }
 
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
+            'name' => $data['name'],
+            'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role'     => 'pasajero',
+            'role' => 'pasajero',
             'transportadora_id' => $organizationId,
         ]);
 
@@ -126,8 +126,8 @@ class AuthController extends BaseController
     {
         return $this->success([
             'access_token' => $token,
-            'token_type'   => 'Bearer',
-            'user'         => $this->userPayload($user),
+            'token_type' => 'Bearer',
+            'user' => $this->userPayload($user),
         ], 'Autenticación exitosa');
     }
 
@@ -155,11 +155,11 @@ class AuthController extends BaseController
     private function userPayload(User $user): array
     {
         return [
-            'id'     => $user->id,
-            'name'   => $user->name,
-            'email'  => $user->email,
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
             'avatar' => $user->avatar,
-            'role'   => $user->role,
+            'role' => $user->role,
             'organization_slug' => $user->transportadora_id
                 ? Transportadora::whereKey($user->transportadora_id)->value('slug')
                 : null,
