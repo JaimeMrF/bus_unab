@@ -198,9 +198,14 @@ class BrandingValidationTest extends TestCase
 
         $rules = BrandingService::imageRules();
 
-        $fakePng = UploadedFile::fake()->createWithContent('logo.png', '<?php echo 1; ?>');
-        $big = UploadedFile::fake()->image('big.png')->size(1025);
-        $ok = UploadedFile::fake()->image('ok.png')->size(100);
+        // UploadedFile::fake() deduce el mime por la extensión; usamos un archivo real para que cuente el mime real.
+        $tmp = tempnam(sys_get_temp_dir(), 'brand');
+        file_put_contents($tmp, '<?php echo 1; ?>');
+        $fakePng = new UploadedFile($tmp, 'logo.png', 'image/png', null, true);
+        // PNG 1x1 real (sin GD, que no está habilitado en todos los entornos).
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        $big = UploadedFile::fake()->createWithContent('big.png', $png.str_repeat("\0", 1025 * 1024));
+        $ok = UploadedFile::fake()->createWithContent('ok.png', $png);
 
         $this->assertTrue(Validator::make(['f' => $fakePng], ['f' => $rules])->fails(), 'mime falso');
         $this->assertTrue(Validator::make(['f' => $big], ['f' => $rules])->fails(), '>1MB');
