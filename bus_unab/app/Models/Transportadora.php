@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\BrandingService;
 use Database\Factories\TransportadoraFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -76,6 +77,12 @@ class Transportadora extends Model
         static::saved($forget);
         static::deleted($forget);
         static::restored($forget);
+    }
+
+    /** Slug siempre en minúsculas: búsqueda consistente entre MySQL y SQLite. */
+    protected function slug(): Attribute
+    {
+        return Attribute::set(fn (?string $value) => $value === null ? null : strtolower(trim($value)));
     }
 
     public function buses(): HasMany

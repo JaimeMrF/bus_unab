@@ -70,4 +70,17 @@ class BrandingCacheTest extends TestCase
         Transportadora::create(['nombre' => 'F', 'slug' => 'futuro']);
         $this->getJson('/api/v1/branding/futuro')->assertOk();
     }
+
+    public function test_slug_lookup_is_case_insensitive_and_stored_lowercase(): void
+    {
+        Transportadora::create(['nombre' => 'Acme', 'slug' => 'ACME']);
+
+        $this->assertDatabaseHas('transportadoras', ['slug' => 'acme']);
+
+        $lower = $this->getJson('/api/v1/branding/acme')->assertOk();
+        $upper = $this->getJson('/api/v1/branding/ACME')->assertOk();
+
+        $this->assertSame($lower->getContent(), $upper->getContent());
+        $this->assertSame('acme', $upper->json('data.slug'));
+    }
 }

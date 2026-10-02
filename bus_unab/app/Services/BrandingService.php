@@ -88,6 +88,7 @@ class BrandingService
     /** Payload público cacheado por slug; null si no existe o está inactivo (no se cachea). */
     public function cachedPayload(string $slug): ?array
     {
+        $slug = strtolower($slug);
         $key = self::cacheKey($slug);
 
         if (($hit = Cache::get($key)) !== null) {
