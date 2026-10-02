@@ -48,7 +48,7 @@ return [
     */
 
     // Tokens expiran en 43200 minutos (30 días). Ajustar según política institucional.
-    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 43200),
+    'expiration' => env('SANCTUM_EXPIRATION', env('SANCTUM_TOKEN_EXPIRATION', 43200)),
 
     /*
     |--------------------------------------------------------------------------
