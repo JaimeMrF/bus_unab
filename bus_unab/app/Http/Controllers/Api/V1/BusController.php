@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Bus;
 use App\Services\GpsMobileService;
+use App\Support\DriverLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -48,11 +49,7 @@ class BusController extends BaseController
             'heading' => 'required|integer|between:0,360',
         ]);
 
-        Cache::put("driver_location_{$plate}", [
-            'latitude' => (float) $validated['lat'],
-            'longitude' => (float) $validated['lng'],
-            'heading' => (int) $validated['heading'],
-        ], 60);
+        DriverLocation::put($plate, (float) $validated['lat'], (float) $validated['lng'], (int) $validated['heading']);
 
         return $this->success();
     }
@@ -66,7 +63,7 @@ class BusController extends BaseController
     {
         $plate = strtoupper(preg_replace('/[^A-Z0-9]/', '', $plate));
 
-        Cache::forget("driver_location_{$plate}");
+        DriverLocation::forget($plate);
 
         return $this->success();
     }

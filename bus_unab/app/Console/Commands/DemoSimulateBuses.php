@@ -3,10 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Models\Bus;
+use App\Support\DriverLocation;
 use App\Support\RouteWalker;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 
 class DemoSimulateBuses extends Command
 {
@@ -15,10 +15,7 @@ class DemoSimulateBuses extends Command
         {--speed=40 : Velocidad simulada en km/h}
         {--ticks=0 : Número de actualizaciones antes de terminar (0 = infinito, Ctrl+C para salir)}';
 
-    protected $description = 'Mueve los buses demo por su ruta (ida y vuelta) publicando posición y rumbo en driver_location_{PLACA}';
-
-    /** Debe superar el intervalo máximo razonable; el bus "desaparece" si el simulador se detiene. */
-    private const LOCATION_TTL = 60;
+    protected $description = 'Mueve los buses demo por su ruta (ida y vuelta) publicando posición y rumbo con App\Support\DriverLocation';
 
     public function handle(): int
     {
@@ -60,7 +57,7 @@ class DemoSimulateBuses extends Command
         while ($maxTicks === 0 || $tick < $maxTicks) {
             foreach ($walkers as $plate => &$state) {
                 $pos = $state['walker']->at($state['distance']);
-                $this->publish($plate, $pos);
+                DriverLocation::put($plate, $pos['lat'], $pos['lng'], $pos['heading'], (int) round($speed));
                 $state['distance'] += $step;
             }
             unset($state);
@@ -72,17 +69,5 @@ class DemoSimulateBuses extends Command
         }
 
         return self::SUCCESS;
-    }
-
-    /** Publica ambos juegos de claves: el API de conductor usa latitude/longitude y el mapa admin lat/lng. */
-    private function publish(string $plate, array $pos): void
-    {
-        Cache::put("driver_location_{$plate}", [
-            'latitude' => $pos['lat'],
-            'longitude' => $pos['lng'],
-            'lat' => $pos['lat'],
-            'lng' => $pos['lng'],
-            'heading' => $pos['heading'],
-        ], self::LOCATION_TTL);
     }
 }

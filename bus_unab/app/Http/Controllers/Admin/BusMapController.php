@@ -7,9 +7,9 @@ use App\Models\Bus;
 use App\Models\BusRequest;
 use App\Models\Stop;
 use App\Services\GpsMobileService;
+use App\Support\DriverLocation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class BusMapController extends Controller
 {
@@ -68,17 +68,17 @@ class BusMapController extends Controller
             }
 
             // Sobreescribir con la ubicación del teléfono del conductor si está activa
-            $driverLoc = Cache::get("driver_location_{$bus->plate}");
+            $driverLoc = DriverLocation::get($bus->plate);
             if ($driverLoc) {
                 if ($gps) {
-                    $gps['latitude'] = $driverLoc['lat'];
-                    $gps['longitude'] = $driverLoc['lng'];
+                    $gps['latitude'] = $driverLoc['latitude'];
+                    $gps['longitude'] = $driverLoc['longitude'];
                     $gps['heading'] = $driverLoc['heading'];
                 } else {
                     $gps = [
-                        'latitude' => $driverLoc['lat'],
-                        'longitude' => $driverLoc['lng'],
-                        'speed_kmh' => 0,
+                        'latitude' => $driverLoc['latitude'],
+                        'longitude' => $driverLoc['longitude'],
+                        'speed_kmh' => $driverLoc['speed_kmh'] ?? 0,
                         'heading' => $driverLoc['heading'],
                         'address' => null,
                         'driver' => null,
