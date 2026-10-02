@@ -126,7 +126,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
             topBar = { AppTopBar(
                 title = "Siguiendo bus",
                 subtitle = bus?.name ?: plate,
-                onBack = cancelTracking,
+                onBack = { cancelTracking () },
                 windowInsets = TopAppBarDefaults.windowInsets,
             ) }
         ) { padding ->
@@ -271,7 +271,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 },
                             )
                             TextButton(
-                                onClick = cancelTracking,
+                                onClick = { cancelTracking () },
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                             ) {
                                 Text(

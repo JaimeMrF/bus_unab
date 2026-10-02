@@ -26,7 +26,7 @@ fun materialShapes(scale: Float) = Shapes(
 )
 
 /** Formas semánticas de la app; todas escalan con la marca. */
-class AppShapeSet(scale: Float) {
+class AppShapeSet(private val scale: Float) {
     private fun r(dp: Int): Dp = (dp * scale).dp
     private fun round(dp: Int) = RoundedCornerShape(r(dp))
 
