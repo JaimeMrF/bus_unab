@@ -16,6 +16,20 @@ bus_unab/
 
 ---
 
+## ⚡ Prueba rápida (demo local)
+
+```powershell
+.\scripts\dev-up.ps1 -Simulate     # Linux/macOS: scripts/dev-up.sh --simulate
+```
+Instala dependencias, prepara datos demo (orgs `metrobus`, `campus`, `logistica`; clave `Demo12345!`), levanta la API en `http://<IP_LAN>:8000` e imprime el comando para instalar la app:
+
+```
+./gradlew :composeApp:installDebug -PapiBaseUrl=http://<IP>:8000/api/v1 -PdefaultOrgSlug=metrobus
+```
+Flags: `-Fresh` (recrea BD), `-Stop`, `-Port`. Detalle y credenciales en [docs/DEMO.md](docs/DEMO.md). Solo para desarrollo.
+
+---
+
 ## ⚙️ BACKEND — Laravel
 
 ### Requisitos previos
