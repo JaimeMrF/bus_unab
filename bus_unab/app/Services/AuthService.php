@@ -63,6 +63,14 @@ class AuthService
                 return null;
             }
 
+            // Verificar que el emisor sea Google
+            if (! in_array($payload['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true)) {
+                Log::warning('AuthService: token Google con iss incorrecto', [
+                    'received' => substr((string) ($payload['iss'] ?? ''), 0, 40),
+                ]);
+                return null;
+            }
+
             // Verificar que el token no está expirado (Google lo valida, pero doble check)
             if (isset($payload['exp']) && $payload['exp'] < time()) {
                 return null;

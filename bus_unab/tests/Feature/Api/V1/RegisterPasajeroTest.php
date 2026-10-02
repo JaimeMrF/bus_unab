@@ -88,6 +88,7 @@ class RegisterPasajeroTest extends TestCase
                 'name'    => 'Pepito Ciudad',
                 'picture' => null,
                 'aud'     => 'test-client.apps.googleusercontent.com',
+                'iss' => 'https://accounts.google.com',
                 'exp'     => time() + 3600,
             ], 200),
         ]);

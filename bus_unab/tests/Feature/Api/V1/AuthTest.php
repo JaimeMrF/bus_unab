@@ -112,6 +112,7 @@ class AuthTest extends TestCase
                 'name'    => 'Alumno Test',
                 'picture' => 'https://example.com/photo.jpg',
                 'aud'     => 'test-client.apps.googleusercontent.com',
+                'iss' => 'https://accounts.google.com',
                 'exp'     => time() + 3600,
             ], 200),
         ]);
@@ -145,6 +146,7 @@ class AuthTest extends TestCase
                 'name'    => 'Admin UNAB',
                 'picture' => null,
                 'aud'     => 'test-client.apps.googleusercontent.com',
+                'iss' => 'https://accounts.google.com',
                 'exp'     => time() + 3600,
             ], 200),
         ]);
@@ -193,6 +195,7 @@ class AuthTest extends TestCase
                 'email' => 'externo@gmail.com',
                 'name'  => 'Usuario Externo',
                 'aud'   => 'test-client.apps.googleusercontent.com',
+                'iss' => 'https://accounts.google.com',
                 'exp'   => time() + 3600,
             ], 200),
         ]);
@@ -217,6 +220,7 @@ class AuthTest extends TestCase
                 'email' => 'estudiante@unab.edu.co',
                 'name'  => 'Estudiante UNAB',
                 'aud'   => 'test-client.apps.googleusercontent.com',
+                'iss' => 'https://accounts.google.com',
                 'exp'   => time() + 3600,
             ], 200),
         ]);
