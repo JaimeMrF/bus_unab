@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Resources\BusResource;
 use App\Filament\Resources\StopResource;
 use App\Filament\Resources\UserResource;
+use App\Filament\Tenant\Pages\BrandingPage;
 use App\Filament\Tenant\Resources\FareResource;
 use App\Http\Middleware\EnsureTenantScope;
 use Filament\Http\Middleware\Authenticate;
@@ -53,6 +54,7 @@ class TenantPanelProvider extends PanelProvider
             ])
             ->pages([
                 Pages\Dashboard::class,
+                BrandingPage::class,
             ])
             ->widgets([
                 Widgets\AccountWidget::class,
