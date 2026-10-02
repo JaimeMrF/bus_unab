@@ -166,7 +166,7 @@ class WalletScreen : Screen {
                             } else {
                                 val qr = payQr
                                 if (qr == null) {
-                                    ShimmerBox(Modifier.size(220.dp), height = 220.dp)
+                                    ShimmerBox(height = 220.dp)
                                     Text(
                                         "Generando código…",
                                         style = MaterialTheme.typography.bodySmall,

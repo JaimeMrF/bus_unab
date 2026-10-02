@@ -1,53 +1,64 @@
-# DESIGN — BUCARATRANSIT · Mundo visual "Leopardo de Bucaramanga"
+# DESIGN — Sistema visual white-label
 
-> World creado el 20-sep-2026 tras el pivote de UNAB (búho/azul) → BUCARATRANSIT (leopardo/dorado).
-> Reemplaza el mundo visual académico anterior; no es un refinamiento de él.
+Sistema visual **neutro y themable**: ninguna marca, color, mascota ni tipografía de una
+organización vive en el código. Todo aspecto de marca llega en runtime como `BrandConfig`
+(`GET /api/v1/branding/{slug}`) y `AppTheme` lo traduce a Material 3.
 
-## Idea central
-Bucaramanga es la "Ciudad de los Parques" y el leopardo/tigrillo santandereano es su
-emblema. La app se siente como la ciudad: **oro cálido del leopardo**, **espresso** (las
-rosetas / noche tropical) y **verde de los parques**. Operate: movilidad clara y de
-alto contraste, con la personalidad del leopardo en los detalles (mascota, estados vacíos,
-directividad del bus).
+## Principios
+1. **Neutral por defecto, de marca por configuración.** Sin `BrandConfig` la app usa el tema
+   neutro embebido (`BrandConfig.Neutral`): azul pizarra, sin logo ni mascota.
+2. **Contraste primero (WCAG AA).** El cliente garantiza ≥4.5:1 (texto) y ≥3:1 (bordes) con
+   `ensureContrast()`, aunque el tenant elija una paleta pobre.
+3. **Calma visual.** Superficies tonales con borde fino en lugar de sombras pesadas; el
+   color de marca se reserva para la acción principal y el estado activo.
+4. **Movimiento con propósito.** Entradas escalonadas cortas, escala sutil al presionar;
+   nada decorativo en bucle salvo el shimmer de carga.
+5. **Todos los estados diseñados:** carga (shimmer), vacío, error con reintento, sin conexión.
 
-## Paleta (tokens en `theme/Color.kt`)
-- `LeopardGold  #E8A33D` — primario, dorado.
-- `LeopardEspresso #17130E` — fondo oscuro (rosetas), glass oscuro.
-- `LeopardSand  #FDF8F0` — fondo claro (arena cálida).
-- `ParqueGreen  #3D6B4F` — secundario, verde parques (acento).
-- Errores rojos, ocupación verde/ámbar/rojo (sin cambios).
-
-### Luz (día, uso al aire libre soleado)
-Fondo arena cálido, primario dorado, verde parques como secundario, texto #211C14 (>4.5:1).
-
-### Oscuro (noche, a bordo)
-Fondo espresso #17130E, primario dorado, verde claro #8FD49F secundario, texto #ECE3D4.
-
-## Mascota — sistema de 9 expresiones
-Archivos `leopardo_*.webp` (800×800, fondo transparente) en `composeResources/drawable/`:
-
-| Recurso | Uso |
+## Tokens (`presentation/theme/`)
+| Archivo | Contenido |
 |---|---|
-| `leopardo_saludo` | Login + Mi QR |
-| `leopardo_curioso` | Vacío por defecto / Home / Lista paradas |
-| `leopardo_triste` | Estados de error |
-| `leopardo_triste_espera` | Mis viajes (sin viajes) |
-| `leopardo_celular` | Notificaciones / Esperando bus |
-| `leopardo_mapa` | Buscar ruta / Esperando bus |
-| `leopardo_conductor` | Modo conductor |
-| `leopardo_celebrando` · `leopardo_ok` | Reserva (sin referencia aún) |
+| `Color.kt` | `BrandPalette → ColorScheme` (claro/oscuro), `AppColors` (glass, éxito, aviso, estados de bus), `contrastRatio`, `readableOn`, `ensureContrast` |
+| `Typography.kt` | Escala M3 completa (`display`…`label`) sobre la familia de marca: `poppins` (embebida), `inter`/`system` (sans del sistema) |
+| `Shape.kt` | `AppShape.*` semántico (Card, Chip, Sheet, Input…) escalado por `corner_radius` (`sm` 0.6×, `md` 1×, `lg` 1.4×) |
+| `Tokens.kt` | `Spacing` (4/8/12/16/24/32/48), `Elevation`, `Sizing.touchTarget = 48dp`, `Motion` (120/220/360 ms, curvas) |
+| `Theme.kt` | `AppTheme(brand, darkTheme)`, `LocalBrand`, `MaterialTheme.appColors` |
 
-## Bus en el mapa
-2D top-down dibujado con Canvas Compose (`MapViewComposable.android.kt`, `BusIconOverlay`),
-rota por `heading`. Carrocería dorada en claro / espresso en oscuro, franja alternada,
-flecha de dirección. El modelo 3D y las vistas por ángulo están fuera del repo.
+### Derivación de color desde las 11 claves de marca
+`primary`, `on_primary`, `secondary`, `on_secondary`, `background`, `surface`, `on_surface`,
+`accent`, `success`, `warning`, `error` (hex `#RRGGBB`, por modo). El resto del esquema se
+deriva: contenedores = mezcla de color con `surface` (86 % claro / 78 % oscuro),
+`surfaceContainer*` = mezclas de `surface` hacia `onSurface`, `outline` con ≥3:1,
+`onSurfaceVariant` con ≥4.5:1. `accent` → `tertiary`; mapa y ruta usan `primary`.
 
-## Tipo / forma / glass
-- `Theme.kt` con Material 3, `Typography.kt`/`Shape.kt` existentes (no se tocaron).
-- Glassmorphism cálido: `GlassColors` (espresso glass en oscuro).
-- Login: gradiente primario→primarioContainer, etiqueta "⭐ TODA BUCARAMANGA".
+### Modo claro / oscuro
+Preferencia del usuario `Sistema` (por defecto) · `Claro` · `Oscuro`
+(`AppSettings.themeMode`). La paleta de cada modo la define el tenant.
 
-## Prohibiciones (craft floor)
-- Sin morado/azul universitario UNAB (eliminado de theme, grádientes, notificaciones, mapa).
-- Sin emoji supliendo iconografía real del sistema; el ⭐ es etiqueta de marca existente.
-- Contraste texto ≥4.5:1 en cuerpo; alto contraste en los dos modos.
+## Componentes (`presentation/components/`)
+- **Botones:** `PrimaryButton`, `SecondaryButton`, `GoogleSignInButton` (≥52 dp, estado de carga anunciado, escala al presionar sin recomposición).
+- **Campos:** `AppTextField` (etiqueta persistente, error asociado, ≥56 dp).
+- **Superficies:** `AppCard`, `GlassPanel` (vidrio sutil sobre el mapa), `StatusPill` (color + texto + punto "en vivo"), `ScreenHeader`.
+- **Navegación:** `AppTopBar` (superficie neutra, título como heading), `BottomNavBar` (M3 `NavigationBar`, etiquetas siempre visibles; oculta Wallet/Escáner según `features`).
+- **Marca:** `BrandLogo`, `BrandMascot`, `NeutralBadge` (Coil por URL con placeholder neutro).
+- **Estados:** `EmptyState`, `ShimmerBox/ShimmerList`, `Staggered` (entrada escalonada).
+
+## Accesibilidad
+- Áreas táctiles ≥48 dp (`Sizing.touchTarget`); filas de lista ≥64 dp.
+- Cada acción de gesto (deslizar para cancelar/eliminar) tiene alternativa con botón.
+- Estado nunca solo por color: siempre texto o icono (`StatusPill`, banners del escáner).
+- `contentDescription` en iconos accionables; decorativos con `null`. Encabezados con `heading()`.
+- Cambios dinámicos (cuenta atrás de QR, validación de escaneo, "bus llegando") usan `liveRegion`.
+- El QR siempre se dibuja sobre blanco para máxima legibilidad de lectura.
+
+## Rendimiento Compose
+- Animaciones de presión y shimmer se leen en la fase de dibujo (`graphicsLayer`, `drawWithCache`): no recomponen.
+- `remember` de `ColorScheme`/`Shapes`/`Typography` keyed por paleta/modo/escala.
+- Listas con `key` estable y `animateItem()`; sin `composed {}` en modificadores.
+- Un solo `AppTheme` en la raíz; las pantallas anidadas heredan `CompositionLocal`.
+
+## Prohibiciones
+- Colores, nombres, logos, mascotas o emojis de una marca concreta en código o recursos.
+- `Color(0x…)` fuera de `theme/` (excepto negro/blanco funcionales: QR, sombras).
+- Texto sobre color de marca sin pasar por `readableOn`/`ensureContrast`.
+- Emojis como iconografía: usar iconos Material.
