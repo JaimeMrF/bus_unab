@@ -65,6 +65,18 @@ class BrandRepository(
         if (result is ApiResult.Success && result.data.version != _brand.value.version) apply(result.data)
     }
 
+    /**
+     * El backend es la fuente de verdad del tenant del usuario: si el slug de /auth/* difiere
+     * del activo, se adopta y se recarga la marca.
+     */
+    suspend fun adoptOrganization(slug: String?) {
+        val clean = slug?.let(::normalizeSlug).orEmpty()
+        if (clean.isEmpty() || clean == settings.orgSlug) return
+        settings.orgSlug = clean
+        val result = fetch(clean)
+        if (result is ApiResult.Success) apply(result.data)
+    }
+
     fun clearOrganization() {
         settings.orgSlug = ""
         settings.brandJson = ""

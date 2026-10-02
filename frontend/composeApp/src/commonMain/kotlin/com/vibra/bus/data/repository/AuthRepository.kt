@@ -11,11 +11,13 @@ import com.vibra.bus.util.AppSettings
 class AuthRepository(
     private val api: AuthApi,
     private val settings: AppSettings,
+    private val brandRepository: BrandRepository,
 ) {
     suspend fun login(email: String, password: String): ApiResult<AuthResponse> {
         return api.login(LoginRequest(email, password)).also { result ->
             if (result is ApiResult.Success) {
                 saveSession(result.data)
+                brandRepository.adoptOrganization(result.data.data?.organizationSlug ?: result.data.data?.user?.organizationSlug)
             }
         }
     }
@@ -24,6 +26,7 @@ class AuthRepository(
         return api.loginWithGoogle(idToken).also { result ->
             if (result is ApiResult.Success) {
                 saveSession(result.data)
+                brandRepository.adoptOrganization(result.data.data?.organizationSlug ?: result.data.data?.user?.organizationSlug)
             }
         }
     }
@@ -44,7 +47,9 @@ class AuthRepository(
         }
     }
 
-    suspend fun getMe(): ApiResult<MeResponse> = api.getMe()
+    suspend fun getMe(): ApiResult<MeResponse> = api.getMe().also { result ->
+        if (result is ApiResult.Success) brandRepository.adoptOrganization(result.data.data?.organizationSlug)
+    }
 
     suspend fun registerDeviceToken(fcmToken: String, platform: String): ApiResult<BasicResponse> =
         api.registerDeviceToken(fcmToken, platform)

@@ -50,7 +50,7 @@ val commonModule = module {
     single { BrandApi(get()) }
 
     // Repositories
-    single { AuthRepository(get(), get()) }
+    single { AuthRepository(get(), get(), get()) }
     single { BusRepository(get()) }
     single { StopRepository(get()) }
     single { RequestRepository(get(), get()) }

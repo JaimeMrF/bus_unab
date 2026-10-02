@@ -10,12 +10,15 @@ data class UserDto(
     val email: String,
     val avatar: String? = null,
     val role: String = "pasajero",
+    /** Opcional hasta que el backend lo publique; si difiere del slug activo se adopta. */
+    @SerialName("organization_slug") val organizationSlug: String? = null,
 )
 
 @Serializable
 data class AuthResponseData(
     val user: UserDto,
     @SerialName("access_token") val token: String,
+    @SerialName("organization_slug") val organizationSlug: String? = null,
 )
 
 @Serializable
