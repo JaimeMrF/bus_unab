@@ -1,0 +1,14 @@
+title = "bus_unab gitleaks"
+
+[extend]
+useDefault = true
+
+# Allowlist MINIMA: solo falsos positivos verificados. No añadir secretos reales.
+[allowlist]
+description = "Falsos positivos verificados"
+regexes = [
+  # Clave de ejemplo en fixtures de test (literal "Fake...OnlyTesting")
+  '''AIzaSyFakeApiKeyForTestingPurposesOnly''',
+  # OAuth Web Client ID de Google: identificador publico, no secreto
+  '''GOOGLE_SERVER_CLIENT_ID\s*[=:]\s*["']?[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com''',
+]
