@@ -14,7 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
+import com.vibra.bus.presentation.motion.LocalMotion
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
@@ -31,13 +32,16 @@ fun ShimmerBox(
     modifier: Modifier = Modifier,
     height: Dp = 80.dp,
 ) {
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1300, easing = LinearEasing), RepeatMode.Restart),
-        label = "shimmer_progress",
-    )
+    val env = LocalMotion.current
+    // Con "reducir movimiento" o gama baja el bloque queda estático (sin transición infinita).
+    val progress: State<Float>? = if (env.ambient) {
+        rememberInfiniteTransition(label = "shimmer").animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(1300, easing = LinearEasing), RepeatMode.Restart),
+            label = "shimmer_progress",
+        )
+    } else null
     val base = MaterialTheme.colorScheme.surfaceContainerHigh
     val shine = MaterialTheme.colorScheme.surfaceContainerHighest
 
@@ -50,7 +54,7 @@ fun ShimmerBox(
             .drawWithCache {
                 val w = size.width
                 onDrawBehind {
-                    val x = -w + progress * 3f * w
+                    val x = -w + (progress?.value ?: 0.4f) * 3f * w
                     drawRect(
                         Brush.linearGradient(
                             colors = listOf(base, shine, base),

@@ -93,12 +93,6 @@ data class StopSelectionScreen(val plate: String) : Screen {
         )
         val scope             = rememberCoroutineScope()
 
-        val sheetScale by animateFloatAsState(
-            targetValue    = 1f,
-            animationSpec  = tween(durationMillis = 400),
-            label          = "sheet_scale"
-        )
-
         LaunchedEffect(Unit) {
             viewModel.loadStops(plate)
             viewModel.loadBusDetail(plate)

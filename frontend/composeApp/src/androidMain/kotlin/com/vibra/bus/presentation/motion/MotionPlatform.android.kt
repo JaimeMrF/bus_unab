@@ -11,13 +11,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 
 @Composable
 actual fun platformAppActive(): Boolean {
-    val owner = LocalContext.current as? LifecycleOwner ?: return true
+    val owner = LocalLifecycleOwner.current
     var active by remember(owner) {
         mutableStateOf(owner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
     }

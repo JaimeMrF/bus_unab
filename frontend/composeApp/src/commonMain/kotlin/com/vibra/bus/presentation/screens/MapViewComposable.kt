@@ -191,62 +191,6 @@ fun StopMarker(
 }
 
 /**
- * User location marker - High precision style
- */
-@Composable
-fun UserLocationMarker(
-    modifier: Modifier = Modifier
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.5f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulse_alpha"
-    )
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 2.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1500),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulse_scale"
-    )
-    
-    Box(
-        modifier = modifier.size(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        // Onda expansiva de precisión
-        Box(
-            modifier = Modifier
-                .size(16.dp)
-                .scale(pulseScale)
-                .background(MaterialTheme.colorScheme.tertiary.copy(alpha = pulseAlpha), CircleShape)
-        )
-        
-        // Punto central con borde de alta visibilidad
-        Surface(
-            modifier = Modifier.size(14.dp),
-            shape = CircleShape,
-            color = Color.White,
-            shadowElevation = 4.dp
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(2.dp)
-                    .background(MaterialTheme.colorScheme.tertiary, CircleShape)
-            )
-        }
-    }
-}
-
-/**
  * Map overlay controls with Material 3 styling
  */
 @Composable
