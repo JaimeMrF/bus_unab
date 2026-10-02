@@ -18,3 +18,8 @@ Makefile
 app.yaml
 push_to_vps.ps1
 deploy.sh
+*.pem
+*.jks
+*.keystore
+auth.json
+google-services.json
