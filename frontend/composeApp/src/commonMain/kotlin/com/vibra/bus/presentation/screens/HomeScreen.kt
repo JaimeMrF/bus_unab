@@ -1,50 +1,37 @@
 package com.vibra.bus.presentation.screens
 
-import com.vibra.bus.presentation.components.BrandMascot
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Map
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material3.Button
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -61,23 +48,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.StopDto
-import androidx.compose.foundation.Image
+import com.vibra.bus.presentation.components.BrandMascot
 import com.vibra.bus.presentation.components.BusCard
-import com.vibra.bus.presentation.theme.AppShape
-import org.jetbrains.compose.resources.painterResource
-import vibrabus.composeapp.generated.resources.Res
+import com.vibra.bus.presentation.components.GlassPanel
+import com.vibra.bus.presentation.components.PillTone
+import com.vibra.bus.presentation.components.PrimaryButton
+import com.vibra.bus.presentation.components.SecondaryButton
+import com.vibra.bus.presentation.components.ShimmerList
+import com.vibra.bus.presentation.components.StatusPill
+import com.vibra.bus.presentation.theme.Motion
 import com.vibra.bus.presentation.viewmodel.HomeViewModel
 import com.vibra.bus.presentation.viewmodel.ProfileViewModel
 import com.vibra.bus.util.AppSettings
@@ -85,6 +70,8 @@ import com.vibra.bus.util.UiState
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
+
+private enum class HomeAction { Driver, Bus, Tracking, Default }
 
 class HomeScreen : Screen {
 
@@ -113,26 +100,17 @@ class HomeScreen : Screen {
         var selectedBus by remember { mutableStateOf<BusSummaryDto?>(null) }
         var selectedStop by remember { mutableStateOf<StopDto?>(null) }
         var showStops by remember { mutableStateOf(false) }
-        var isCardVisible by remember { mutableStateOf(false) }
         var showBusSheet by remember { mutableStateOf(false) }
         val busSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-        val fabScale by animateFloatAsState(
-            targetValue = 1f,
-            animationSpec = tween(durationMillis = 300),
-            label = "fab_scale"
-        )
 
         LaunchedEffect(sessionExpired) {
             if (sessionExpired) navigator.replaceAll(LoginScreen())
         }
-        LaunchedEffect(Unit) {
-            viewModel.startPolling()
-            isCardVisible = true
-        }
+        LaunchedEffect(Unit) { viewModel.startPolling() }
         LaunchedEffect(selectedBus) {
-            if (selectedBus != null) {
-                viewModel.loadBusStops(selectedBus!!.plate)
+            val bus = selectedBus
+            if (bus != null) {
+                viewModel.loadBusStops(bus.plate)
                 showStops = true
             } else {
                 viewModel.clearBusStops()
@@ -148,6 +126,8 @@ class HomeScreen : Screen {
         DisposableEffect(Unit) { onDispose { viewModel.stopPolling() } }
 
         val busList = (busesState as? UiState.Success)?.data ?: emptyList()
+        val busesLoading = busesState is UiState.Loading
+        val busesError = busesState is UiState.Error
         val allStops = (stopsState as? UiState.Success)?.data ?: emptyList()
         val routeStops = busStops.map { s ->
             StopDto(s.id, s.name, s.address, s.latitude, s.longitude, s.radiusMeters)
@@ -158,27 +138,6 @@ class HomeScreen : Screen {
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = WindowInsets(0),
-            floatingActionButton = {
-                AnimatedVisibility(
-                    visible = true,
-                    enter = slideInVertically(initialOffsetY = { it * 2 }, animationSpec = tween(400))
-                            + fadeIn(animationSpec = tween(400))
-                ) {
-                    FloatingActionButton(
-                        onClick = { /* centrar mapa */ },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        elevation = FloatingActionButtonDefaults.elevation(8.dp, 12.dp),
-                        shape = AppShape.FloatingActionButton,
-                        modifier = Modifier.scale(fabScale)
-                    ) {
-                        Icon(
-                            Icons.Default.MyLocation,
-                            contentDescription = "Mi ubicación",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
-            }
         ) { padding ->
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
 
@@ -191,163 +150,114 @@ class HomeScreen : Screen {
                     selectedBus = selectedBus,
                     onBusSelected = { selectedBus = it },
                     stops = stopList,
-                    buses = busList
+                    buses = busList,
                 )
 
-                // ── Tarjeta inferior ──────────────────────────────────────────
+                // ── Panel inferior ────────────────────────────────────────────
+                var panelVisible by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { panelVisible = true }
                 AnimatedVisibility(
-                    visible = isCardVisible,
+                    visible = panelVisible,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(horizontal = 16.dp, vertical = 20.dp),
-                    enter = slideInVertically(
-                        initialOffsetY = { it },
-                        animationSpec = tween(600)
-                    ) + fadeIn(animationSpec = tween(600)),
-                    exit = fadeOut(animationSpec = tween(300))
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    enter = slideInVertically(tween(Motion.emphasized, easing = Motion.easeOut)) { it } +
+                        fadeIn(tween(Motion.emphasized)),
+                    exit = fadeOut(tween(Motion.standard)),
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .widthIn(max = 500.dp)
-                            .fillMaxWidth()
-                            .shadow(
-                                elevation = 20.dp,
-                                shape = RoundedCornerShape(24.dp),
-                                spotColor = Color.Black.copy(alpha = 0.4f)
-                            )
-                            .clip(RoundedCornerShape(24.dp))
-                            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(24.dp))
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
-                                shape = RoundedCornerShape(24.dp)
-                            )
-                    ) {
+                    GlassPanel(modifier = Modifier.widthIn(max = 500.dp).fillMaxWidth()) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                            modifier = Modifier.fillMaxWidth().padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            // Encabezado
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
+                                    val firstName = profile.name.split(" ").firstOrNull().orEmpty()
                                     Text(
-                                        text = "¡Hola, ${profile.name.split(" ").firstOrNull() ?: ""}! 🦉",
-                                        fontSize = 17.sp,
-                                        fontWeight = FontWeight.Bold,
+                                        text = if (firstName.isBlank()) "Hola" else "Hola, $firstName",
+                                        style = MaterialTheme.typography.titleLarge,
                                         color = MaterialTheme.colorScheme.onSurface,
-                                        lineHeight = 22.sp
                                     )
                                     Spacer(Modifier.height(2.dp))
                                     Text(
                                         text = when {
-                                            selectedBus != null && busStopsLoading -> "Cargando paradas..."
+                                            selectedBus != null && busStopsLoading -> "Cargando paradas…"
                                             selectedBus != null && routeStops.isNotEmpty() -> "${routeStops.size} paradas en esta ruta"
                                             selectedBus != null -> "Sin paradas asignadas"
                                             hasTracking -> "Siguiendo ${settings.trackingPlate} · ${settings.trackingStopName}"
+                                            busesError -> "No pudimos actualizar los buses"
+                                            busesLoading -> "Buscando buses cercanos…"
                                             busList.isNotEmpty() -> "${busList.size} buses activos cerca"
-                                            else -> "Buscando buses cercanos..."
+                                            else -> "No hay buses activos por ahora"
                                         },
-                                        fontSize = 13.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
-
-                                // Indicador live cuando hay buses (no mostrar si hay tracking activo)
                                 if (busList.isNotEmpty() && selectedBus == null && !hasTracking) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(20.dp))
-                                            .background(Color(0xFF2EBE6C).copy(alpha = 0.15f))
-                                            .border(1.dp, Color(0xFF2EBE6C).copy(alpha = 0.4f), RoundedCornerShape(20.dp))
-                                            .padding(horizontal = 10.dp, vertical = 5.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(6.dp)
-                                                .background(Color(0xFF2EBE6C), CircleShape)
-                                        )
-                                        Spacer(Modifier.size(5.dp))
-                                        Text(
-                                            text = "En vivo",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF2EBE6C)
-                                        )
-                                    }
+                                    StatusPill("En vivo", PillTone.Success, showDot = true)
+                                } else if (busesError) {
+                                    StatusPill("Sin conexión", PillTone.Error)
                                 }
                             }
 
-                            // Acciones — AnimatedContent hace slide entre los 4 estados
-                            val actionState = when {
-                                profile.role == "driver" -> "driver"
-                                selectedBus != null      -> "bus"
-                                hasTracking              -> "tracking"
-                                else                     -> "default"
+                            val action = when {
+                                profile.role == "driver" -> HomeAction.Driver
+                                selectedBus != null -> HomeAction.Bus
+                                hasTracking -> HomeAction.Tracking
+                                else -> HomeAction.Default
                             }
                             AnimatedContent(
-                                targetState  = actionState,
+                                targetState = action,
                                 transitionSpec = {
-                                    (fadeIn(tween(220)) + slideInVertically { it / 3 })
-                                        .togetherWith(fadeOut(tween(150)) + slideOutVertically { -it / 3 })
+                                    (fadeIn(tween(Motion.standard)) + slideInVertically { it / 3 })
+                                        .togetherWith(fadeOut(tween(Motion.fast)) + slideOutVertically { -it / 3 })
                                 },
                                 label = "home_action",
                             ) { state ->
                                 when (state) {
-                                    "driver" -> Button(
-                                        onClick  = { navigator.push(DriverModeScreen()) },
-                                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                                        shape    = AppShape.ButtonPrimary,
-                                    ) {
-                                        Text("Entrar a Modo Conductor", fontWeight = FontWeight.SemiBold)
-                                    }
-                                    "bus" -> Row(
+                                    HomeAction.Driver -> PrimaryButton(
+                                        text = "Entrar a modo conductor",
+                                        onClick = { navigator.push(DriverModeScreen()) },
+                                    )
+                                    HomeAction.Bus -> Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
-                                        OutlinedButton(
-                                            onClick  = { navigator.push(BusRouteScreen(selectedBus!!.plate)) },
-                                            modifier = Modifier.weight(1f).height(50.dp),
-                                            shape    = AppShape.ButtonPrimary,
-                                            border   = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                                        ) {
-                                            Icon(Icons.Default.Map, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-                                            Spacer(Modifier.width(6.dp))
-                                            Text("Ver Ruta", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
-                                        }
-                                        Button(
-                                            onClick  = { navigator.push(StopSelectionScreen(selectedBus!!.plate)) },
-                                            modifier = Modifier.weight(1f).height(50.dp),
-                                            shape    = AppShape.ButtonPrimary,
-                                        ) {
-                                            Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
-                                            Spacer(Modifier.width(6.dp))
-                                            Text("Seguir Bus", fontWeight = FontWeight.SemiBold)
-                                        }
+                                        SecondaryButton(
+                                            text = "Ver ruta",
+                                            leadingIcon = Icons.Default.Map,
+                                            modifier = Modifier.weight(1f),
+                                            onClick = { selectedBus?.let { navigator.push(BusRouteScreen(it.plate)) } },
+                                        )
+                                        PrimaryButton(
+                                            text = "Seguir bus",
+                                            leadingIcon = Icons.Default.DirectionsBus,
+                                            modifier = Modifier.weight(1f),
+                                            onClick = { selectedBus?.let { navigator.push(StopSelectionScreen(it.plate)) } },
+                                        )
                                     }
-                                    "tracking" -> Row(
+                                    HomeAction.Tracking -> Row(
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
-                                        OutlinedButton(
-                                            onClick  = {
+                                        SecondaryButton(
+                                            text = "Cancelar",
+                                            modifier = Modifier.weight(1f),
+                                            onClick = {
                                                 settings.clearTracking()
                                                 stopBusTracking()
                                             },
-                                            modifier = Modifier.weight(1f).height(50.dp),
-                                            shape    = AppShape.ButtonPrimary,
-                                            border   = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
-                                        ) {
-                                            Text("Cancelar", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold)
-                                        }
-                                        Button(
-                                            onClick  = {
+                                        )
+                                        PrimaryButton(
+                                            text = "Ver bus",
+                                            leadingIcon = Icons.Default.DirectionsBus,
+                                            modifier = Modifier.weight(1f),
+                                            onClick = {
                                                 val stop = StopDto(
                                                     id           = settings.trackingStopId,
                                                     name         = settings.trackingStopName,
@@ -359,21 +269,12 @@ class HomeScreen : Screen {
                                                 startBusTracking(settings.trackingPlate, stop.latitude, stop.longitude, stop.name)
                                                 navigator.push(WaitingBusScreen(settings.trackingPlate, stop))
                                             },
-                                            modifier = Modifier.weight(1f).height(50.dp),
-                                            shape    = AppShape.ButtonPrimary,
-                                        ) {
-                                            Icon(Icons.Default.DirectionsBus, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimary)
-                                            Spacer(Modifier.width(6.dp))
-                                            Text("Ver bus", fontWeight = FontWeight.SemiBold)
-                                        }
+                                        )
                                     }
-                                    else -> Button(
-                                        onClick  = { showBusSheet = true },
-                                        modifier = Modifier.fillMaxWidth().height(50.dp),
-                                        shape    = AppShape.ButtonPrimary,
-                                    ) {
-                                        Text("Buscar Rutas", fontWeight = FontWeight.SemiBold)
-                                    }
+                                    HomeAction.Default -> PrimaryButton(
+                                        text = "Buscar rutas",
+                                        onClick = { showBusSheet = true },
+                                    )
                                 }
                             }
                         }
@@ -382,116 +283,72 @@ class HomeScreen : Screen {
             }
         }
 
-        // ── Bottom Sheet estilo Uber ──────────────────────────────────────────
+        // ── Hoja de rutas ─────────────────────────────────────────────────────
         if (showBusSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showBusSheet = false },
                 sheetState = busSheetState,
                 containerColor = MaterialTheme.colorScheme.surface,
-                dragHandle = {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 14.dp, bottom = 6.dp)
-                            .size(width = 36.dp, height = 4.dp)
-                            .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), RoundedCornerShape(2.dp))
-                    )
-                }
+                dragHandle = { BottomSheetDefaults.DragHandle() },
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                ) {
-                    // Cabecera
+                Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding()) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Column {
                             Text(
                                 text = "Elige tu ruta",
-                                fontSize = 21.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurface,
                             )
-                            Spacer(Modifier.height(3.dp))
                             Text(
                                 text = when {
-                                    busList.isEmpty() -> "Buscando buses cercanos..."
+                                    busesLoading -> "Buscando buses cercanos…"
+                                    busList.isEmpty() -> "Sin buses por ahora"
                                     busList.size == 1 -> "1 bus disponible"
                                     else -> "${busList.size} buses disponibles"
                                 },
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-
-                        // Badge con conteo
-                        if (busList.isNotEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                                    .border(
-                                        1.dp,
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                                        RoundedCornerShape(14.dp)
-                                    )
-                                    .padding(horizontal = 12.dp, vertical = 6.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "${busList.size}",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
+                        if (busList.isNotEmpty()) StatusPill("${busList.size}", PillTone.Brand)
                     }
 
                     HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 24.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+                        color = MaterialTheme.colorScheme.outlineVariant,
                     )
                     Spacer(Modifier.height(8.dp))
 
-                    if (busList.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp),
-                            contentAlignment = Alignment.Center
+                    when {
+                        busesLoading && busList.isEmpty() -> ShimmerList(count = 3, itemHeight = 72.dp)
+                        busList.isEmpty() -> Column(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp, horizontal = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                BrandMascot(modifier = Modifier.size(90.dp))
-                                Text(
-                                    text = "No hay buses activos ahora",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "Intenta de nuevo en unos minutos",
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                                )
-                            }
+                            BrandMascot(modifier = Modifier.size(88.dp))
+                            Text(
+                                text = if (busesError) "No pudimos cargar los buses" else "No hay buses activos ahora",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = "Intenta de nuevo en unos minutos",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
-                    } else {
-                        LazyColumn(
+                        else -> LazyColumn(
                             modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(bottom = 12.dp),
+                            contentPadding = PaddingValues(bottom = 16.dp),
                         ) {
                             items(busList, key = { it.plate }) { bus ->
                                 BusCard(
-                                    modifier = Modifier.animateItem(fadeInSpec = tween(300), fadeOutSpec = tween(200)),
+                                    modifier = Modifier.animateItem(),
                                     bus = bus,
                                     occupancy = occupancyMap[bus.plate],
                                     onClick = {
@@ -500,7 +357,7 @@ class HomeScreen : Screen {
                                                 showBusSheet = false
                                                 selectedBus = bus
                                             }
-                                    }
+                                    },
                                 )
                             }
                         }

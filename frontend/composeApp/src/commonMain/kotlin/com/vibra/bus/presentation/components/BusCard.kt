@@ -1,199 +1,123 @@
 package com.vibra.bus.presentation.components
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.vibra.bus.data.model.BusSummaryDto
 import com.vibra.bus.data.model.OccupancyDto
 import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.theme.AppThemeUtils
-import com.vibra.bus.presentation.theme.appColors
+import com.vibra.bus.presentation.theme.ensureContrast
 
+/** Fila de bus: icono tonal, nombre/placa, estado (texto + color) y ocupación. ≥64dp de alto táctil. */
 @Composable
 fun BusCard(
     bus: BusSummaryDto,
     occupancy: OccupancyDto?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    expanded: Boolean = false
 ) {
     val isFull = occupancy?.level == "full"
     val isAvailable = occupancy != null
-    val interactionSource = remember { MutableInteractionSource() }
-    
-    // Animation states
-    val pressedScale by animateFloatAsState(
-        targetValue = if (interactionSource.collectIsPressedAsState().value) 0.95f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness    = Spring.StiffnessHigh,
-        ),
-        label = "bus_card_scale",
-    )
-
-    // Use Material 3 theme utilities for colors
-    val statusColor = AppThemeUtils.busStatusColor(isAvailable, isFull)
-    val occupancyColor = occupancy?.level?.let { AppThemeUtils.occupancyColor(it) }
-        ?: MaterialTheme.colorScheme.outline
-    
     val statusLabel = when {
         isFull -> "Lleno"
         isAvailable -> "Disponible"
         else -> "Próximo"
     }
+    val tone = when {
+        isFull -> PillTone.Error
+        isAvailable -> PillTone.Success
+        else -> PillTone.Warning
+    }
+    val occupancyColor = occupancy?.level?.let { AppThemeUtils.occupancyColor(it) }
+        ?: MaterialTheme.colorScheme.outline
 
-    Box(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 5.dp)
-            .scale(pressedScale)
-            .animateContentSize(
-                animationSpec = tween(durationMillis = 300)
-            )
-            .shadow(
-                elevation = 6.dp,
-                shape = AppShape.Card,
-                spotColor = Color.Black.copy(alpha = 0.12f)
-            )
-            .clip(AppShape.Card)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.appColors.glassSurface,
-                        MaterialTheme.appColors.glassBorder
-                    )
-                )
-            )
-            .border(
-                width = 1.dp,
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        MaterialTheme.appColors.glassHighlight,
-                        MaterialTheme.appColors.glassBorder
-                    )
-                ),
-                shape = AppShape.Card
-            )
-            .clickable(
-                onClick = onClick,
-                interactionSource = interactionSource,
-                indication = ripple(
-                    color = MaterialTheme.colorScheme.primary,
-                    radius = 24.dp
-                )
-            )
-            .padding(horizontal = 14.dp, vertical = 13.dp),
+            .padding(horizontal = 16.dp, vertical = 5.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = "${bus.name}, placa ${bus.plate}, $statusLabel" +
+                    (occupancy?.let { ", ocupación ${it.percentage.toInt()} por ciento" } ?: "")
+            },
+        onClick = onClick,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-
-            // Bus icon box premium con Material 3
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 72.dp)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
                 modifier = Modifier
-                    .size(46.dp)
-                    .clip(AppShape.BusMarker)
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f)
-                            )
-                        )
-                    ),
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = "🚌",
-                    fontSize = 22.sp,
-                    color = MaterialTheme.colorScheme.onSecondary
+                Icon(
+                    imageVector = Icons.Filled.DirectionsBus,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(22.dp),
                 )
             }
 
             Spacer(Modifier.width(12.dp))
 
-            // Info
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text       = bus.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize   = 14.sp,
-                    color      = MaterialTheme.colorScheme.onSurface,
-                    letterSpacing = 0.2.sp
+                    text = bus.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
                 )
-                Spacer(Modifier.height(3.dp))
                 Text(
-                    text     = bus.plate,
-                    fontSize = 11.sp,
-                    color    = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    text = bus.plate,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(5.dp))
-                // Status row
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .background(statusColor, CircleShape),
-                    )
-                    Spacer(Modifier.width(5.dp))
-                    Text(
-                        text       = statusLabel,
-                        fontSize   = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color      = statusColor,
-                    )
-                }
+                StatusPill(text = statusLabel, tone = tone, showDot = true)
             }
 
-            // Occupancy badge
-            occupancy?.let {
+            if (occupancy != null) {
                 OccupancyBadge(
-                    level      = it.level,
-                    percentage = it.percentage,
-                    color      = occupancyColor,
+                    level = occupancy.level,
+                    percentage = occupancy.percentage,
+                    color = occupancyColor,
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(4.dp))
             }
 
-            // Chevron
-            Text(
-                text  = "›",
-                fontSize   = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color      = MaterialTheme.colorScheme.primary,
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -201,24 +125,25 @@ fun BusCard(
 
 @Composable
 fun OccupancyBadge(level: String, percentage: Float, color: Color) {
-    Box(
+    val surface = MaterialTheme.colorScheme.surface
+    val container = lerp(color, surface, 0.86f)
+    val content = ensureContrast(color, container)
+    Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(9.dp))
-            .background(color.copy(alpha = 0.10f))
+            .clip(AppShape.Chip)
+            .background(container)
             .padding(horizontal = 10.dp, vertical = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text       = "${percentage.toInt()}%",
-                fontSize   = 14.sp,
-                fontWeight = FontWeight.Bold,
-                color      = color,
-            )
-            Text(
-                text     = level.replaceFirstChar { it.uppercase() },
-                fontSize = 10.sp,
-                color    = color,
-            )
-        }
+        Text(
+            text = "${percentage.toInt()}%",
+            style = MaterialTheme.typography.titleSmall,
+            color = content,
+        )
+        Text(
+            text = level.replaceFirstChar { it.uppercase() },
+            style = MaterialTheme.typography.labelSmall,
+            color = content,
+        )
     }
 }
