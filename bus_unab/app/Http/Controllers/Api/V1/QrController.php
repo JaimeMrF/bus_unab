@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 
 class QrController extends BaseController
 {
+    private const MAX_CLOCK_SKEW_MS = 5_000;
+
     /**
      * Valida el QR de un estudiante y lo marca como abordado.
      * POST /api/v1/qr/validate
@@ -39,6 +41,12 @@ class QrController extends BaseController
 
         if ($ageMs > 60_000) {
             return $fail('El código QR ha expirado');
+        }
+
+        // `ts` lo envía el cliente sin firma: un ts futuro nunca expiraría. Solo se
+        // tolera un desfase de reloj pequeño.
+        if ($ageMs < -self::MAX_CLOCK_SKEW_MS) {
+            return $fail('QR inválido: marca de tiempo futura');
         }
 
         $busRequest = BusRequest::find($validated['request_id']);
