@@ -97,7 +97,8 @@ class QrAuditTest extends TestCase
         Carbon::setTestNow('2026-01-01 10:00:00');
         $this->fund(500000);
         [, $qrOk] = $this->qr->issueToken($this->passenger);
-        [, $qrLate] = $this->qr->issueToken($this->passenger);
+        // Otro pasajero: un QR nuevo del mismo usuario revocaría el primero.
+        [, $qrLate] = $this->qr->issueToken(User::factory()->create(['role' => 'pasajero']));
 
         Carbon::setTestNow('2026-01-01 10:00:59');
         $this->pay($qrOk)->assertOk();

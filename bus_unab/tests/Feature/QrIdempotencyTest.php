@@ -89,7 +89,9 @@ class QrIdempotencyTest extends TestCase
     public function test_same_key_with_different_payload_is_a_conflict(): void
     {
         $qrA = $this->qr();
-        $qrB = $this->qr();
+        $other = User::factory()->create(['role' => 'pasajero']);
+        app(WalletService::class)->credit(Wallet::para($other), 1_000_000, 'seed_other', 'mock');
+        $qrB = app(QrPaymentService::class)->issueToken($other)[1];
         $key = 'qr-pay-compartida';
 
         $this->pay($this->driver, $qrA, $key)->assertOk();
