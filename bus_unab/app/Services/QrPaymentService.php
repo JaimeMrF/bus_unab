@@ -56,10 +56,20 @@ class QrPaymentService
         $fare = $this->resolveFare($busId);
         $monto = $fare?->monto_centavos ?? self::FALLBACK_FARE_CENTAVOS;
 
+        if ($monto <= 0) {
+            throw new DomainException('La tarifa vigente no es válida; contacta a la empresa.');
+        }
+
         $selector = bin2hex(random_bytes(16)); // 32 hex chars — jamás se persiste
         $issuedAt = now();
         $expiresAt = $issuedAt->copy()->addSeconds($ttlSeconds);
         $signature = $this->sign($selector, $expiresAt->getTimestamp());
+
+        // Un QR nuevo revoca los anteriores aún sin usar (solo el último es cobrable).
+        QrPaymentToken::where('user_id', $user->id)
+            ->whereNull('used_at')
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => now(), 'updated_at' => now()]);
 
         $token = QrPaymentToken::create([
             'user_id' => $user->id,
@@ -111,6 +121,10 @@ class QrPaymentService
             throw new DomainException('El QR expiró; pídele al pasajero que genere uno nuevo.');
         }
 
+        if ($token->revoked_at !== null) {
+            throw new DomainException('Este QR fue reemplazado por uno más reciente; pídele al pasajero que muestre el nuevo.');
+        }
+
         $asiento = DB::transaction(function () use ($token, $driver) {
             // Reclamo one-time atómico: solo el primer escaneo afecta 1 fila.
             $claimed = DB::table('qr_payment_tokens')
@@ -127,6 +141,14 @@ class QrPaymentService
             }
 
             $wallet = Wallet::whereKey($token->wallet_id)->lockForUpdate()->firstOrFail();
+
+            if (! $wallet->estaActiva()) {
+                throw new DomainException('La wallet del pasajero está congelada.');
+            }
+
+            if ((int) $token->monto_snapshot_centavos <= 0) {
+                throw new DomainException('QR inválido: monto no válido.');
+            }
 
             // Ver nota de clase: sin wallet de plataforma, la contraparte del
             // débito del pasajero identifica a quién se le acredita el recaudo.
@@ -163,9 +185,10 @@ class QrPaymentService
             throw new DomainException('Formato de QR inválido (se esperaba selector.firma).');
         }
 
-        [$selector, $signature] = array_map(static fn ($p) => strtolower(trim($p)), $parts);
+        // Sin trim por parte: un NUL o espacio embebido debe fallar el regex, no normalizarse.
+        [$selector, $signature] = array_map(static fn ($p) => strtolower($p), $parts);
 
-        if (! preg_match('/^[0-9a-f]{32}$/', $selector) || ! preg_match('/^[0-9a-f]{64}$/', $signature)) {
+        if (! preg_match('/^[0-9a-f]{32}$/D', $selector) || ! preg_match('/^[0-9a-f]{64}$/D', $signature)) {
             throw new DomainException('Formato de QR inválido (hex esperados).');
         }
 

@@ -110,7 +110,7 @@ class WalletController extends BaseController
     public function pay(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'qr' => 'required|string',
+            'qr' => 'required|string|max:200',
         ]);
 
         // Idempotente por (conductor, Idempotency-Key): el reintento tras un corte

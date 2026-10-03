@@ -27,6 +27,7 @@ class QrPaymentToken extends Model
         'issued_at',
         'expires_at',
         'used_at',
+        'revoked_at',
         'used_by_driver_id',
         'reference',
     ];
@@ -38,6 +39,7 @@ class QrPaymentToken extends Model
             'issued_at' => 'datetime',
             'expires_at' => 'datetime',
             'used_at' => 'datetime',
+            'revoked_at' => 'datetime',
         ];
     }
 
