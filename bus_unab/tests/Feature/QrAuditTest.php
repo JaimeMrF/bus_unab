@@ -504,4 +504,100 @@ class QrAuditTest extends TestCase
             ->postJson('/api/v1/qr/validate', $p + ['ts' => (int) (microtime(true) * 1000)])
             ->assertStatus(403);
     }
+
+    // ── Hallazgos T15 ya corregidos por backend ──────────────────────
+
+    public function test_zero_fare_is_rejected_cleanly_never_500(): void
+    {
+        $this->fund(500000);
+        $this->fare(0);
+
+        $issue = $this->actingAs($this->passenger, 'sanctum')->postJson('/api/v1/wallet/qr/issue');
+        if ($issue->status() === 422) {
+            $this->assertTrue(true);
+
+            return;
+        }
+        $this->pay($issue->json('data.qr'))->assertStatus(422);
+    }
+
+    public function test_pay_validates_a_sane_max_length_before_parsing(): void
+    {
+        $res = $this->actingAs($this->driver, 'sanctum')
+            ->postJson('/api/v1/qr/pay', ['qr' => str_repeat('a', 5000)]);
+
+        $res->assertStatus(422)->assertJsonValidationErrors('qr', 'errors');
+    }
+
+    public function test_wallet_frozen_after_issue_returns_422_not_500_and_keeps_token_unused(): void
+    {
+        $this->fund(500000);
+        [$token, $qr] = $this->qr->issueToken($this->passenger);
+        Wallet::para($this->passenger)->update(['estado' => Wallet::ESTADO_CONGELADA]);
+
+        $this->pay($qr)->assertStatus(422);
+        $this->assertNull($token->fresh()->used_at);
+        $this->assertSame(500000, $this->balance());
+    }
+
+    public function test_issuing_a_new_qr_revokes_previous_unused_ones(): void
+    {
+        $this->fund(500000);
+        [, $old] = $this->qr->issueToken($this->passenger);
+        [, $new] = $this->qr->issueToken($this->passenger);
+
+        $this->pay($old)->assertStatus(422);
+        $this->pay($new)->assertOk();
+    }
+
+    public function test_credit_overflow_is_rejected_not_silently_corrupted(): void
+    {
+        $w = Wallet::para($this->passenger);
+        $this->wallets->credit($w, PHP_INT_MAX - 10, 'big_'.uniqid());
+
+        $accepted = false;
+        try {
+            $this->wallets->credit($w->fresh(), 100, 'over_'.uniqid());
+            $accepted = true;
+        } catch (\Throwable) {
+            // rechazo explícito: correcto
+        }
+
+        $this->assertFalse($accepted, 'debió rechazar el overflow');
+        $this->assertSame(PHP_INT_MAX - 10, $this->balance());
+    }
+
+    public function test_reference_collision_across_wallets_is_not_silently_swallowed(): void
+    {
+        $other = User::factory()->create(['role' => 'pasajero']);
+        $this->wallets->credit(Wallet::para($other), 1000, 'shared_ref');
+
+        $rejected = false;
+        try {
+            $this->wallets->credit(Wallet::para($this->passenger), 5000, 'shared_ref');
+        } catch (\Throwable) {
+            $rejected = true; // rechazo explícito: correcto
+        }
+
+        $this->assertTrue($rejected || $this->balance() === 5000, 'el crédito con reference ya usada por otra wallet se descartó en silencio (saldo '.$this->balance().')');
+    }
+
+    public function test_legacy_validate_rejects_far_future_timestamp(): void
+    {
+        [$req, $p] = $this->legacyRequest();
+        $future = (int) (microtime(true) * 1000) + 10 * 365 * 86_400_000;
+
+        $this->actingAs($this->driver, 'sanctum')->postJson('/api/v1/qr/validate', $p + ['ts' => $future])->assertStatus(422);
+        $this->assertSame('pending', $req->fresh()->status);
+    }
+
+    public function test_qr_with_embedded_nul_bytes_is_rejected(): void
+    {
+        $this->fund(500000);
+        [, $qr] = $this->qr->issueToken($this->passenger);
+        [$sel, $sig] = explode('.', $qr);
+
+        $this->pay("$sel .$sig")->assertStatus(422);
+        $this->assertSame(500000, $this->balance());
+    }
 }
