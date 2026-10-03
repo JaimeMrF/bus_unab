@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\InsufficientFundsException;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use DomainException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -92,11 +93,24 @@ class WalletService
             // Idempotencia por reference: el reintento devuelve el asiento previo, cero efecto extra.
             $existe = WalletTransaction::where('reference', $reference)->first();
             if ($existe !== null) {
+                // Solo es un reintento si es EL MISMO movimiento; una reference que
+                // pertenece a otra wallet/tipo/monto no puede descartarse en silencio.
+                if ((int) $existe->wallet_id !== (int) $locked->getKey()
+                    || $existe->tipo !== $tipo
+                    || (int) $existe->monto_centavos !== $montoCentavos) {
+                    throw new DomainException('La referencia ya fue usada por otro movimiento.');
+                }
+
                 return $existe;
             }
 
             if (! $locked->estaActiva()) {
                 throw new RuntimeException('Wallet congelada: no se admiten movimientos.');
+            }
+
+            // Sin esto, PHP convierte la suma desbordada a float y corrompe el saldo.
+            if ($signo > 0 && $montoCentavos > PHP_INT_MAX - $locked->balance_centavos) {
+                throw new DomainException('El movimiento excede el saldo máximo permitido.');
             }
 
             $nuevoSaldo = $locked->balance_centavos + ($signo * $montoCentavos);
