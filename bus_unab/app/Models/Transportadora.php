@@ -33,6 +33,8 @@ class Transportadora extends Model
         'logo_dark_path',
         'icon_path',
         'mascot_path',
+        'mascot_poses',
+        'bus_style',
         'branding',
         'contacto_nombre',
         'contacto_email',
@@ -56,6 +58,8 @@ class Transportadora extends Model
         return [
             'activo' => 'boolean',
             'branding' => 'array',
+            'mascot_poses' => 'array',
+            'bus_style' => 'array',
             'branding_version' => 'integer',
         ];
     }
@@ -64,7 +68,7 @@ class Transportadora extends Model
     protected static function booted(): void
     {
         static::updating(function (self $t): void {
-            if ($t->isDirty(['branding', 'logo_path', 'logo_dark_path', 'icon_path', 'mascot_path'])) {
+            if ($t->isDirty(['branding', 'logo_path', 'logo_dark_path', 'icon_path', 'mascot_path', 'mascot_poses', 'bus_style'])) {
                 $t->branding_version = ((int) ($t->getOriginal('branding_version') ?? 1)) + 1;
             }
         });

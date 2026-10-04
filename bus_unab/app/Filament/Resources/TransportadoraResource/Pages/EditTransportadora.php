@@ -22,6 +22,8 @@ class EditTransportadora extends EditRecord
             'colors' => BrandingService::defaultColors(),
         ], $data['branding'] ?? []);
 
+        $data['bus_style'] = array_replace(['icon' => 'classic'], $data['bus_style'] ?? []);
+
         return $data;
     }
 

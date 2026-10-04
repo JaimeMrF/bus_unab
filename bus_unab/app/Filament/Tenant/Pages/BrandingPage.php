@@ -62,6 +62,8 @@ class BrandingPage extends Page implements HasForms
             'logo_dark_path' => $t->logo_dark_path,
             'icon_path' => $t->icon_path,
             'mascot_path' => $t->mascot_path,
+            'mascot_poses' => $t->mascot_poses ?? [],
+            'bus_style' => array_replace(['icon' => 'classic'], $t->bus_style ?? []),
         ]);
     }
 
@@ -75,7 +77,8 @@ class BrandingPage extends Page implements HasForms
         $state = $this->form->getState();
         $branding = (array) Arr::get($state, 'branding', []);
 
-        $validator = (new BrandingService)->validator($branding);
+        $busStyle = array_replace(['icon' => 'classic'], (array) Arr::get($state, 'bus_style', []));
+        $validator = (new BrandingService)->validator($branding, $busStyle);
         if ($validator->fails()) {
             throw ValidationException::withMessages(
                 collect($validator->errors()->messages())
@@ -89,6 +92,8 @@ class BrandingPage extends Page implements HasForms
             'logo_dark_path' => $state['logo_dark_path'] ?? null,
             'icon_path' => $state['icon_path'] ?? null,
             'mascot_path' => $state['mascot_path'] ?? null,
+            'mascot_poses' => array_filter((array) Arr::get($state, 'mascot_poses', [])) ?: null,
+            'bus_style' => array_filter($busStyle, fn ($v) => $v !== null && $v !== ''),
         ]);
 
         Notification::make()->title('Marca actualizada')->success()->send();

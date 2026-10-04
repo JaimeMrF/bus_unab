@@ -33,6 +33,11 @@ class BrandingService
 
     public const MIN_CONTRAST = 4.5;
 
+    /** Poses de la mascota; el cliente asocia cada una a un tipo de pantalla. */
+    public const MASCOT_POSES = ['greeting', 'curious', 'sad', 'waiting', 'phone', 'map', 'driver', 'ok', 'celebrating'];
+
+    public const BUS_ICONS = ['classic', 'modern', 'minibus'];
+
     public const IMAGE_COLUMNS = [
         'logo_url' => 'logo_path',
         'logo_dark_url' => 'logo_dark_path',
@@ -144,7 +149,24 @@ class BrandingService
             $data[$field] = $this->url($t->{$column});
         }
 
+        $poses = [];
+        foreach (self::MASCOT_POSES as $pose) {
+            $poses[$pose] = $this->url(Arr::get($t->mascot_poses ?? [], $pose));
+        }
+        // mascot_url: la mascota única o, si solo hay set de poses, el saludo.
+        $data['mascot_url'] ??= $poses['greeting'];
+
+        $busStyle = $t->bus_style ?? [];
+        $icon = Arr::get($busStyle, 'icon');
+
         return $data + [
+            'mascot_poses' => $poses,
+            'bus_style' => [
+                'body' => ColorContrast::isHex(Arr::get($busStyle, 'body')) ? strtoupper($busStyle['body']) : null,
+                'accent' => ColorContrast::isHex(Arr::get($busStyle, 'accent')) ? strtoupper($busStyle['accent']) : null,
+                'icon' => in_array($icon, self::BUS_ICONS, true) ? $icon : 'classic',
+                'icon_url' => $this->url(Arr::get($busStyle, 'icon_path')),
+            ],
             'colors' => $colors,
             'font_family' => in_array($font, self::FONTS, true) ? $font : 'system',
             'corner_radius' => in_array($radius, self::RADII, true) ? $radius : 'md',
@@ -194,9 +216,22 @@ class BrandingService
     }
 
     /** Valida el array completo, incluido el contraste de texto sobre fondo (WCAG AA). */
-    public function validator(array $branding): ValidatorContract
+    /** Reglas del estilo del bus: colores opcionales e ícono de la whitelist. */
+    public static function busStyleRules(string $prefix = 'bus_style'): array
     {
-        $validator = Validator::make(['branding' => $branding], self::rules('branding'));
+        return [
+            "{$prefix}.body" => ['nullable', new HexColor],
+            "{$prefix}.accent" => ['nullable', new HexColor],
+            "{$prefix}.icon" => ['required', Rule::in(self::BUS_ICONS)],
+        ];
+    }
+
+    public function validator(array $branding, array $busStyle = ['icon' => 'classic']): ValidatorContract
+    {
+        $validator = Validator::make(
+            ['branding' => $branding, 'bus_style' => $busStyle],
+            self::rules('branding') + self::busStyleRules()
+        );
 
         $validator->after(function (ValidatorContract $v) use ($branding): void {
             foreach (['light', 'dark'] as $mode) {

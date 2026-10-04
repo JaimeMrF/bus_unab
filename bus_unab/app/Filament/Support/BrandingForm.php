@@ -16,6 +16,18 @@ use Illuminate\Support\Str;
  */
 class BrandingForm
 {
+    private const POSE_LABELS = [
+        'greeting' => 'Saludo (login/splash)',
+        'curious' => 'Curiosa (vacíos)',
+        'sad' => 'Triste (errores)',
+        'waiting' => 'Espera del bus',
+        'phone' => 'Celular (QR/wallet)',
+        'map' => 'Mapa',
+        'driver' => 'Conductor',
+        'ok' => 'Confirmación',
+        'celebrating' => 'Celebración',
+    ];
+
     private const COLOR_LABELS = [
         'primary' => 'Primario',
         'on_primary' => 'Texto sobre primario',
@@ -64,6 +76,23 @@ class BrandingForm
                     self::image('icon_path', 'Ícono'),
                     self::image('mascot_path', 'Mascota'),
                 ])->columns(2),
+
+            Forms\Components\Section::make('Mascota (poses)')
+                ->description('Opcional. Sin pose se usa la mascota general; sin ninguna, el cliente no muestra hueco.')
+                ->schema(array_map(
+                    fn (string $pose) => self::image("mascot_poses.{$pose}", self::POSE_LABELS[$pose]),
+                    BrandingService::MASCOT_POSES
+                ))->columns(3)->collapsible()->collapsed(),
+
+            Forms\Components\Section::make('Estilo del bus')
+                ->description('Sin colores se usan el primario y el secundario de la marca.')
+                ->schema([
+                    Forms\Components\ColorPicker::make('bus_style.body')->label('Color de carrocería')->rule(new HexColor),
+                    Forms\Components\ColorPicker::make('bus_style.accent')->label('Color de acento')->rule(new HexColor),
+                    Forms\Components\Select::make('bus_style.icon')->label('Silueta')->required()->default('classic')
+                        ->options(['classic' => 'Clásico', 'modern' => 'Moderno', 'minibus' => 'Minibús']),
+                    self::image('bus_style.icon_path', 'Ícono propio (vista superior)'),
+                ])->columns(2)->collapsible(),
 
             Forms\Components\Section::make('Colores — modo claro')
                 ->schema(self::colors('light'))->columns(3)->collapsible(),
