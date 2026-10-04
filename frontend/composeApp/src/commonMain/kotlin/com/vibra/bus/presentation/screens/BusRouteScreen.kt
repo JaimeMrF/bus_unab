@@ -404,7 +404,7 @@ private fun RouteStopRow(
                     modifier   = Modifier.weight(1f)
                 )
                 Text(
-                    "~${stop.estimatedMinutes} min",
+                    "~${stop.displayMinutes} min",
                     color    = MaterialTheme.colorScheme.primary,
                     style    = MaterialTheme.typography.labelMedium
                 )

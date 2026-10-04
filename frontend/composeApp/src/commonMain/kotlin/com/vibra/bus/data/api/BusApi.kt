@@ -43,8 +43,9 @@ class BusApi(private val client: HttpClient) {
         client.get("$BASE_URL/buses/$plate/eta") { parameter("stop_id", stopId) }.body()
     }
 
-    suspend fun getBusStops(plate: String): ApiResult<BusStopsResponse> = safeCall {
-        client.get("$BASE_URL/buses/$plate/stops").body()
+    /** [withEta]: agrega eta_seconds por parada (una sola lectura de posicion en el servidor). */
+    suspend fun getBusStops(plate: String, withEta: Boolean = false): ApiResult<BusStopsResponse> = safeCall {
+        client.get("$BASE_URL/buses/$plate/stops") { if (withEta) parameter("eta", 1) }.body()
     }
 
     suspend fun getBusOccupancy(plate: String): ApiResult<OccupancyResponse> = safeCall {

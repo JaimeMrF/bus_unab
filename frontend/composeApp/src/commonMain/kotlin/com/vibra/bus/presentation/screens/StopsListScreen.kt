@@ -154,7 +154,7 @@ private fun StopListItem(
 ) {
     val badge = if (isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
     val onBadge = if (isFirst) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
-    val eta = if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min"
+    val eta = if (stop.displayMinutes == 0) "Salida" else "~${stop.displayMinutes} min"
 
     AppCard(
         modifier = modifier

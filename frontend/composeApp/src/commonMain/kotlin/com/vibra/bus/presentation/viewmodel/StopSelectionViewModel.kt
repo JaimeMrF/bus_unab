@@ -40,10 +40,11 @@ class StopSelectionViewModel(
         viewModelScope.launch {
             _stopsState.value = UiState.Loading
             loadRoutePath(plate)
-            when (val result = busRepository.getBusStops(plate)) {
+            when (val result = busRepository.getBusStops(plate, withEta = true)) {
                 is ApiResult.Success -> {
                     val sorted = result.data.data.sortedBy { it.order }
-                    val stops = if (sorted.all { it.estimatedMinutes == 0 }) computeEstimatedMinutes(sorted) else sorted
+                    val live = sorted.any { it.etaSeconds != null }
+                    val stops = if (!live && sorted.all { it.estimatedMinutes == 0 }) computeEstimatedMinutes(sorted) else sorted
                     _stopsState.value = UiState.Success(stops)
                     if (stops.isNotEmpty() && _selectedStop.value == null) {
                         _selectedStop.value = stops.first()

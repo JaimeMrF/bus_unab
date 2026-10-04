@@ -342,7 +342,7 @@ private fun StopSelectionRow(
                 )
             }
             Text(
-                text = if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min",
+                text = if (stop.displayMinutes == 0) "Salida" else "~${stop.displayMinutes} min",
                 style = MaterialTheme.typography.labelMedium,
                 color = if (isSelected) colors.onPrimaryContainer else colors.primary,
                 modifier = Modifier.padding(horizontal = 8.dp),

@@ -30,7 +30,13 @@ data class StopWithPivotDto(
     val order: Int = 0,
     @SerialName("estimated_minutes") val estimatedMinutes: Int = 0,
     val pivot: StopPivot? = null,
-)
+    /** Presente solo con GET /buses/{plate}/stops?eta=1: ETA en vivo hasta esta parada. */
+    @SerialName("eta_seconds") val etaSeconds: Int? = null,
+) {
+    /** Minutos a mostrar: ETA en vivo si existe (redondeo hacia arriba, minimo 1); si no, el estimado fijo. */
+    val displayMinutes: Int
+        get() = etaSeconds?.let { maxOf(1, (it + 59) / 60) } ?: estimatedMinutes
+}
 
 @Serializable
 data class StopsResponse(

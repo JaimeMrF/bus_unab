@@ -15,7 +15,8 @@ class BusRepository(
     suspend fun getBusCatalog(): ApiResult<BusCatalogResponse> = api.getBusCatalog()
     suspend fun getBuses(lat: Double, lng: Double): ApiResult<BusesResponse> = api.getBuses(lat, lng)
     suspend fun getBusDetail(plate: String): ApiResult<BusDetailResponse> = api.getBusDetail(plate)
-    suspend fun getBusStops(plate: String): ApiResult<BusStopsResponse> = api.getBusStops(plate)
+    suspend fun getBusStops(plate: String, withEta: Boolean = false): ApiResult<BusStopsResponse> =
+        api.getBusStops(plate, withEta)
     suspend fun getBusOccupancy(plate: String): ApiResult<OccupancyResponse> = api.getBusOccupancy(plate)
     suspend fun confirmArrival(plate: String, stopId: Int): ApiResult<ArrivedResponse> = api.confirmArrival(plate, stopId)
     suspend fun notifyApproaching(plate: String, stopId: Int): ApiResult<ArrivedResponse> = api.notifyApproaching(plate, stopId)
