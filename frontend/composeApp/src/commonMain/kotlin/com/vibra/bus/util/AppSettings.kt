@@ -44,6 +44,15 @@ class AppSettings(private val settings: Settings) {
         get() = settings.getString("favorite_stops", "")
         set(value) = settings.putString("favorite_stops", value)
 
+    /** Cambios de favoritos aun no confirmados por la API (ids separados por coma). */
+    var favoritePendingAddsRaw: String
+        get() = settings.getString("favorite_pending_adds", "")
+        set(value) = settings.putString("favorite_pending_adds", value)
+
+    var favoritePendingRemovesRaw: String
+        get() = settings.getString("favorite_pending_removes", "")
+        set(value) = settings.putString("favorite_pending_removes", value)
+
     var token: String
         get() = settings.getString("token", "")
         set(value) = settings.putString("token", value)

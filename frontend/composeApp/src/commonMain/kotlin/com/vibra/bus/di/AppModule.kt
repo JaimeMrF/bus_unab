@@ -5,6 +5,7 @@ import com.russhwolf.settings.Settings
 import com.vibra.bus.data.api.AuthApi
 import com.vibra.bus.data.api.BrandApi
 import com.vibra.bus.data.api.BusApi
+import com.vibra.bus.data.api.FavoritesApi
 import com.vibra.bus.data.api.PoiApi
 import com.vibra.bus.data.api.RequestApi
 import com.vibra.bus.data.api.StopApi
@@ -48,6 +49,7 @@ val commonModule = module {
     single { RequestApi(get()) }
     single { PoiApi(get()) }
     single { WalletApi(get()) }
+    single { FavoritesApi(get()) }
     single { BrandApi(get()) }
 
     // Repositories
@@ -58,7 +60,7 @@ val commonModule = module {
     single { PoiRepository(get()) }
     single { WalletRepository(get()) }
     single { BrandRepository(get(), get()) }
-    single { FavoritesRepository(get()) }
+    single { FavoritesRepository(get(), get()) }
 
     // ViewModels
     viewModel { AuthViewModel(get(), get(), get()) }

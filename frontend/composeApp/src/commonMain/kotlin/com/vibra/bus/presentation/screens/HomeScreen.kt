@@ -122,6 +122,7 @@ class HomeScreen : Screen {
         var refreshing by remember { mutableStateOf(false) }
         val favorites = koinInject<FavoritesRepository>()
         val favoriteIds by favorites.ids.collectAsState()
+        LaunchedEffect(Unit) { favorites.syncAsync() }
         val haptics = LocalHapticFeedback.current
         val busSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
