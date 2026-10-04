@@ -18,6 +18,10 @@ expect fun platformReduceMotion(): Boolean
 @Composable
 expect fun platformLowTier(): Boolean
 
+/** Plataforma: gama media (menos de 4 GB de RAM): sin confeti ni parallax, aurora simplificada. */
+@Composable
+expect fun platformMidTier(): Boolean
+
 /** Plataforma: la app está en primer plano (las animaciones infinitas se pausan si no). */
 @Composable
 expect fun platformAppActive(): Boolean
@@ -25,6 +29,7 @@ expect fun platformAppActive(): Boolean
 /**
  * Entorno de movimiento de la app.
  * - [reduceMotion]: versión estática de todo (sin loops ni desplazamientos).
+ * - [midTier]: sin confeti ni parallax y con aurora de menos manchas.
  * - [lowTier]: además sin efectos ambientales caros (aurora, confeti, ondas).
  * - [appActive]: en segundo plano no se mantiene ningún loop.
  */
@@ -33,7 +38,11 @@ class MotionEnv(
     val reduceMotion: Boolean,
     val lowTier: Boolean,
     val appActive: Boolean,
+    val midTier: Boolean = false,
 ) {
+    /** Efectos costosos opcionales (confeti, parallax): solo en gama alta. */
+    val rich: Boolean get() = ambient && !midTier
+
     /** Transiciones cortas de una sola vez (entradas, press, contadores). */
     val animate: Boolean get() = !reduceMotion
 
@@ -52,7 +61,8 @@ fun ProvideMotion(content: @Composable () -> Unit) {
     val reduce = platformReduceMotion()
     val low = platformLowTier()
     val active = platformAppActive()
-    val env = remember(reduce, low, active) { MotionEnv(reduce, low, active) }
+    val mid = platformMidTier()
+    val env = remember(reduce, low, active, mid) { MotionEnv(reduce, low, active, mid) }
     CompositionLocalProvider(LocalMotion provides env, content = content)
 }
 

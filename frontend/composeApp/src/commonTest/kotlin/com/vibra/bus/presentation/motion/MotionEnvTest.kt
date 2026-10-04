@@ -28,4 +28,11 @@ class MotionEnvTest {
         val env = MotionEnv(reduceMotion = false, lowTier = false, appActive = false)
         assertFalse(env.ambient)
     }
+
+    @Test fun midTierKeepsAmbientButDropsRichEffects() {
+        val env = MotionEnv(reduceMotion = false, lowTier = false, appActive = true, midTier = true)
+        assertTrue(env.ambient)
+        assertFalse(env.rich)
+        assertTrue(MotionEnv(false, false, true, false).rich)
+    }
 }

@@ -53,3 +53,15 @@ actual fun platformLowTier(): Boolean {
         Build.VERSION.SDK_INT < 26 || am?.isLowRamDevice == true
     }
 }
+
+@Composable
+actual fun platformMidTier(): Boolean {
+    val context = LocalContext.current
+    return remember {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        val info = ActivityManager.MemoryInfo()
+        am?.getMemoryInfo(info)
+        // Menos de 4 GB de RAM total (el valor real suele ser algo menor que el nominal).
+        info.totalMem in 1 until 3_800_000_000L
+    }
+}

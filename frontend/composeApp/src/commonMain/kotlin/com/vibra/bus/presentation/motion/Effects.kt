@@ -69,7 +69,7 @@ fun ConfettiBurst(
     origin: Offset = Offset(0.5f, 0.35f),
 ) {
     val env = LocalMotion.current
-    if (!env.ambient || trigger <= 0) return
+    if (!env.rich || trigger <= 0) return
 
     val particles = remember(trigger) {
         val rnd = Random(trigger * 7919)

@@ -15,3 +15,8 @@ actual fun platformReduceMotion(): Boolean = remember { UIAccessibilityIsReduceM
 actual fun platformLowTier(): Boolean = remember {
     NSProcessInfo.processInfo.physicalMemory < 3_000_000_000UL
 }
+
+@Composable
+actual fun platformMidTier(): Boolean = remember {
+    NSProcessInfo.processInfo.physicalMemory < 4_000_000_000UL
+}

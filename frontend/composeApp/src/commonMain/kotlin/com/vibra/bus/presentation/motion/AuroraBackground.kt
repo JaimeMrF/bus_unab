@@ -56,6 +56,7 @@ fun Modifier.auroraBackground(
     } else null
 
     val flat = env.lowTier
+    val mid = env.midTier
     return this.drawWithCache {
         val w = size.width
         val h = size.height
@@ -77,7 +78,7 @@ fun Modifier.auroraBackground(
                 translate(w * (0.80f + 0.10f * cos(t + 1.7f)), h * (0.35f + 0.10f * sin(t * 2f + 0.6f))) {
                     drawCircle(b2, radius * 0.9f, Offset.Zero)
                 }
-                translate(w * (0.45f + 0.15f * sin(t * 2f + 2.4f)), h * (0.92f + 0.06f * cos(t + 0.9f))) {
+                if (!mid) translate(w * (0.45f + 0.15f * sin(t * 2f + 2.4f)), h * (0.92f + 0.06f * cos(t + 0.9f))) {
                     drawCircle(b3, radius * 0.8f, Offset.Zero)
                 }
             }

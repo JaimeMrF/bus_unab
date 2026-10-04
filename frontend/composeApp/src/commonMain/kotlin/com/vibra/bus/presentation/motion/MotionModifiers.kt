@@ -73,7 +73,7 @@ fun Modifier.parallaxCollapse(
     fadeDistance: Float = 480f,
 ): Modifier {
     val env = LocalMotion.current
-    if (!env.animate) return this
+    if (!env.animate || env.midTier) return this
     return this.graphicsLayer {
         val o = offset().coerceAtLeast(0f)
         translationY = o * factor
