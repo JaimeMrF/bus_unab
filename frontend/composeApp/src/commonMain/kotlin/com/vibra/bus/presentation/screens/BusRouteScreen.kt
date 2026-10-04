@@ -1,5 +1,12 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.theme.AppThemeUtils
+import com.vibra.bus.presentation.components.BusIllustration
+import org.koin.compose.koinInject
+import com.vibra.bus.util.ApiResult
+import com.vibra.bus.data.repository.BusRepository
+import com.vibra.bus.data.model.OccupancyDto
+import androidx.compose.runtime.produceState
 import com.vibra.bus.presentation.theme.LocalBrand
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.components.ShimmerList
@@ -43,7 +50,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -83,6 +89,12 @@ data class BusRouteScreen(val plate: String) : Screen {
         val stopsState by viewModel.stopsState.collectAsState()
         val busDetail  by viewModel.busDetail.collectAsState()
         val routePath  by viewModel.routePath.collectAsState()
+        val busRepository = koinInject<BusRepository>()
+        // Ocupacion del bus para la ilustracion: una consulta al abrir el detalle (sin polling).
+        val occupancy by produceState<OccupancyDto?>(initialValue = null, plate) {
+            val r = busRepository.getBusOccupancy(plate)
+            value = (r as? ApiResult.Success)?.data?.data
+        }
 
         LaunchedEffect(Unit) {
             viewModel.loadStops(plate)
@@ -153,20 +165,15 @@ data class BusRouteScreen(val plate: String) : Screen {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                modifier = Modifier.size(44.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        Icons.Default.DirectionsBus,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                            }
+                            val occ = occupancy
+                            BusIllustration(
+                                percentage = occ?.percentage ?: 0f,
+                                width = 40.dp,
+                                height = 72.dp,
+                                bodyColor = MaterialTheme.colorScheme.primary,
+                                occupiedColor = occ?.let { AppThemeUtils.occupancyColor(it.level) }
+                                    ?: MaterialTheme.colorScheme.outline,
+                            )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     bus.name,
