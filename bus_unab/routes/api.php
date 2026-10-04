@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\BrandingController;
 use App\Http\Controllers\Api\V1\BusController;
 use App\Http\Controllers\Api\V1\BusRequestController;
 use App\Http\Controllers\Api\V1\DeviceTokenController;
+use App\Http\Controllers\Api\V1\FavoriteStopController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PointOfInterestController;
 use App\Http\Controllers\Api\V1\QrController;
@@ -73,6 +74,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/', [BusController::class, 'index']);              // GET  /api/v1/buses
                 Route::get('catalog', [BusController::class, 'catalog']);           // GET  /api/v1/buses/catalog
                 Route::get('{plate}', [BusController::class, 'show']);              // GET  /api/v1/buses/RUTA1
+                Route::get('{plate}/eta', [BusController::class, 'eta']);               // GET  /api/v1/buses/RUTA1/eta?stop_id=
                 Route::get('{plate}/stops', [StopController::class, 'byBus']);            // GET  /api/v1/buses/RUTA1/stops
                 Route::get('{plate}/route', [BusController::class, 'route']);             // GET  /api/v1/buses/RUTA1/route
                 Route::get('{plate}/occupancy', [BusRequestController::class, 'occupancy']); // GET  /api/v1/buses/RUTA1/occupancy
@@ -94,6 +96,13 @@ Route::prefix('v1')->group(function () {
         // Paradas
         Route::get('stops', [StopController::class, 'index'])
             ->middleware(['throttle:api-60', 'tenant.scope']); // GET /api/v1/stops
+
+        // Paradas favoritas (tenant-scoped)
+        Route::prefix('favorites/stops')->middleware(['throttle:api-60', 'tenant.scope'])->group(function () {
+            Route::get('/', [FavoriteStopController::class, 'index']);              // GET    /api/v1/favorites/stops
+            Route::post('/', [FavoriteStopController::class, 'store']);             // POST   /api/v1/favorites/stops
+            Route::delete('{stopId}', [FavoriteStopController::class, 'destroy'])->whereNumber('stopId'); // DELETE /api/v1/favorites/stops/{id}
+        });
 
         // Solicitudes de bus (aforo) — 20 solicitudes por minuto máximo
         Route::prefix('requests')->middleware(['throttle:api-20', 'tenant.scope'])->group(function () {

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Bus;
+use App\Models\Stop;
+use App\Services\EtaService;
 use App\Services\GpsMobileService;
 use App\Support\DriverLocation;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +20,7 @@ class BusController extends BaseController
     /**
      * Catálogo de buses activos para la selección del conductor (sin GPS).
      */
-    public function catalog(): JsonResponse
+    public function catalog(Request $request): JsonResponse
     {
         $buses = Bus::active()
             ->select('id', 'name', 'plate', 'capacity')
@@ -31,7 +33,32 @@ class BusController extends BaseController
                 'capacity' => $b->capacity,
             ]);
 
-        return $this->success($buses);
+        return $this->withEtag($request, $this->success($buses));
+    }
+
+    /**
+     * ETA del bus a una parada, sobre la ruta y la velocidad reciente.
+     * GET /api/v1/buses/{plate}/eta?stop_id=
+     */
+    public function eta(Request $request, string $plate, EtaService $etas): JsonResponse
+    {
+        $data = $request->validate(['stop_id' => 'required|integer']);
+        $plate = DriverLocation::normalizePlate($plate);
+
+        $bus = Bus::active()->where('plate', $plate)->first();
+        $stop = Stop::active()->find($data['stop_id']);
+
+        if (! $bus || ! $stop) {
+            return $this->notFound('Bus o parada no encontrados');
+        }
+
+        $eta = $etas->eta($bus, $stop);
+
+        if ($eta === null) {
+            return $this->serviceUnavailable('Sin posición del bus por ahora');
+        }
+
+        return $this->success($eta);
     }
 
     /**

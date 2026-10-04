@@ -14,6 +14,19 @@ abstract class BaseController extends Controller
     use ApiResponseTrait;
 
     /**
+     * Añade ETag + Cache-Control privado y responde 304 si el cliente ya tiene la
+     * misma versión. Para listas estables (paradas, catálogo) en redes lentas.
+     */
+    protected function withEtag(Request $request, JsonResponse $response, int $maxAge = 60): JsonResponse
+    {
+        $response->setEtag(md5((string) $response->getContent()));
+        $response->headers->set('Cache-Control', "private, max-age={$maxAge}");
+        $response->isNotModified($request);
+
+        return $response;
+    }
+
+    /**
      * Ejecuta $action una sola vez por header `Idempotency-Key` (y conductor).
      * $action devuelve [status, envelope]; sin header se ejecuta normal.
      * Un reintento devuelve el resultado original con `Idempotent-Replayed: true`.
