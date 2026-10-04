@@ -32,19 +32,20 @@ Contraseña de todos: `Demo12345!`
 
 | Org (slug) | Admin tenant (`/empresa`) | Conductor | Pasajero |
 |---|---|---|---|
+| `bucaratransit` | admin.bucaratransit@demo.test | driver.bucaratransit@demo.test | pasajero.bucaratransit@demo.test |
 | `metrobus` | admin.metrobus@demo.test | driver.metrobus@demo.test | pasajero.metrobus@demo.test |
 | `campus` | admin.campus@demo.test | driver.campus@demo.test | pasajero.campus@demo.test |
 | `logistica` | admin.logistica@demo.test | driver.logistica@demo.test | pasajero.logistica@demo.test |
 
 Super admin (`/admin`): superadmin@demo.test. Pasajero de ciudad (sin org): pasajero@demo.test.
-Buses: MB101/MB102, CP201/CP202, LG301/LG302. Con `-Simulate`, `/api/v1/buses` usa las posiciones del simulador (no requiere gpsmobile.co).
+Buses: BT401/BT402 (bucaratransit, con 9 poses de mascota), MB101/MB102, CP201/CP202, LG301/LG302. Con `-Simulate`, `/api/v1/buses` usa las posiciones del simulador (no requiere gpsmobile.co).
 
 ## App Android
 Desde `frontend/` (teléfono físico en la misma red; con emulador usa `10.0.2.2` como IP):
 ```
-./gradlew :composeApp:installDebug -PapiBaseUrl=http://<IP>:8000/api/v1 -PdefaultOrgSlug=metrobus
+./gradlew :composeApp:installDebug -PapiBaseUrl=http://<IP>:8000/api/v1 -PdefaultOrgSlug=bucaratransit
 ```
-Cambia `-PdefaultOrgSlug` a `campus` o `logistica` para ver otro branding.
+Cambia `-PdefaultOrgSlug` a `metrobus`, `campus` o `logistica` para ver otro branding.
 
 ## Problemas frecuentes
 - **El teléfono no conecta**: falta la regla de firewall (ejecuta el comando que imprime el script como administrador) o la red es "Pública".

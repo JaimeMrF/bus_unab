@@ -184,7 +184,7 @@ services:
 
   # ── Certbot (SSL — solo se usa via `docker compose run`) ─────────────────────
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v2.11.0
     volumes:
       - certbot_www:/var/www/certbot
       - certbot_certs:/etc/letsencrypt

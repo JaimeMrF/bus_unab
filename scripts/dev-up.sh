@@ -3,7 +3,7 @@
 # Uso: scripts/dev-up.sh [--fresh] [--stop] [--simulate] [--queue] [--port N] [--org slug]
 set -euo pipefail
 
-FRESH=0; STOP=0; SIMULATE=0; QUEUE=0; PORT=8000; ORG=metrobus
+FRESH=0; STOP=0; SIMULATE=0; QUEUE=0; PORT=8000; ORG=bucaratransit
 while [ $# -gt 0 ]; do
   case "$1" in
     --fresh|-Fresh) FRESH=1;; --stop|-Stop) STOP=1;; --simulate|-Simulate) SIMULATE=1;;
@@ -83,7 +83,7 @@ cat <<OUT
  Servidor : $APP_URL   (health OK)
  API      : $APP_URL/api/v1
  Panel    : $APP_URL/admin  |  $APP_URL/empresa
- Orgs demo: metrobus, campus, logistica  (default: $ORG)
+ Orgs demo: bucaratransit, metrobus, campus, logistica  (default: $ORG)
  Login    : admin.<slug>@demo.test / driver.<slug>@demo.test / pasajero.<slug>@demo.test  -  clave Demo12345!
  Super    : superadmin@demo.test (panel /admin; tenant en /empresa)  -  detalle: docs/DEMO.md
  Detener  : scripts/dev-up.sh --stop

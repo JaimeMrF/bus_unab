@@ -3,6 +3,7 @@
 Un tenant = una `Transportadora` (organización). Cada una tiene su perfil de branding que la app carga en runtime vía `GET /api/v1/branding/{slug}`.
 
 ## 1. Prerrequisitos
+- Versiones mínimas soportadas: **MySQL 8.0+** (el compose fija `mysql:8.0`; MariaDB no está soportado), **PHP 8.2+** (la imagen usa 8.3).
 - Stack desplegado (`docker compose up -d`) y migraciones aplicadas (`php artisan migrate --force`).
 - Acceso como super admin al panel Filament (`/admin`).
 

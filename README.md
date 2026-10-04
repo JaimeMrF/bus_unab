@@ -21,10 +21,10 @@ bus_unab/
 ```powershell
 .\scripts\dev-up.ps1 -Simulate     # Linux/macOS: scripts/dev-up.sh --simulate
 ```
-Instala dependencias, prepara datos demo (orgs `metrobus`, `campus`, `logistica`; clave `Demo12345!`), levanta la API en `http://<IP_LAN>:8000` e imprime el comando para instalar la app:
+Instala dependencias, prepara datos demo (orgs `bucaratransit`, `metrobus`, `campus`, `logistica`; clave `Demo12345!`), levanta la API en `http://<IP_LAN>:8000` e imprime el comando para instalar la app:
 
 ```
-./gradlew :composeApp:installDebug -PapiBaseUrl=http://<IP>:8000/api/v1 -PdefaultOrgSlug=metrobus
+./gradlew :composeApp:installDebug -PapiBaseUrl=http://<IP>:8000/api/v1 -PdefaultOrgSlug=bucaratransit
 ```
 Flags: `-Fresh` (recrea BD), `-Stop`, `-Port`. Detalle y credenciales en [docs/DEMO.md](docs/DEMO.md). Solo para desarrollo.
 
@@ -37,7 +37,7 @@ Flags: `-Fresh` (recrea BD), `-Stop`, `-Port`. Detalle y credenciales en [docs/D
 |---|---|
 | PHP | ≥ 8.2 |
 | Composer | ≥ 2.x |
-| MySQL / MariaDB | ≥ 8.0 (o SQLite para desarrollo) |
+| MySQL | ≥ 8.0 (MariaDB no soportado; SQLite solo para desarrollo/tests) |
 | Node.js | ≥ 18 (solo para assets Filament) |
 
 ### 1. Instalar dependencias

@@ -14,7 +14,7 @@ param(
     [switch]$Simulate,
     [switch]$Queue,
     [int]$Port = 8000,
-    [string]$OrgSlug = 'metrobus'
+    [string]$OrgSlug = 'bucaratransit'
 )
 $ErrorActionPreference = 'Stop'
 $Root    = Split-Path -Parent $PSScriptRoot
@@ -139,7 +139,7 @@ Write-Host '================ BUS DEV LISTO (solo desarrollo) ================' -
 Write-Host " Servidor : $AppUrl   (health OK)"
 Write-Host " API      : $AppUrl/api/v1"
 Write-Host " Panel    : $AppUrl/admin  |  $AppUrl/empresa"
-Write-Host " Orgs demo: metrobus, campus, logistica  (default: $OrgSlug)"
+Write-Host " Orgs demo: bucaratransit, metrobus, campus, logistica  (default: $OrgSlug)"
 Write-Host ' Login    : admin.<slug>@demo.test / driver.<slug>@demo.test / pasajero.<slug>@demo.test  -  clave Demo12345!'
 Write-Host ' Super    : superadmin@demo.test (panel /admin; tenant en /empresa)  -  detalle: docs/DEMO.md'
 if ($Simulate) { Write-Host ' Simulador: activo (demo:simulate-buses)' }
