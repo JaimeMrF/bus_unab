@@ -38,7 +38,7 @@ Compose compiler 2.1 usa strong skipping: las lambdas y los `List` estables por 
 
 ### Pendiente de medir en dispositivo
 - Fluidez de Home con mapa + hoja de rutas en gama media (perfilar con GPU rendering y Layout Inspector: recomposiciones por segundo durante el polling a 5 s).
-- Que `baseline-prof.txt` lo recoja AGP con el layout KMP (`src/main`); si no, mover a un módulo `baselineprofile` y generarlo. La instalación fuera de Play requiere `androidx.profileinstaller` (no añadida: sin librerías nuevas).
+- Que `baseline-prof.txt` lo recoja AGP con el layout KMP (`src/main`); si no, mover a un módulo `baselineprofile` y generarlo. `androidx.profileinstaller` 1.4.1 añadido para aplicar el perfil fuera de Play.
 - Costo del dibujo de 36 partículas y de la aurora en gama baja/media; consumo de batería.
 - Tamaño real de las poses descargadas (1 MB máx. por imagen según contrato) y tasa de aciertos de la caché de disco.
 - Icono de bus por `bus_style.icon_url` (imagen tintada): aún no consumido, solo la forma vectorial (`classic|modern|minibus`).

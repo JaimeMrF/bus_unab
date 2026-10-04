@@ -90,6 +90,8 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            // Aplica baseline-prof.txt al instalar fuera de Play (sideload, adb) y en el primer arranque.
+            implementation(libs.androidx.profileinstaller)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.koin.android)
 
