@@ -27,4 +27,6 @@ class BusRepository(
 
     suspend fun updateDriverLocation(plate: String, lat: Double, lng: Double, heading: Int) =
         api.updateDriverLocation(plate, lat, lng, heading)
+
+    suspend fun getEta(plate: String, stopId: Int): ApiResult<com.vibra.bus.data.model.EtaResponse> = api.getEta(plate, stopId)
 }

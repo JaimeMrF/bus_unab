@@ -1,5 +1,11 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.util.formatEta
+import com.vibra.bus.util.showLocalNotification
+import com.vibra.bus.util.shareText
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.vibra.bus.presentation.map.BusMapState
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.components.CelebrationOverlay
@@ -67,6 +73,16 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
         var isVisible        by remember { mutableStateOf(false) }
         var showBatteryDialog by remember { mutableStateOf(false) }
 
+        val alertMinutes by viewModel.alertMinutes.collectAsState()
+        val alertFired by viewModel.alertFired.collectAsState()
+        val haptics = LocalHapticFeedback.current
+        val brand = LocalBrand.current
+        LaunchedEffect(alertFired) {
+            if (alertFired) {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                showLocalNotification("Tu bus está cerca", "${bus?.name ?: plate} llega en ${formatEta(eta)}")
+            }
+        }
         var arrivals by remember { mutableStateOf(0) }
         LaunchedEffect(isArriving) { if (isArriving) arrivals++ }
 
@@ -267,6 +283,34 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                "Avísame a",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            listOf(3, 5, 10).forEach { m ->
+                                FilterChip(
+                                    selected = alertMinutes == m,
+                                    onClick = {
+                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        viewModel.setAlert(if (alertMinutes == m) null else m)
+                                    },
+                                    label = { Text("$m min") },
+                                )
+                            }
+                            Spacer(Modifier.weight(1f))
+                            IconButton(onClick = {
+                                shareText("Voy en ${bus?.name ?: plate} hacia ${stop.name}. Llega en ${formatEta(eta)}. ${brand.appName}")
+                            }) {
+                                Icon(Icons.Default.Share, contentDescription = "Compartir mi viaje")
+                            }
+                        }
 
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             PrimaryButton(

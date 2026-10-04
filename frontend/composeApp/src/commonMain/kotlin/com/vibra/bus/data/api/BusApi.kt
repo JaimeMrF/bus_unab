@@ -1,5 +1,6 @@
 package com.vibra.bus.data.api
 
+import com.vibra.bus.data.model.EtaResponse
 import com.vibra.bus.data.model.ArrivedRequest
 import com.vibra.bus.data.model.ArrivedResponse
 import com.vibra.bus.data.model.BusCatalogResponse
@@ -35,6 +36,11 @@ class BusApi(private val client: HttpClient) {
 
     suspend fun getBusDetail(plate: String): ApiResult<BusDetailResponse> = safeCall {
         client.get("$BASE_URL/buses/$plate").body()
+    }
+
+    /** ETA del backend (disponible desde la API de ETA); si responde 404 el cliente calcula localmente. */
+    suspend fun getEta(plate: String, stopId: Int): ApiResult<EtaResponse> = safeCall {
+        client.get("$BASE_URL/buses/$plate/eta") { parameter("stop_id", stopId) }.body()
     }
 
     suspend fun getBusStops(plate: String): ApiResult<BusStopsResponse> = safeCall {

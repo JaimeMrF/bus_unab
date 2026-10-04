@@ -102,3 +102,16 @@ data class DriverLocationRequest(
 data class DriverLocationResponse(
     val success: Boolean = false,
 )
+
+/** ETA calculado por el backend para un bus y una parada. Todos los campos son opcionales. */
+@Serializable
+data class EtaDto(
+    @SerialName("eta_minutes") val etaMinutes: Int? = null,
+    @SerialName("distance_meters") val distanceMeters: Int? = null,
+)
+
+@Serializable
+data class EtaResponse(
+    val success: Boolean = false,
+    val data: EtaDto? = null,
+)
