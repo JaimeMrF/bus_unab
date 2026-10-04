@@ -1,5 +1,6 @@
 package com.vibra.bus.di
 
+import com.vibra.bus.data.repository.FavoritesRepository
 import com.russhwolf.settings.Settings
 import com.vibra.bus.data.api.AuthApi
 import com.vibra.bus.data.api.BrandApi
@@ -57,6 +58,7 @@ val commonModule = module {
     single { PoiRepository(get()) }
     single { WalletRepository(get()) }
     single { BrandRepository(get(), get()) }
+    single { FavoritesRepository(get()) }
 
     // ViewModels
     viewModel { AuthViewModel(get(), get(), get()) }

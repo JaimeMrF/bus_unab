@@ -1,5 +1,12 @@
 package com.vibra.bus.presentation.components
 
+import com.vibra.bus.presentation.theme.Motion
+import com.vibra.bus.presentation.motion.LocalMotion
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -92,6 +99,9 @@ fun BusCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 StatusPill(text = statusLabel, tone = tone, showDot = true)
+                if (occupancy != null) {
+                    OccupancyBar(percentage = occupancy.percentage, color = occupancyColor)
+                }
             }
 
             if (occupancy != null) {
@@ -134,5 +144,27 @@ fun OccupancyBadge(level: String, percentage: Float, color: Color) {
             style = MaterialTheme.typography.labelSmall,
             color = content,
         )
+    }
+}
+
+/** Barra de ocupacion con color semantico; el relleno anima al valor y se lee al dibujar. */
+@Composable
+fun OccupancyBar(percentage: Float, color: Color, modifier: Modifier = Modifier) {
+    val env = LocalMotion.current
+    val target = (percentage / 100f).coerceIn(0f, 1f)
+    val fill = animateFloatAsState(
+        targetValue = target,
+        animationSpec = if (env.animate) tween(600, easing = Motion.easeOut) else tween(0),
+        label = "occupancy_fill",
+    )
+    val track = MaterialTheme.colorScheme.surfaceVariant
+    Canvas(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(6.dp)
+            .clip(AppShape.StatusBadge),
+    ) {
+        drawRect(track)
+        drawRect(color, size = Size(size.width * fill.value, size.height))
     }
 }

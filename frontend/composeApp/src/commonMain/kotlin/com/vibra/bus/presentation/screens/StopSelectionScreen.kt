@@ -1,5 +1,10 @@
 package com.vibra.bus.presentation.screens
 
+import org.koin.compose.koinInject
+import com.vibra.bus.presentation.components.matchesQuery
+import com.vibra.bus.presentation.components.SearchField
+import com.vibra.bus.presentation.components.FavoriteHeart
+import com.vibra.bus.data.repository.FavoritesRepository
 import com.vibra.bus.domain.brand.MascotPose
 import androidx.compose.material3.Surface
 import androidx.compose.ui.semantics.Role
@@ -93,6 +98,9 @@ data class StopSelectionScreen(val plate: String) : Screen {
             )
         )
         val scope             = rememberCoroutineScope()
+        val favorites         = koinInject<FavoritesRepository>()
+        val favoriteIds by favorites.ids.collectAsState()
+        var query by remember { mutableStateOf("") }
 
         LaunchedEffect(Unit) {
             viewModel.loadStops(plate)
@@ -168,15 +176,27 @@ data class StopSelectionScreen(val plate: String) : Screen {
                                     subtitle = "No hay paradas registradas para esta ruta"
                                 )
                             } else {
+                                if (state.data.size > 6) {
+                                    SearchField(query, { query = it }, "Buscar parada")
+                                    Spacer(Modifier.height(8.dp))
+                                }
+                                // Favoritas primero; el filtro es instantaneo y se recalcula solo si cambian sus entradas.
+                                val visible = remember(state.data, query, favoriteIds) {
+                                    state.data
+                                        .filter { matchesQuery(query, it.name, it.address) }
+                                        .sortedByDescending { it.id in favoriteIds }
+                                }
                                 LazyColumn(
                                     state = listState,
                                     modifier = Modifier.heightIn(max = 280.dp),
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    items(state.data, key = { it.id }) { stop ->
+                                    items(visible, key = { it.id }, contentType = { "stop" }) { stop ->
                                         StopSelectionRow(
                                             stop       = stop,
                                             isSelected = selectedStop?.id == stop.id,
+                                            favorite   = stop.id in favoriteIds,
+                                            onToggleFavorite = { favorites.toggle(stop.id) },
                                             onClick    = { viewModel.selectStop(stop) }
                                         )
                                     }
@@ -291,6 +311,8 @@ data class StopSelectionScreen(val plate: String) : Screen {
 private fun StopSelectionRow(
     stop       : StopWithPivotDto,
     isSelected : Boolean,
+    favorite   : Boolean,
+    onToggleFavorite: () -> Unit,
     onClick    : () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -325,6 +347,7 @@ private fun StopSelectionRow(
                 color = if (isSelected) colors.onPrimaryContainer else colors.primary,
                 modifier = Modifier.padding(horizontal = 8.dp),
             )
+            FavoriteHeart(favorite = favorite, onToggle = onToggleFavorite)
         }
     }
 }

@@ -1,5 +1,16 @@
 package com.vibra.bus.presentation.screens
 
+import kotlinx.coroutines.delay
+import com.vibra.bus.presentation.components.matchesQuery
+import com.vibra.bus.presentation.components.SearchField
+import com.vibra.bus.data.repository.FavoritesRepository
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.Icon
+import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.lazy.LazyRow
 import com.vibra.bus.presentation.theme.LocalBrand
 import com.vibra.bus.presentation.map.busStatesFrom
 import com.vibra.bus.domain.brand.MascotPose
@@ -107,6 +118,11 @@ class HomeScreen : Screen {
         var selectedStop by remember { mutableStateOf<StopDto?>(null) }
         var showStops by remember { mutableStateOf(false) }
         var showBusSheet by remember { mutableStateOf(false) }
+        var busQuery by remember { mutableStateOf("") }
+        var refreshing by remember { mutableStateOf(false) }
+        val favorites = koinInject<FavoritesRepository>()
+        val favoriteIds by favorites.ids.collectAsState()
+        val haptics = LocalHapticFeedback.current
         val busSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
         LaunchedEffect(sessionExpired) {
@@ -143,6 +159,13 @@ class HomeScreen : Screen {
             busStops.map { s -> StopDto(s.id, s.name, s.address, s.latitude, s.longitude, s.radiusMeters) }
         }
         val stopList = if (selectedBus != null) routeStops else allStops
+        val favoriteStops = remember(allStops, favoriteIds) { allStops.filter { it.id in favoriteIds } }
+        val filteredBuses = remember(busList, busQuery) {
+            busList.filter { matchesQuery(busQuery, it.name, it.plate) }
+        }
+        LaunchedEffect(refreshing) {
+            if (refreshing) { viewModel.refresh(); delay(900); refreshing = false }
+        }
 
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -333,6 +356,38 @@ class HomeScreen : Screen {
                         modifier = Modifier.padding(horizontal = 24.dp),
                         color = MaterialTheme.colorScheme.outlineVariant,
                     )
+                    if (favoriteStops.isNotEmpty()) {
+                        Text(
+                            "Tus paradas",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 24.dp, top = 12.dp),
+                        )
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(favoriteStops, key = { it.id }, contentType = { "fav" }) { stop ->
+                                AssistChip(
+                                    onClick = {
+                                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        selectedStop = stop
+                                        showBusSheet = false
+                                    },
+                                    label = { Text(stop.name, maxLines = 1) },
+                                    leadingIcon = { Icon(Icons.Filled.Favorite, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                                )
+                            }
+                        }
+                    }
+                    if (busList.size > 4) {
+                        SearchField(
+                            value = busQuery,
+                            onValueChange = { busQuery = it },
+                            placeholder = "Buscar ruta o placa",
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                        )
+                    }
                     Spacer(Modifier.height(8.dp))
 
                     when {
@@ -354,11 +409,15 @@ class HomeScreen : Screen {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        else -> LazyColumn(
+                        else -> PullToRefreshBox(
+                            isRefreshing = refreshing,
+                            onRefresh = { refreshing = true },
+                        ) {
+                        LazyColumn(
                             modifier = Modifier.fillMaxWidth(),
                             contentPadding = PaddingValues(bottom = 16.dp),
                         ) {
-                            itemsIndexed(busList, key = { _, b -> b.plate }, contentType = { _, _ -> "bus" }) { index, bus ->
+                            itemsIndexed(filteredBuses, key = { _, b -> b.plate }, contentType = { _, _ -> "bus" }) { index, bus ->
                                 BusCard(
                                     modifier = Modifier.animateItem().staggerIn(index),
                                     bus = bus,
@@ -372,6 +431,7 @@ class HomeScreen : Screen {
                                     },
                                 )
                             }
+                        }
                         }
                     }
                 }

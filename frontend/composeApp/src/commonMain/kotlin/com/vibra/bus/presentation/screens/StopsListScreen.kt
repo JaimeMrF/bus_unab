@@ -1,5 +1,16 @@
 package com.vibra.bus.presentation.screens
 
+import org.koin.compose.koinInject
+import kotlinx.coroutines.delay
+import com.vibra.bus.presentation.components.matchesQuery
+import com.vibra.bus.presentation.components.SearchField
+import com.vibra.bus.presentation.components.FavoriteHeart
+import com.vibra.bus.data.repository.FavoritesRepository
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.motion.staggerIn
 import androidx.compose.foundation.layout.WindowInsets
@@ -45,12 +56,24 @@ import org.koin.compose.viewmodel.koinViewModel
 
 data class StopsListScreen(val plate: String) : Screen {
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val viewModel = koinViewModel<StopSelectionViewModel>()
         val stopsState by viewModel.stopsState.collectAsState()
         val busDetail by viewModel.busDetail.collectAsState()
+        val favorites = koinInject<FavoritesRepository>()
+        val favoriteIds by favorites.ids.collectAsState()
+        var query by remember { mutableStateOf("") }
+        var refreshing by remember { mutableStateOf(false) }
+        LaunchedEffect(refreshing) {
+            if (refreshing) {
+                viewModel.loadStops(plate)
+                delay(900)
+                refreshing = false
+            }
+        }
 
         LaunchedEffect(Unit) {
             viewModel.loadStops(plate)
@@ -80,17 +103,28 @@ data class StopsListScreen(val plate: String) : Screen {
                                 onCtaClick = { viewModel.loadStops(plate) },
                             )
                         } else {
-                            LazyColumn(
-                                contentPadding = PaddingValues(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                itemsIndexed(state.data, key = { _, s -> s.id }, contentType = { _, _ -> "stop" }) { index, stop ->
-                                    StopListItem(
-                                        modifier = Modifier.staggerIn(index),
-                                        stop = stop,
-                                        isFirst = index == 0,
-                                        isLast = index == state.data.lastIndex,
-                                    )
+                            val visible = remember(state.data, query) {
+                                state.data.filter { matchesQuery(query, it.name, it.address) }
+                            }
+                            SearchField(
+                                query, { query = it }, "Buscar parada",
+                                Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                            PullToRefreshBox(isRefreshing = refreshing, onRefresh = { refreshing = true }) {
+                                LazyColumn(
+                                    contentPadding = PaddingValues(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    itemsIndexed(visible, key = { _, s -> s.id }, contentType = { _, _ -> "stop" }) { index, stop ->
+                                        StopListItem(
+                                            modifier = Modifier.staggerIn(index),
+                                            stop = stop,
+                                            isFirst = index == 0,
+                                            isLast = index == visible.lastIndex,
+                                            favorite = stop.id in favoriteIds,
+                                            onToggleFavorite = { favorites.toggle(stop.id) },
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -110,7 +144,14 @@ data class StopsListScreen(val plate: String) : Screen {
 }
 
 @Composable
-private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boolean, modifier: Modifier = Modifier) {
+private fun StopListItem(
+    stop: StopWithPivotDto,
+    isFirst: Boolean,
+    isLast: Boolean,
+    favorite: Boolean,
+    onToggleFavorite: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val badge = if (isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
     val onBadge = if (isFirst) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary
     val eta = if (stop.estimatedMinutes == 0) "Salida" else "~${stop.estimatedMinutes} min"
@@ -155,6 +196,7 @@ private fun StopListItem(stop: StopWithPivotDto, isFirst: Boolean, isLast: Boole
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
+            FavoriteHeart(favorite = favorite, onToggle = onToggleFavorite)
         }
     }
 }

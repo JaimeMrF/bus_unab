@@ -39,6 +39,11 @@ class AppSettings(private val settings: Settings) {
         get() = settings.getString("brand_json", "")
         set(value) = settings.putString("brand_json", value)
 
+    /** Ids de paradas favoritas separados por coma. */
+    var favoriteStopsRaw: String
+        get() = settings.getString("favorite_stops", "")
+        set(value) = settings.putString("favorite_stops", value)
+
     var token: String
         get() = settings.getString("token", "")
         set(value) = settings.putString("token", value)
