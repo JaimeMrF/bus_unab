@@ -60,7 +60,7 @@ val commonModule = module {
     single { PoiRepository(get()) }
     single { WalletRepository(get()) }
     single { BrandRepository(get(), get()) }
-    single { FavoritesRepository(get(), get()) }
+    single { FavoritesRepository(get<AppSettings>(), get<FavoritesApi>()) }
 
     // ViewModels
     viewModel { AuthViewModel(get(), get(), get()) }

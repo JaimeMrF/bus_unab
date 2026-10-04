@@ -1,5 +1,6 @@
 package com.vibra.bus.data.repository
 
+import com.vibra.bus.data.api.FavoriteStopsResponse
 import com.vibra.bus.data.api.FavoritesApi
 import com.vibra.bus.util.ApiResult
 import com.vibra.bus.util.AppSettings
@@ -13,31 +14,71 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/** Operaciones remotas de favoritos; la implementacion real es [FavoritesApi]. */
+interface FavoritesRemote {
+    suspend fun list(): ApiResult<FavoriteStopsResponse>
+    suspend fun add(stopId: Int): ApiResult<Unit>
+    suspend fun remove(stopId: Int): ApiResult<Unit>
+}
+
+/** Persistencia local de favoritos y de los cambios aun no confirmados (ids separados por coma). */
+interface FavoritesStorage {
+    var ids: String
+    var pendingAdds: String
+    var pendingRemoves: String
+}
+
+class SettingsFavoritesStorage(private val settings: AppSettings) : FavoritesStorage {
+    override var ids: String
+        get() = settings.favoriteStopsRaw
+        set(value) { settings.favoriteStopsRaw = value }
+    override var pendingAdds: String
+        get() = settings.favoritePendingAddsRaw
+        set(value) { settings.favoritePendingAddsRaw = value }
+    override var pendingRemoves: String
+        get() = settings.favoritePendingRemovesRaw
+        set(value) { settings.favoritePendingRemovesRaw = value }
+}
+
 /**
  * Paradas favoritas con sincronizacion. La UI siempre lee y escribe en local (respuesta
- * inmediata); la API es el respaldo entre dispositivos:
- * - toggle: cambia en local y lo envia; si falla (sin red o endpoint ausente) queda pendiente.
- * - sync: sube los pendientes y, si el servidor responde, adopta su lista como verdad.
- * Si la API no existe (404/405) o la sesion no es valida, todo sigue funcionando solo en local.
+ * inmediata); la API es el respaldo entre dispositivos.
+ *
+ * Reglas ante la respuesta del servidor al subir un cambio pendiente:
+ * - 2xx: confirmado, deja de estar pendiente.
+ * - 401, 404, 405 o sin red: no hay API utilizable ahora; se conserva todo (local y pendientes)
+ *   y se reintenta en la siguiente sincronizacion (por ejemplo tras volver a iniciar sesion).
+ * - 5xx: error transitorio del servidor; igual, se conserva y se reintenta.
+ * - Otro 4xx (validacion, p. ej. 422): el servidor rechaza ese cambio de forma definitiva; se
+ *   descarta de pendientes para no reintentarlo eternamente.
  */
 class FavoritesRepository(
-    private val settings: AppSettings,
-    private val api: FavoritesApi? = null,
+    private val storage: FavoritesStorage,
+    private val remote: FavoritesRemote? = null,
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    constructor(settings: AppSettings, api: FavoritesApi) : this(
+        SettingsFavoritesStorage(settings),
+        object : FavoritesRemote {
+            override suspend fun list() = api.list()
+            override suspend fun add(stopId: Int) = api.add(stopId)
+            override suspend fun remove(stopId: Int) = api.remove(stopId)
+        },
+    )
+
     private val lock = Mutex()
 
-    private val _ids = MutableStateFlow(parse(settings.favoriteStopsRaw))
+    private val _ids = MutableStateFlow(parse(storage.ids))
     val ids: StateFlow<Set<Int>> = _ids.asStateFlow()
 
-    private var pendingAdds = parse(settings.favoritePendingAddsRaw).toMutableSet()
-    private var pendingRemoves = parse(settings.favoritePendingRemovesRaw).toMutableSet()
+    private var pendingAdds = parse(storage.pendingAdds).toMutableSet()
+    private var pendingRemoves = parse(storage.pendingRemoves).toMutableSet()
 
     fun toggle(stopId: Int) {
         val nowFavorite = stopId !in _ids.value
         val next = _ids.value.toMutableSet().apply { if (nowFavorite) add(stopId) else remove(stopId) }
         _ids.value = next
-        settings.favoriteStopsRaw = serialize(next)
+        storage.ids = serialize(next)
         if (nowFavorite) { pendingRemoves.remove(stopId); pendingAdds.add(stopId) }
         else { pendingAdds.remove(stopId); pendingRemoves.add(stopId) }
         persistPending()
@@ -46,7 +87,7 @@ class FavoritesRepository(
 
     fun clear() {
         _ids.value = emptySet()
-        settings.favoriteStopsRaw = ""
+        storage.ids = ""
         pendingAdds.clear()
         pendingRemoves.clear()
         persistPending()
@@ -54,48 +95,54 @@ class FavoritesRepository(
 
     /** Sincroniza sin bloquear a quien llama (arranque de Home, tras cada cambio). */
     fun syncAsync() {
-        if (api == null) return
+        if (remote == null) return
         scope.launch { sync() }
     }
 
+    private enum class Outcome { Done, Discard, Retry }
+
+    private fun classify(result: ApiResult<Unit>): Outcome = when (result) {
+        is ApiResult.Success -> Outcome.Done
+        is ApiResult.NetworkError -> Outcome.Retry
+        is ApiResult.HttpError -> when {
+            result.code == 401 || result.code == 404 || result.code == 405 -> Outcome.Retry
+            result.code >= 500 -> Outcome.Retry
+            result.code in 400..499 -> Outcome.Discard
+            else -> Outcome.Retry
+        }
+    }
+
     suspend fun sync() {
-        val api = api ?: return
+        val remote = remote ?: return
         lock.withLock {
-            // 1. Subir cambios pendientes; los que el servidor acepta dejan de estar pendientes.
+            // 1. Subir cambios pendientes. Con un resultado "reintentar" se corta todo: no se
+            // adopta la lista del servidor (que aun no refleja los cambios) ni se pierde nada.
             for (id in pendingAdds.toList()) {
-                when (val r = api.add(id)) {
-                    is ApiResult.Success -> pendingAdds.remove(id)
-                    is ApiResult.HttpError -> if (unavailable(r.code)) return
-                    is ApiResult.NetworkError -> return
+                when (classify(remote.add(id))) {
+                    Outcome.Done, Outcome.Discard -> pendingAdds.remove(id)
+                    Outcome.Retry -> { persistPending(); return }
                 }
             }
             for (id in pendingRemoves.toList()) {
-                when (val r = api.remove(id)) {
-                    is ApiResult.Success -> pendingRemoves.remove(id)
-                    is ApiResult.HttpError -> if (unavailable(r.code)) return
-                    is ApiResult.NetworkError -> return
+                when (classify(remote.remove(id))) {
+                    Outcome.Done, Outcome.Discard -> pendingRemoves.remove(id)
+                    Outcome.Retry -> { persistPending(); return }
                 }
             }
             persistPending()
-            // 2. Adoptar la lista del servidor (mas lo que aun este pendiente de subir).
-            when (val r = api.list()) {
-                is ApiResult.Success -> {
-                    val remote = r.data.data?.map { it.id }?.toSet() ?: return
-                    val merged = (remote + pendingAdds) - pendingRemoves
-                    _ids.value = merged
-                    settings.favoriteStopsRaw = serialize(merged)
-                }
-                else -> Unit
+            // 2. Con todo subido, la lista del servidor es la verdad.
+            val r = remote.list()
+            if (r is ApiResult.Success) {
+                val remoteIds = r.data.data?.map { it.id }?.toSet() ?: return
+                _ids.value = remoteIds
+                storage.ids = serialize(remoteIds)
             }
         }
     }
 
-    /** 401, 404 y 405: no hay API utilizable (sesion caduca o backend sin el endpoint): seguir en local. */
-    private fun unavailable(code: Int) = code == 401 || code == 404 || code == 405
-
     private fun persistPending() {
-        settings.favoritePendingAddsRaw = serialize(pendingAdds)
-        settings.favoritePendingRemovesRaw = serialize(pendingRemoves)
+        storage.pendingAdds = serialize(pendingAdds)
+        storage.pendingRemoves = serialize(pendingRemoves)
     }
 
     private fun serialize(ids: Set<Int>) = ids.joinToString(",")
