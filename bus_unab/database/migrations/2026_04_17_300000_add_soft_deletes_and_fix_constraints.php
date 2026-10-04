@@ -50,24 +50,27 @@ return new class extends Migration
             $hasPlain = true;
         }
 
-        if ($hasUnique) {
-            Schema::table('bus_requests', function (Blueprint $table) use ($driver, $uniqueName) {
-                if ($driver === 'mysql') {
-                    // MySQL no permite borrar el único si es el único índice que cubre la FK de user_id.
-                    // Agregamos un índice temporal para que MySQL tenga cobertura, luego lo borramos.
-                    $table->index('user_id', 'bus_requests_user_id_fk_cover');
-                    $table->dropUnique(['user_id', 'bus_id', 'status']);
-                    $table->dropIndex('bus_requests_user_id_fk_cover');
-                } else {
-                    // SQLite no requiere cobertura de índice para las FK.
-                    $table->dropUnique($uniqueName);
-                }
-            });
-        }
-
+        // Orden seguro en MySQL/MariaDB: primero el índice plano (user_id es su prefijo
+        // izquierdo, así que cubre la FK de user_id) y solo entonces se borra el único.
+        // Con el orden inverso (índice temporal + drop) MySQL se niega a borrar el
+        // temporal porque la FK ya lo adoptó ("needed in a foreign key constraint").
         if (! $hasPlain) {
             Schema::table('bus_requests', function (Blueprint $table) {
                 $table->index(['user_id', 'bus_id', 'status']);
+            });
+        }
+
+        if ($hasUnique) {
+            Schema::table('bus_requests', function (Blueprint $table) use ($uniqueName) {
+                $table->dropUnique($uniqueName);
+            });
+        }
+
+        // Restos de un intento anterior fallido de esta migración (índice temporal).
+        if ($driver === 'mysql'
+            && collect(DB::select('SHOW INDEX FROM bus_requests WHERE Key_name = ?', ['bus_requests_user_id_fk_cover']))->isNotEmpty()) {
+            Schema::table('bus_requests', function (Blueprint $table) {
+                $table->dropIndex('bus_requests_user_id_fk_cover');
             });
         }
     }

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->char('request_hash', 64);
             $table->unsignedSmallInteger('status_code');
             $table->json('response');
-            $table->timestamp('expires_at');
+            $table->dateTime('expires_at');
             $table->timestamps();
 
             $table->unique(['user_id', 'scope', 'key']);

@@ -30,7 +30,7 @@ return new class extends Migration
             // Monto congelado al emitir (la tarifa puede cambiar después).
             $table->unsignedBigInteger('monto_snapshot_centavos');
             $table->timestamp('issued_at')->useCurrent();
-            $table->timestamp('expires_at')->index();      // issued_at + 60 s
+            $table->dateTime('expires_at')->index();       // issued_at + 60 s (dateTime: MariaDB sin explicit_defaults_for_timestamp rechaza timestamp NOT NULL sin default)
             $table->timestamp('used_at')->nullable()->index(); // ONE-TIME: primera marca gana
             $table->foreignId('used_by_driver_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('reference', 190)->nullable();  // 'qrpay:{token_id}' del asiento cobrado
