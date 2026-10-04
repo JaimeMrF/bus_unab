@@ -66,7 +66,7 @@ class FavoritesSyncTest {
     }
 
     @Test fun serverErrorAndMissingEndpointKeepPending() {
-        for (code in listOf(404, 405, 500, 503)) {
+        for (code in listOf(405, 500, 503)) {
             val storage = FakeStorage(); val remote = FakeRemote()
             remote.addResult = { ApiResult.HttpError(code, "x") }
             val r = repo(storage, remote)
@@ -74,6 +74,16 @@ class FavoritesSyncTest {
             assertEquals("3", storage.pendingAdds, "codigo $code")
             assertEquals(setOf(3), r.ids.value, "codigo $code")
         }
+    }
+
+    @Test fun unknownStopOnAddIsDiscardedAndDroppedByServerList() {
+        val storage = FakeStorage(); val remote = FakeRemote()
+        remote.addResult = { ApiResult.HttpError(404, "Parada no encontrada") }
+        val r = repo(storage, remote)
+        r.toggle(99)
+        assertEquals("", storage.pendingAdds)
+        // La lista del servidor manda: la parada inexistente deja de ser favorita local.
+        assertEquals(emptySet(), r.ids.value)
     }
 
     @Test fun networkErrorKeepsPending() {

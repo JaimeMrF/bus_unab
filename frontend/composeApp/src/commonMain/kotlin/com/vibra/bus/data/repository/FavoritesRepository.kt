@@ -46,11 +46,13 @@ class SettingsFavoritesStorage(private val settings: AppSettings) : FavoritesSto
  *
  * Reglas ante la respuesta del servidor al subir un cambio pendiente:
  * - 2xx: confirmado, deja de estar pendiente.
- * - 401, 404, 405 o sin red: no hay API utilizable ahora; se conserva todo (local y pendientes)
+ * - 401, 405 o sin red: no hay API utilizable ahora; se conserva todo (local y pendientes)
  *   y se reintenta en la siguiente sincronizacion (por ejemplo tras volver a iniciar sesion).
  * - 5xx: error transitorio del servidor; igual, se conserva y se reintenta.
- * - Otro 4xx (validacion, p. ej. 422): el servidor rechaza ese cambio de forma definitiva; se
- *   descarta de pendientes para no reintentarlo eternamente.
+ * - 404 al agregar: la parada no existe, esta inactiva o es de otro tenant (contrato del backend);
+ *   es definitivo, se descarta de pendientes y se quita de la lista local en la siguiente sync.
+ * - Otro 4xx (validacion, p. ej. 422): rechazo definitivo; se descarta para no reintentarlo siempre.
+ * DELETE responde 204 siempre (idempotente), asi que cualquier 2xx confirma.
  */
 class FavoritesRepository(
     private val storage: FavoritesStorage,
@@ -105,7 +107,7 @@ class FavoritesRepository(
         is ApiResult.Success -> Outcome.Done
         is ApiResult.NetworkError -> Outcome.Retry
         is ApiResult.HttpError -> when {
-            result.code == 401 || result.code == 404 || result.code == 405 -> Outcome.Retry
+            result.code == 401 || result.code == 405 -> Outcome.Retry
             result.code >= 500 -> Outcome.Retry
             result.code in 400..499 -> Outcome.Discard
             else -> Outcome.Retry
