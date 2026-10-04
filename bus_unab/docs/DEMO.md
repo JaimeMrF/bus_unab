@@ -1,6 +1,6 @@
 # Demo white-label
 
-Entorno de demostración con **3 organizaciones** de identidad muy distinta, para
+Entorno de demostración con **4 organizaciones** de identidad muy distinta, para
 ver cómo la app cambia de marca solo con el slug. Solo funciona con
 `APP_ENV=local` o `testing`; en cualquier otro entorno los comandos se niegan.
 
@@ -25,6 +25,9 @@ simulador y el servidor compartan las posiciones.
 | `metrobus` | MetroBus | poppins | lg | `#0F766E` (teal) | QR + wallet + conductor | sí |
 | `campus` | Campus Go | inter | sm | `#6D28D9` (violeta) | solo conductor | sí |
 | `logistica` | RutaCarga | system | md | `#C2410C` (naranja) | wallet + conductor | no |
+| `bucaratransit` | BucaraTransit | poppins | lg | `#01265A` azul rey + `#FCBB01` amarillo | todas | set de 9 poses (leopardo) |
+
+`bucaratransit` usa las 9 imágenes de `database/seeders/assets/bucaratransit/*.webp` (copiadas de forma idempotente a `storage/app/public/branding/demo/bucaratransit/`) como `mascot_poses`. Estilo de bus (`bus_style.icon`): bucaratransit `classic`, metrobus `modern`, campus `minibus`, logistica `classic`.
 
 Branding público: `GET /api/v1/branding/{slug}`. Los logos/mascotas son SVG
 generados localmente en `storage/app/public/branding/demo/`.
@@ -41,14 +44,14 @@ Password de **todos** los usuarios: `Demo12345!`
 | Pasajero | `pasajero.{slug}@demo.test` | app; wallet con $50.000 COP |
 | Pasajero de ciudad | `pasajero@demo.test` | app, sin organización; wallet con $50.000 COP |
 
-`{slug}` = `metrobus`, `campus` o `logistica`.
+`{slug}` = `metrobus`, `campus`, `logistica` o `bucaratransit` (p. ej. `admin.bucaratransit@demo.test`).
 
 ## Datos operativos
 
 - Buses (2 por organización, el segundo recorre la ruta al revés):
-  `MB101/102`, `CP201/202`, `LG301/302`.
+  `MB101/102`, `CP201/202`, `LG301/302`, `BT401/402`.
 - 4–5 paradas por organización en zonas distintas de Bucaramanga, rutas con
-  waypoints y una tarifa (`DEMO-ORD`, `DEMO-EST`, `DEMO-CARGA`).
+  waypoints y una tarifa (`DEMO-ORD`, `DEMO-EST`, `DEMO-CARGA`, `DEMO-BT`).
 - Wallets con saldo inicial 5.000.000 centavos; el ledger cuadra con el saldo.
 
 ## Simulador de buses

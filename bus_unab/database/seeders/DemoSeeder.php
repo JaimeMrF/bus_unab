@@ -69,6 +69,7 @@ class DemoSeeder extends Seeder
                     'dark' => self::palette('#2DD4BF', '#042F2E', '#94A3B8', '#0B1220', '#042F2E', '#0B3B38', '#ECFEFF', '#FBBF24'),
                 ],
                 'mascot' => true,
+                'bus_style' => ['body' => '#0F766E', 'accent' => '#F59E0B', 'icon' => 'modern'],
                 'logo_color' => '#0F766E',
                 'fare' => ['DEMO-ORD', 'Tarifa ordinaria', 280_000],
                 'plates' => ['MB101', 'MB102'],
@@ -93,6 +94,7 @@ class DemoSeeder extends Seeder
                     'dark' => self::palette('#A78BFA', '#1E1B4B', '#F472B6', '#1E1B4B', '#1E1B4B', '#2E2A5E', '#F5F3FF', '#F472B6'),
                 ],
                 'mascot' => true,
+                'bus_style' => ['body' => null, 'accent' => '#EC4899', 'icon' => 'minibus'],
                 'logo_color' => '#6D28D9',
                 'fare' => ['DEMO-EST', 'Tarifa estudiantil', 100_000],
                 'plates' => ['CP201', 'CP202'],
@@ -116,6 +118,7 @@ class DemoSeeder extends Seeder
                     'dark' => self::palette('#FB923C', '#1C1917', '#D1D5DB', '#1C1917', '#1C1917', '#292524', '#FAFAF9', '#38BDF8'),
                 ],
                 'mascot' => false,
+                'bus_style' => ['body' => null, 'accent' => null, 'icon' => 'classic'],
                 'logo_color' => '#C2410C',
                 'fare' => ['DEMO-CARGA', 'Tarifa operativa', 350_000],
                 'plates' => ['LG301', 'LG302'],
@@ -126,6 +129,32 @@ class DemoSeeder extends Seeder
                     ['Peaje Floridablanca', 7.0780, -73.1040],
                     ['Centro de Acopio', 7.0850, -73.1130],
                     ['Puerto Seco', 7.0920, -73.1200],
+                ],
+            ],
+            'bucaratransit' => [
+                'nombre' => 'BucaraTransit',
+                'app_name' => 'BucaraTransit',
+                'tagline' => 'Muévete por Bucaramanga',
+                'font_family' => 'poppins',
+                'corner_radius' => 'lg',
+                'features' => ['qr_payments' => true, 'wallet' => true, 'driver_mode' => true],
+                'colors' => [
+                    'light' => self::palette('#01265A', '#FFFFFF', '#FCBB01', '#01265A', '#F4F7FC', '#FFFFFF', '#0B1B33', '#FCBB01'),
+                    'dark' => self::palette('#FCBB01', '#01265A', '#7FA6E8', '#00142F', '#00142F', '#0A2F66', '#FFFFFF', '#FCBB01'),
+                ],
+                'mascot' => false,
+                'poses' => true,
+                'bus_style' => ['body' => '#01265A', 'accent' => '#FCBB01', 'icon' => 'classic'],
+                'logo_color' => '#01265A',
+                'fare' => ['DEMO-BT', 'Tarifa BucaraTransit', 230_000],
+                'plates' => ['BT401', 'BT402'],
+                'ext_id' => 900007,
+                'stops' => [
+                    ['Parque del Agua', 7.1090, -73.1150],
+                    ['Plaza Guarín', 7.1130, -73.1190],
+                    ['Parque Santander', 7.1190, -73.1210],
+                    ['Cañaveral', 7.1000, -73.1070],
+                    ['Terminal de Transporte', 7.1280, -73.1260],
                 ],
             ],
         ];
@@ -146,9 +175,35 @@ class DemoSeeder extends Seeder
         ];
     }
 
+    /** Archivo del set de assets => pose pública (ver contrato de branding). */
+    private const POSE_FILES = [
+        'greeting' => 'saludo', 'curious' => 'curioso', 'sad' => 'triste', 'waiting' => 'triste_espera',
+        'phone' => 'celular', 'map' => 'mapa', 'driver' => 'conductor', 'ok' => 'ok', 'celebrating' => 'celebrando',
+    ];
+
+    /** Copia (idempotente) las 9 poses de database/seeders/assets/{slug}/ al disco público. */
+    private function poses(string $slug): ?array
+    {
+        $paths = [];
+        foreach (self::POSE_FILES as $pose => $file) {
+            $source = database_path("seeders/assets/{$slug}/{$file}.webp");
+            if (! is_file($source)) {
+                return null;
+            }
+            $target = "branding/demo/{$slug}/{$pose}.webp";
+            Storage::disk('public')->put($target, file_get_contents($source));
+            $paths[$pose] = $target;
+        }
+
+        return $paths;
+    }
+
     private function tenant(string $slug, array $org): Transportadora
     {
-        $paths = ['logo_path' => "branding/demo/{$slug}-logo.svg", 'mascot_path' => null];
+        $paths = ['logo_path' => "branding/demo/{$slug}-logo.svg", 'mascot_path' => null, 'mascot_poses' => null];
+        if (! empty($org['poses'])) {
+            $paths['mascot_poses'] = $this->poses($slug);
+        }
         Storage::disk('public')->put($paths['logo_path'], $this->logoSvg($org['app_name'], $org['logo_color']));
 
         if ($org['mascot']) {
@@ -161,6 +216,7 @@ class DemoSeeder extends Seeder
             'contacto_email' => "contacto@{$slug}.demo.test",
             'plan' => 'pro',
             'activo' => true,
+            'bus_style' => $org['bus_style'],
             'branding' => [
                 'app_name' => $org['app_name'],
                 'tagline' => $org['tagline'],
