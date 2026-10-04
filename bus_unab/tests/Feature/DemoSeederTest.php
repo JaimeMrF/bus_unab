@@ -59,13 +59,13 @@ class DemoSeederTest extends TestCase
     {
         $this->seedDemo();
 
-        $this->assertSame(['campus', 'logistica', 'metrobus'], Transportadora::orderBy('slug')->pluck('slug')->all());
-        $this->assertSame(3, User::where('role', 'tenant_admin')->count());
-        $this->assertSame(3, User::where('role', 'driver')->count());
-        $this->assertSame(4, User::where('role', 'pasajero')->count());
+        $this->assertSame(['bucaratransit', 'campus', 'logistica', 'metrobus'], Transportadora::orderBy('slug')->pluck('slug')->all());
+        $this->assertSame(4, User::where('role', 'tenant_admin')->count());
+        $this->assertSame(4, User::where('role', 'driver')->count());
+        $this->assertSame(5, User::where('role', 'pasajero')->count());
         $this->assertSame(1, User::where('role', 'super_admin')->count());
-        $this->assertSame(6, Bus::count());
-        $this->assertSame(4, Wallet::count());
+        $this->assertSame(8, Bus::count());
+        $this->assertSame(5, Wallet::count());
 
         foreach (Wallet::all() as $wallet) {
             $this->assertSame(DemoSeeder::WALLET_CENTAVOS, $wallet->balance_centavos);
@@ -181,7 +181,7 @@ class DemoSeederTest extends TestCase
         $this->assertEqualsCanonicalizing(['latitude', 'longitude', 'heading', 'speed_kmh', 'updated_at'], array_keys($first));
         $this->assertContains($first['heading'], range(0, 360));
 
-        foreach (['MB102', 'CP201', 'CP202', 'LG301', 'LG302'] as $plate) {
+        foreach (['MB102', 'CP201', 'CP202', 'LG301', 'LG302', 'BT401', 'BT402'] as $plate) {
             $this->assertNotNull(Cache::get("driver_location_{$plate}"), $plate);
         }
 
