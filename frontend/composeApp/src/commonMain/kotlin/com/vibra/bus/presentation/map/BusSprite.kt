@@ -1,5 +1,8 @@
 package com.vibra.bus.presentation.map
 
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -50,6 +53,8 @@ data class BusSpriteKey(
     val state: BusMapState,
     val icon: BusIcon,
     val sizePx: Int,
+    /** Imagen del tenant (bus_style.icon_url); forma parte de la clave para cachear por url y color. */
+    val iconUrl: String? = null,
 )
 
 /** Cache LRU pequena de sprites ya dibujados: se dibuja una vez por [BusSpriteKey], nunca por frame. */
@@ -57,9 +62,10 @@ object BusSpriteCache {
     private const val MAX = 16
     private val map = LinkedHashMap<BusSpriteKey, ImageBitmap>()
 
-    fun get(key: BusSpriteKey): ImageBitmap {
+    /** [custom] es la imagen ya cargada de [BusSpriteKey.iconUrl]; null dibuja la forma vectorial. */
+    fun get(key: BusSpriteKey, custom: ImageBitmap? = null): ImageBitmap {
         map.remove(key)?.let { map[key] = it; return it }
-        val bmp = renderBusSprite(key)
+        val bmp = renderBusSprite(key, custom)
         map[key] = bmp
         if (map.size > MAX) map.remove(map.keys.first())
         return bmp
@@ -74,17 +80,17 @@ private fun darken(c: Color, f: Float) = lerp(c, Color.Black, f)
  * Dibuja el bus apuntando hacia arriba (norte) en un lienzo cuadrado de [BusSpriteKey.sizePx].
  * El anillo exterior codifica el estado; la rotacion por rumbo la aplica el mapa.
  */
-fun renderBusSprite(key: BusSpriteKey): ImageBitmap {
+fun renderBusSprite(key: BusSpriteKey, custom: ImageBitmap? = null): ImageBitmap {
     val s = key.sizePx
     val image = ImageBitmap(s, s)
     val canvas = Canvas(image)
     CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, canvas, Size(s.toFloat(), s.toFloat())) {
-        drawBus(key)
+        drawBus(key, custom)
     }
     return image
 }
 
-private fun DrawScope.drawBus(key: BusSpriteKey) {
+private fun DrawScope.drawBus(key: BusSpriteKey, custom: ImageBitmap?) {
     val u = size.minDimension / 96f
     val c = Offset(size.width / 2f, size.height / 2f)
     val body = Color(key.body)
@@ -97,6 +103,18 @@ private fun DrawScope.drawBus(key: BusSpriteKey) {
     drawCircle(ring, radius = 44f * u, center = c, style = Stroke(width = 5f * u))
     if (key.state == BusMapState.Arriving) {
         drawCircle(ring.copy(alpha = 0.45f), radius = 38.5f * u, center = c, style = Stroke(width = 2f * u))
+    }
+
+    if (custom != null) {
+        // Imagen del tenant: silueta tintada con el color del cuerpo, centrada dentro del anillo.
+        val side = (66f * u).toInt().coerceAtLeast(1)
+        drawImage(
+            image = custom,
+            dstOffset = IntOffset((c.x - side / 2f).toInt(), (c.y - side / 2f).toInt()),
+            dstSize = IntSize(side, side),
+            colorFilter = ColorFilter.tint(body),
+        )
+        return
     }
 
     val (w, h, r) = when (key.icon) {

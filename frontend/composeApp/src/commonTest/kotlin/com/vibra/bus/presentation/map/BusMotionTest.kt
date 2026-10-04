@@ -29,3 +29,12 @@ class BusMotionTest {
         assertTrue("OLD" !in mid)
     }
 }
+
+class BusSpriteKeyTest {
+    @Test fun keysDifferByIconUrlAndColor() {
+        val a = BusSpriteKey(1, 2, 3, BusMapState.Available, BusIcon.Classic, 96, null)
+        assertEquals(a, a.copy())
+        assertTrue(a != a.copy(iconUrl = "https://x/i.png"))
+        assertTrue(a != a.copy(body = 9))
+    }
+}

@@ -1,5 +1,14 @@
 package com.vibra.bus.presentation.screens
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import coil3.toBitmap
+import coil3.request.SuccessResult
+import coil3.request.ImageRequest
+import coil3.SingletonImageLoader
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.runtime.produceState
 import com.vibra.bus.presentation.theme.appColors
 import com.vibra.bus.presentation.motion.LocalMotion
 import com.vibra.bus.presentation.map.interpolateBuses
@@ -136,11 +145,16 @@ private fun userCollection(userLocation: LatLng?): FeatureCollection =
     )
 
 /** Sprites de bus por estado, dibujados una vez por combinacion de color, forma y tamano (cache). */
-private fun busSprites(colors: MapColors, style: BusStyle?, ringColors: Map<BusMapState, Int>): Map<String, Bitmap> {
+private fun busSprites(
+    colors: MapColors,
+    style: BusStyle?,
+    ringColors: Map<BusMapState, Int>,
+    custom: ImageBitmap?,
+): Map<String, Bitmap> {
     val icon = BusIcon.parse(style?.icon)
     return BusMapState.values().associate { state ->
-        val key = BusSpriteKey(colors.busBody, colors.busAccent, ringColors.getValue(state), state, icon, 96)
-        val bmp = BusSpriteCache.get(key).asAndroidBitmap()
+        val key = BusSpriteKey(colors.busBody, colors.busAccent, ringColors.getValue(state), state, icon, 96, if (custom != null) style?.iconUrl else null)
+        val bmp = BusSpriteCache.get(key, custom).asAndroidBitmap()
         bmp.density = DisplayMetrics.DENSITY_DEFAULT
         (IMG_BUS_PREFIX + state.key) to bmp
     }
@@ -268,7 +282,24 @@ actual fun MapViewComposable(
             BusMapState.Arriving to app.warning.toArgb(),
         )
     }
-    val sprites = remember(mapColors, busStyle?.icon, ringColors) { busSprites(mapColors, busStyle, ringColors) }
+    // Icono del tenant (bus_style.icon_url): se descarga fuera del hilo principal; mientras carga, o si
+    // falla (incluye SVG, que Coil no decodifica sin modulo extra), se usa la forma vectorial.
+    val iconUrl = busStyle?.iconUrl?.takeIf { it.isNotBlank() }
+    val iconContext = LocalContext.current
+    val customIcon by produceState<ImageBitmap?>(initialValue = null, iconUrl) {
+        value = if (iconUrl == null) null else withContext(Dispatchers.Default) {
+            try {
+                val request = ImageRequest.Builder(iconContext).data(iconUrl).size(96, 96).build()
+                (SingletonImageLoader.get(iconContext).execute(request) as? SuccessResult)
+                    ?.image?.toBitmap(96, 96)?.asImageBitmap()
+            } catch (e: Exception) {
+                null
+            }
+        }
+    }
+    val sprites = remember(mapColors, busStyle?.icon, ringColors, customIcon) {
+        busSprites(mapColors, busStyle, ringColors, customIcon)
+    }
     val motion = LocalMotion.current
     // Ultima pose dibujada de cada bus: punto de partida de la siguiente interpolacion.
     val displayed = remember { HashMap<String, BusPose>() }
