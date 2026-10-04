@@ -43,7 +43,12 @@ class WaitingBusViewModel(
     private val _alertFired = MutableStateFlow(false)
     val alertFired: StateFlow<Boolean> = _alertFired
 
+    /** Fiabilidad del ETA mostrado: "high" del backend con velocidad real; "low" si es calculo local. */
+    private val _etaConfidence = MutableStateFlow("low")
+    val etaConfidence: StateFlow<String> = _etaConfidence
+
     private var etaApiAvailable = true
+    private var etaMisses = 0
     private var smoothedSpeed: Double? = null
     private var lastPollMs = 0L
     private var pollingJob: Job? = null
@@ -154,6 +159,7 @@ class WaitingBusViewModel(
         _distanceMeters.value = distance.toInt()
         
         _etaMinutes.value = estimateEtaMinutes(distance, smoothedSpeed)
+        _etaConfidence.value = "low"
         evaluateAlert()
 
         if (distance < 200 && !_isArriving.value) {
@@ -161,15 +167,30 @@ class WaitingBusViewModel(
         }
     }
 
-    /** ETA del backend si existe; ante 404 o error se mantiene el calculo local y no se vuelve a pedir. */
+    /**
+     * ETA del backend (GET /buses/{plate}/eta?stop_id): eta_seconds medido sobre la ruta. Si no
+     * hay dato (503 sin posicion, red) se mantiene el calculo local. 404 no es "endpoint ausente"
+     * sino bus o parada no encontrados: tras 3 seguidos se deja de preguntar; 405 corta de inmediato.
+     */
     private suspend fun refineEtaFromBackend(plate: String, stop: StopDto) {
         if (!etaApiAvailable) return
         when (val r = busRepository.getEta(plate, stop.id)) {
-            is ApiResult.Success -> r.data.data?.etaMinutes?.let {
-                _etaMinutes.value = max(1, it)
-                evaluateAlert()
+            is ApiResult.Success -> {
+                etaMisses = 0
+                val dto = r.data.data
+                val minutes = dto?.etaMinutes
+                if (dto != null && minutes != null) {
+                    _etaMinutes.value = minutes
+                    dto.distanceM?.let { _distanceMeters.value = it }
+                    _etaConfidence.value = dto.confidence ?: "medium"
+                    evaluateAlert()
+                }
             }
-            is ApiResult.HttpError -> if (r.code == 404 || r.code == 405) etaApiAvailable = false
+            is ApiResult.HttpError -> when (r.code) {
+                405 -> etaApiAvailable = false
+                404 -> if (++etaMisses >= 3) etaApiAvailable = false
+                else -> Unit
+            }
             is ApiResult.NetworkError -> Unit
         }
     }

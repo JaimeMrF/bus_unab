@@ -62,3 +62,22 @@ class EtaTest {
         assertEquals("7 min", formatEta(7))
     }
 }
+
+class EtaDtoTest {
+    private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; isLenient = true }
+
+    @Test fun parsesContractAndRoundsMinutesUp() {
+        val r = json.decodeFromString(
+            com.vibra.bus.data.model.EtaResponse.serializer(),
+            """{"success":true,"data":{"eta_seconds":61,"distance_m":420,"speed_mps":8.2,"confidence":"high"}}""",
+        )
+        assertEquals(2, r.data?.etaMinutes)
+        assertEquals(420, r.data?.distanceM)
+        assertEquals("high", r.data?.confidence)
+    }
+
+    @Test fun smallEtaIsAtLeastOneMinute() {
+        val r = json.decodeFromString(com.vibra.bus.data.model.EtaDto.serializer(), """{"eta_seconds":5}""")
+        assertEquals(1, r.etaMinutes)
+    }
+}

@@ -106,9 +106,15 @@ data class DriverLocationResponse(
 /** ETA calculado por el backend para un bus y una parada. Todos los campos son opcionales. */
 @Serializable
 data class EtaDto(
-    @SerialName("eta_minutes") val etaMinutes: Int? = null,
-    @SerialName("distance_meters") val distanceMeters: Int? = null,
-)
+    @SerialName("eta_seconds") val etaSeconds: Int? = null,
+    @SerialName("distance_m") val distanceM: Int? = null,
+    @SerialName("speed_mps") val speedMps: Double? = null,
+    /** "high", "medium" o "low" (low = linea recta, sin ruta). */
+    val confidence: String? = null,
+) {
+    /** Minutos redondeados hacia arriba (minimo 1) o null si el backend no dio ETA. */
+    val etaMinutes: Int? get() = etaSeconds?.let { maxOf(1, (it + 59) / 60) }
+}
 
 @Serializable
 data class EtaResponse(
