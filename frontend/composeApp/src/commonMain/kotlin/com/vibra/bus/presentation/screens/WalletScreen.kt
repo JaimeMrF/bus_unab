@@ -1,8 +1,10 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
+import com.vibra.bus.presentation.components.CelebrationOverlay
+import com.vibra.bus.presentation.components.BrandMascot
 import com.vibra.bus.presentation.security.ProtectedQrDisplay
 import androidx.compose.foundation.lazy.rememberLazyListState
-import com.vibra.bus.presentation.motion.ConfettiBurst
 import com.vibra.bus.presentation.motion.CountdownRing
 import com.vibra.bus.presentation.motion.CountUpText
 import com.vibra.bus.presentation.motion.parallaxCollapse
@@ -63,12 +65,10 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.vibra.bus.data.model.WalletTx
 import com.vibra.bus.presentation.components.AppCard
 import com.vibra.bus.presentation.components.AppTopBar
-import com.vibra.bus.presentation.components.PillTone
 import com.vibra.bus.presentation.components.PrimaryButton
 import com.vibra.bus.presentation.components.QRCodeImage
 import com.vibra.bus.presentation.components.SecondaryButton
 import com.vibra.bus.presentation.components.ShimmerBox
-import com.vibra.bus.presentation.components.StatusPill
 import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.theme.appColors
 import com.vibra.bus.presentation.viewmodel.WalletViewModel
@@ -166,6 +166,7 @@ class WalletScreen : Screen {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
+                            BrandMascot(pose = MascotPose.Phone, size = 72.dp)
                             Text(
                                 "Pagar a bordo",
                                 style = MaterialTheme.typography.titleMedium,
@@ -321,7 +322,7 @@ class WalletScreen : Screen {
                     }
                 }
             }
-            ConfettiBurst(trigger = confetti, modifier = Modifier.fillMaxSize().padding(padding))
+            CelebrationOverlay(trigger = confetti, modifier = Modifier.padding(padding))
             }
         }
     }

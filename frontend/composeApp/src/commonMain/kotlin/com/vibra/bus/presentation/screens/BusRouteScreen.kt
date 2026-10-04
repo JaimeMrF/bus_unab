@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.components.ShimmerList
 import com.vibra.bus.presentation.components.PrimaryButton
 import androidx.compose.ui.semantics.semantics
@@ -263,6 +264,7 @@ data class BusRouteScreen(val plate: String) : Screen {
                         }
                         is UiState.Error -> {
                             EmptyState(
+                    pose = MascotPose.Sad,
                                 message  = "Error al cargar paradas",
                                 subtitle = (state as UiState.Error).message,
                             )

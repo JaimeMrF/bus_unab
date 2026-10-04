@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
+import com.vibra.bus.presentation.components.CelebrationOverlay
 import com.vibra.bus.presentation.motion.PulseRings
 import androidx.compose.foundation.layout.width
 import com.vibra.bus.presentation.theme.Motion
@@ -64,6 +66,9 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
         var isVisible        by remember { mutableStateOf(false) }
         var showBatteryDialog by remember { mutableStateOf(false) }
 
+        var arrivals by remember { mutableStateOf(0) }
+        LaunchedEffect(isArriving) { if (isArriving) arrivals++ }
+
         LaunchedEffect(Unit) {
             settings.saveTracking(plate, stop.id, stop.name, stop.address, stop.latitude, stop.longitude)
             viewModel.startTracking(plate, stop)
@@ -80,7 +85,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                     settings.batteryPromptShown = true
                     showBatteryDialog = false
                 },
-                icon = { BrandMascot(modifier = Modifier.size(72.dp)) },
+                icon = { BrandMascot(pose = MascotPose.Phone, size = 72.dp) },
                 title = { Text("Mantén el seguimiento activo") },
                 text = {
                     Text(
@@ -141,6 +146,8 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                         }
                     },
                 )
+
+                CelebrationOverlay(trigger = arrivals, pose = MascotPose.Celebrating)
 
                 // Aviso de llegada: superficie de acento + icono + texto (no solo color)
                 AnimatedVisibility(
@@ -212,6 +219,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                 contentAlignment = Alignment.Center,
                             ) {
                             if (isArriving || bus == null) PulseRings(Modifier.fillMaxSize())
+                            if (bus == null) BrandMascot(pose = MascotPose.Waiting, size = 56.dp)
                             Box(
                                 modifier = Modifier
                                     .size(64.dp)

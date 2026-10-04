@@ -1,5 +1,21 @@
 package com.vibra.bus.presentation.components
 
+import com.vibra.bus.presentation.motion.LocalMotion
+import com.vibra.bus.domain.brand.MascotPose
+import coil3.request.crossfade
+import coil3.request.ImageRequest
+import coil3.request.CachePolicy
+import coil3.compose.LocalPlatformContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.remember
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,25 +63,68 @@ fun NeutralBadge(
     }
 }
 
-/** Mascota de la organización (URL). Sin URL o si falla la carga, muestra el placeholder neutro. */
+/**
+ * Mascota de la organización en la pose pedida. Carga con Coil a tamaño fijo (sin decodificar de
+ * más), con fundido, cache de memoria y disco y un shimmer como placeholder.
+ *
+ * Fallback sin hueco: si la pose y la mascota única son null, o la carga falla, con
+ * [neutralFallback] se muestra un icono neutro; sin él no se emite nada (el modifier, y por tanto
+ * el tamaño reservado, tampoco se aplica).
+ *
+ * Con movimiento ambiental activo flota 2.5dp y "respira" con un parpadeo de escala; el valor
+ * animado se lee en graphicsLayer, sin recomponer.
+ */
 @Composable
 fun BrandMascot(
     modifier: Modifier = Modifier,
+    pose: MascotPose = MascotPose.Greeting,
+    size: Dp = 120.dp,
+    neutralFallback: Boolean = false,
     icon: ImageVector = Icons.Outlined.DirectionsBus,
+    animated: Boolean = true,
 ) {
-    val url = LocalBrand.current.mascotUrl
-    if (url.isNullOrBlank()) {
-        NeutralBadge(modifier, icon)
-    } else {
-        SubcomposeAsyncImage(
-            model = url,
-            contentDescription = null,
-            modifier = modifier,
-            contentScale = ContentScale.Fit,
-            loading = { NeutralBadge(Modifier.fillMaxSize(), icon) },
-            error = { NeutralBadge(Modifier.fillMaxSize(), icon) },
-        )
+    val url = LocalBrand.current.poseUrl(pose)
+    if (url == null) {
+        if (neutralFallback) NeutralBadge(modifier.size(size), icon)
+        return
     }
+    val env = LocalMotion.current
+    val density = LocalDensity.current
+    val context = LocalPlatformContext.current
+    val px = with(density) { size.roundToPx() }
+    val request = remember(url, px) {
+        ImageRequest.Builder(context)
+            .data(url)
+            .size(px, px)
+            .crossfade(true)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .build()
+    }
+    val float = if (animated && env.ambient) {
+        rememberInfiniteTransition(label = "mascot").animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(3200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "mascot_t",
+        )
+    } else null
+    SubcomposeAsyncImage(
+        model = request,
+        contentDescription = null,
+        modifier = modifier
+            .size(size)
+            .graphicsLayer {
+                val t = float?.value ?: 0f
+                translationY = -2.5.dp.toPx() * t
+                val s = 1f + 0.018f * t
+                scaleX = s
+                scaleY = s
+            },
+        contentScale = ContentScale.Fit,
+        loading = { ShimmerBox(Modifier.fillMaxSize(), height = size) },
+        error = { if (neutralFallback) NeutralBadge(Modifier.fillMaxSize(), icon) },
+    )
 }
 
 /**

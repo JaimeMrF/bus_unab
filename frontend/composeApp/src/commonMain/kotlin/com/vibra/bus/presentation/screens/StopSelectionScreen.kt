@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
 import androidx.compose.material3.Surface
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.selection.selectable
@@ -184,6 +185,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         }
                         is UiState.Error -> {
                             EmptyState(
+                    pose = MascotPose.Sad,
                                 message = "No pudimos cargar las paradas",
                                 subtitle = state.message,
                                 ctaLabel = "Reintentar",

@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.components
 
+import com.vibra.bus.domain.brand.MascotPose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +28,7 @@ fun EmptyState(
     message: String,
     subtitle: String = "",
     icon: ImageVector = Icons.Outlined.DirectionsBus,
+    pose: MascotPose = MascotPose.Curious,
     ctaLabel: String? = null,
     onCtaClick: (() -> Unit)? = null,
 ) {
@@ -35,7 +37,7 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        BrandMascot(modifier = Modifier.size(132.dp), icon = icon)
+        BrandMascot(pose = pose, size = 132.dp, neutralFallback = true, icon = icon)
         Spacer(Modifier.height(24.dp))
         Text(
             text = message,

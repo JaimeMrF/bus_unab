@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.motion.staggerIn
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.vibra.bus.presentation.components.PillTone
@@ -131,6 +132,7 @@ class MyTripsScreen : Screen {
                                     }
                                 }
                                 is UiState.Error -> EmptyState(
+                    pose = MascotPose.Sad,
                                     message = "No pudimos cargar tus viajes",
                                     subtitle = state.message,
                                     ctaLabel = "Reintentar",

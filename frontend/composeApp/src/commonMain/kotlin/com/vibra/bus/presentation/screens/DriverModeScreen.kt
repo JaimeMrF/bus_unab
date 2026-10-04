@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -169,7 +170,7 @@ class DriverModeScreen : Screen {
                                     color = MaterialTheme.colorScheme.onPrimary,
                                 )
                             }
-                            BrandMascot(modifier = Modifier.size(64.dp))
+                            BrandMascot(pose = MascotPose.Driver, size = 64.dp)
                         }
                     }
                 }
@@ -358,7 +359,7 @@ private fun BusSelectorScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                BrandMascot(modifier = Modifier.size(64.dp))
+                BrandMascot(pose = MascotPose.Driver, size = 64.dp)
             }
             Spacer(Modifier.height(12.dp))
 
@@ -415,6 +416,7 @@ private fun BusSelectorScreen(
                     }
                 }
                 is UiState.Error -> EmptyState(
+                    pose = MascotPose.Sad,
                     message = "No pudimos cargar las rutas",
                     subtitle = state.message,
                 )

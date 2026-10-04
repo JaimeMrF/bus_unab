@@ -1,13 +1,13 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
+import com.vibra.bus.presentation.components.CelebrationOverlay
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.geometry.Offset
-import com.vibra.bus.presentation.motion.ConfettiBurst
 import androidx.compose.foundation.layout.WindowInsets
 import com.vibra.bus.presentation.theme.readableOn
 import com.vibra.bus.presentation.theme.appColors
@@ -34,24 +34,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,10 +52,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -85,8 +76,10 @@ class QRScannerScreen : Screen {
         val mode by viewModel.mode.collectAsState()
         val manualCode by viewModel.manualCode.collectAsState()
         var confetti by remember { mutableStateOf(0) }
+        var okTick by remember { mutableStateOf(0) }
         LaunchedEffect(lastResult) {
             if (lastResult is ScanResult.Charged) confetti++
+            if (lastResult is ScanResult.Valid) okTick++
         }
 
         Scaffold(
@@ -196,7 +189,8 @@ class QRScannerScreen : Screen {
                     }
                 }
 
-                ConfettiBurst(trigger = confetti, modifier = Modifier.fillMaxSize(), origin = Offset(0.5f, 0.2f))
+                CelebrationOverlay(trigger = confetti, pose = MascotPose.Celebrating)
+                CelebrationOverlay(trigger = okTick, pose = MascotPose.Ok)
 
                 // Banner de resultado (aparece/desaparece desde arriba)
                 AnimatedVisibility(

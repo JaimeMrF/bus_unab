@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.motion.platformAppActive
 import com.vibra.bus.presentation.motion.staggerIn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -337,7 +338,7 @@ class HomeScreen : Screen {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            BrandMascot(modifier = Modifier.size(88.dp))
+                            BrandMascot(pose = if (busesError) MascotPose.Sad else MascotPose.Curious, size = 88.dp, neutralFallback = true)
                             Text(
                                 text = if (busesError) "No pudimos cargar los buses" else "No hay buses activos ahora",
                                 style = MaterialTheme.typography.titleMedium,

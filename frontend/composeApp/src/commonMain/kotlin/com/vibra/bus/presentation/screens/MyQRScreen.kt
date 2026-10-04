@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.security.ProtectedQrDisplay
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
@@ -137,7 +138,7 @@ class MyQRScreen : Screen {
                                 contentScale       = ContentScale.Crop,
                             )
                         } else {
-                            BrandMascot(modifier = Modifier.fillMaxSize().padding(8.dp))
+                            BrandMascot(pose = MascotPose.Phone, size = 84.dp, neutralFallback = true, animated = false)
                         }
                     }
 

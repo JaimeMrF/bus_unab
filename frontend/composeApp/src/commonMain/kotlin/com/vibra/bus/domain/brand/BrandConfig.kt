@@ -30,6 +30,29 @@ data class BrandFeatures(
     @SerialName("driver_mode") val driverMode: Boolean = true,
 )
 
+/** Poses de la mascota (URLs https o null). Todas opcionales: el cliente degrada a la mascota única o a nada. */
+@Serializable
+data class MascotPoses(
+    val greeting: String? = null,
+    val curious: String? = null,
+    val sad: String? = null,
+    val waiting: String? = null,
+    val phone: String? = null,
+    val map: String? = null,
+    val driver: String? = null,
+    val ok: String? = null,
+    val celebrating: String? = null,
+)
+
+/** Estilo del bus en el mapa. body y accent null: se usan primary y secondary del tenant. */
+@Serializable
+data class BusStyle(
+    val body: String? = null,
+    val accent: String? = null,
+    val icon: String? = "classic",
+    @SerialName("icon_url") val iconUrl: String? = null,
+)
+
 /** Perfil de marca de una organización (tenant). Contrato: GET /branding/{slug}. */
 @Serializable
 data class BrandConfig(
@@ -41,12 +64,31 @@ data class BrandConfig(
     @SerialName("logo_dark_url") val logoDarkUrl: String? = null,
     @SerialName("icon_url") val iconUrl: String? = null,
     @SerialName("mascot_url") val mascotUrl: String? = null,
+    @SerialName("mascot_poses") val mascotPoses: MascotPoses? = null,
+    @SerialName("bus_style") val busStyle: BusStyle? = null,
     val colors: BrandColors,
     @SerialName("font_family") val fontFamily: String = "system",
     @SerialName("corner_radius") val cornerRadius: String = "md",
     val features: BrandFeatures = BrandFeatures(),
     val version: Int = 0,
 ) {
+    /** URL de la pose pedida; si falta usa la mascota única; si tampoco hay, null (layout sin hueco). */
+    fun poseUrl(pose: MascotPose): String? {
+        val p = mascotPoses
+        val url = when (pose) {
+            MascotPose.Greeting -> p?.greeting
+            MascotPose.Curious -> p?.curious
+            MascotPose.Sad -> p?.sad
+            MascotPose.Waiting -> p?.waiting
+            MascotPose.Phone -> p?.phone
+            MascotPose.Map -> p?.map
+            MascotPose.Driver -> p?.driver
+            MascotPose.Ok -> p?.ok
+            MascotPose.Celebrating -> p?.celebrating
+        }
+        return (url ?: mascotUrl)?.takeIf { it.isNotBlank() }
+    }
+
     fun logoFor(dark: Boolean): String? = if (dark) logoDarkUrl ?: logoUrl else logoUrl
 
     companion object {
@@ -86,6 +128,8 @@ data class BrandConfig(
         )
     }
 }
+
+enum class MascotPose { Greeting, Curious, Sad, Waiting, Phone, Map, Driver, Ok, Celebrating }
 
 /** "#RRGGBB" -> Color; valor inválido -> [fallback] (la API ya valida, esto es defensa en cliente). */
 fun parseHexColor(hex: String, fallback: Color): Color {

@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
+import com.vibra.bus.presentation.components.BrandMascot
 import kotlinx.coroutines.launch
 import com.vibra.bus.presentation.theme.Motion
 import com.vibra.bus.presentation.motion.auroraBackground
@@ -123,6 +125,7 @@ class SplashScreen : Screen {
                     alpha = e * (1f - x)
                 },
             ) {
+                BrandMascot(pose = MascotPose.Greeting, size = 128.dp)
                 BrandLogo(Modifier.size(width = 200.dp, height = 132.dp))
                 Spacer(Modifier.height(24.dp))
                 Text(

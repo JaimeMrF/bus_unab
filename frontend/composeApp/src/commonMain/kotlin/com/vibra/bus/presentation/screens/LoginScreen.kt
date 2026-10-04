@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
+import com.vibra.bus.presentation.components.BrandMascot
 import com.vibra.bus.presentation.motion.auroraBackground
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -122,7 +124,10 @@ class LoginScreen : Screen {
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Staggered(0) {
-                        BrandLogo(Modifier.size(width = 168.dp, height = 112.dp))
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            BrandMascot(pose = MascotPose.Greeting, size = 120.dp)
+                            BrandLogo(Modifier.size(width = 168.dp, height = 112.dp))
+                        }
                     }
 
                     Spacer(Modifier.height(24.dp))

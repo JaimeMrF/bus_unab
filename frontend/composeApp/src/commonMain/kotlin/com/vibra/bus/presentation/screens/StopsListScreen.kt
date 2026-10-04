@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.motion.staggerIn
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.background
@@ -95,6 +96,7 @@ data class StopsListScreen(val plate: String) : Screen {
                         }
                     }
                     is UiState.Error -> EmptyState(
+                    pose = MascotPose.Sad,
                         message = "No pudimos cargar las paradas",
                         subtitle = state.message,
                         ctaLabel = "Reintentar",
