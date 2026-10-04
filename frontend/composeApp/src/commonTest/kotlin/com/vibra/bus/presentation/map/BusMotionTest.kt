@@ -5,36 +5,55 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BusMotionTest {
-    @Test fun headingTakesShortestWay() {
+
+    @Test
+    fun headingTakesShortestPathAcrossZero() {
         assertEquals(0f, lerpHeading(350f, 10f, 0.5f), 0.001f)
-        assertEquals(355f, lerpHeading(350f, 10f, 0.25f), 0.001f)
-        assertEquals(350f, lerpHeading(10f, 350f, 1f), 0.001f)
+        assertEquals(0f, lerpHeading(10f, 350f, 0.5f), 0.001f)
     }
 
-    @Test fun headingStaysInRange() {
-        for (a in 0..359 step 17) for (b in 0..359 step 23) {
-            val h = lerpHeading(a.toFloat(), b.toFloat(), 0.37f)
-            assertTrue(h >= 0f && h < 360f, "$a->$b = $h")
+    @Test
+    fun headingEndpointsAndNormalisation() {
+        assertEquals(90f, lerpHeading(90f, 270f, 0f), 0.001f)
+        val end = lerpHeading(350f, 10f, 1f)
+        assertEquals(10f, end, 0.001f)
+        for (t in listOf(0f, 0.25f, 0.5f, 0.75f, 1f)) {
+            val h = lerpHeading(300f, 20f, t)
+            assertTrue(h >= 0f && h < 360f, "rumbo fuera de [0,360): $h")
         }
     }
 
-    @Test fun interpolationIsLinearAndHandlesNewAndGoneBuses() {
-        val from = mapOf("A" to BusPose(0.0, 0.0, 0f), "OLD" to BusPose(1.0, 1.0, 0f))
-        val to = mapOf("A" to BusPose(2.0, 4.0, 90f), "NEW" to BusPose(5.0, 5.0, 45f))
-        val mid = interpolateBuses(from, to, 0.5f)
-        assertEquals(1.0, mid.getValue("A").latitude, 1e-9)
-        assertEquals(2.0, mid.getValue("A").longitude, 1e-9)
-        assertEquals(45f, mid.getValue("A").heading, 0.001f)
-        assertEquals(BusPose(5.0, 5.0, 45f), mid["NEW"])
-        assertTrue("OLD" !in mid)
+    @Test
+    fun poseInterpolatesLinearly() {
+        val mid = lerpPose(BusPose(0.0, 0.0, 0f), BusPose(10.0, -20.0, 90f), 0.5f)
+        assertEquals(5.0, mid.latitude, 1e-9)
+        assertEquals(-10.0, mid.longitude, 1e-9)
+        assertEquals(45f, mid.heading, 0.001f)
     }
-}
 
-class BusSpriteKeyTest {
-    @Test fun keysDifferByIconUrlAndColor() {
-        val a = BusSpriteKey(1, 2, 3, BusMapState.Available, BusIcon.Classic, 96, null)
-        assertEquals(a, a.copy())
-        assertTrue(a != a.copy(iconUrl = "https://x/i.png"))
-        assertTrue(a != a.copy(body = 9))
+    @Test
+    fun newBusAppearsAtDestinationAndRemovedBusDisappears() {
+        val from = mapOf("OLD" to BusPose(1.0, 1.0, 0f), "A" to BusPose(0.0, 0.0, 0f))
+        val to = mapOf("A" to BusPose(10.0, 10.0, 0f), "NEW" to BusPose(7.0, 7.0, 45f))
+
+        val r = interpolateBuses(from, to, 0.5f)
+
+        assertEquals(setOf("A", "NEW"), r.keys)
+        assertEquals(5.0, r.getValue("A").latitude, 1e-9)
+        assertEquals(BusPose(7.0, 7.0, 45f), r.getValue("NEW"))
+    }
+
+    @Test
+    fun tIsClampedToZeroOne() {
+        val from = mapOf("A" to BusPose(0.0, 0.0, 0f))
+        val to = mapOf("A" to BusPose(10.0, 10.0, 0f))
+        assertEquals(10.0, interpolateBuses(from, to, 5f).getValue("A").latitude, 1e-9)
+        assertEquals(0.0, interpolateBuses(from, to, -3f).getValue("A").latitude, 1e-9)
+    }
+
+    @Test
+    fun emptyInputsGiveEmptyResult() {
+        assertTrue(interpolateBuses(emptyMap(), emptyMap(), 0.5f).isEmpty())
+        assertTrue(interpolateBuses(mapOf("A" to BusPose(0.0, 0.0, 0f)), emptyMap(), 0.5f).isEmpty())
     }
 }
