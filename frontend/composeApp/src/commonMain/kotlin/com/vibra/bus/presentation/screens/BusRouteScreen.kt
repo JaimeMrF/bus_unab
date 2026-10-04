@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.theme.LocalBrand
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.components.ShimmerList
 import com.vibra.bus.presentation.components.PrimaryButton
@@ -302,6 +303,7 @@ data class BusRouteScreen(val plate: String) : Screen {
                     onBusSelected  = {},
                     stops          = stopDtos,
                     buses          = listOfNotNull(busSummary),
+                    busStyle       = LocalBrand.current.busStyle,
                     path           = routePath.ifEmpty { null }
                 )
 

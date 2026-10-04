@@ -21,7 +21,9 @@ actual fun MapViewComposable(
     onBusSelected: (com.vibra.bus.data.model.BusSummaryDto) -> Unit,
     stops: List<com.vibra.bus.data.model.StopDto>,
     buses: List<com.vibra.bus.data.model.BusSummaryDto>,
-    path: List<LatLng>?
+    path: List<LatLng>?,
+    busStates: Map<String, com.vibra.bus.presentation.map.BusMapState>,
+    busStyle: com.vibra.bus.domain.brand.BusStyle?,
 ) {
     UIKitView(
         factory = {

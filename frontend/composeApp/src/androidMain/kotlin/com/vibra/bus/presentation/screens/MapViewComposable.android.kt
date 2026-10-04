@@ -1,5 +1,17 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.theme.appColors
+import com.vibra.bus.presentation.motion.LocalMotion
+import com.vibra.bus.presentation.map.interpolateBuses
+import com.vibra.bus.presentation.map.BusSpriteKey
+import com.vibra.bus.presentation.map.BusSpriteCache
+import com.vibra.bus.presentation.map.BusPose
+import com.vibra.bus.presentation.map.BusMapState
+import com.vibra.bus.presentation.map.BusIcon
+import com.vibra.bus.domain.brand.parseHexColor
+import com.vibra.bus.domain.brand.BusStyle
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.runtime.withFrameNanos
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -76,10 +88,10 @@ private const val SRC_USER = "src-user"
 private const val LYR_USER = "lyr-user"
 private const val SRC_BUSES = "src-buses"
 private const val LYR_BUSES = "lyr-buses"
-private const val IMG_BUS = "img-bus"
+private const val IMG_BUS_PREFIX = "img-bus-"
 
 /** Colores del mapa derivados del tema/marca activos (ya no hay colores de marca fijos). */
-private class MapColors(val primary: Int, val accent: Int, val onPrimary: Int)
+private class MapColors(val primary: Int, val accent: Int, val onPrimary: Int, val busBody: Int, val busAccent: Int)
 
 private fun MlLatLng.toGeoPoint(): Point = Point.fromLngLat(longitude, latitude)
 
@@ -101,13 +113,17 @@ private fun stopCollection(stops: List<StopDto>): FeatureCollection =
         },
     )
 
-/** El bus lleva su rumbo como propiedad para que la capa lo rote en el mapa. */
-private fun busCollection(buses: List<BusSummaryDto>): FeatureCollection =
+/**
+ * Los buses llevan rumbo y estado como propiedades: la capa rota el sprite y elige la imagen
+ * (anillo por estado) sin recrear nada; solo cambia la fuente GeoJSON.
+ */
+private fun busCollection(poses: Map<String, BusPose>, states: Map<String, BusMapState>): FeatureCollection =
     FeatureCollection.fromFeatures(
-        buses.map { bus ->
-            Feature.fromGeometry(MlLatLng(bus.latitude, bus.longitude).toGeoPoint()).apply {
-                addNumberProperty("heading", bus.heading)
-                addStringProperty("plate", bus.plate)
+        poses.map { (plate, pose) ->
+            Feature.fromGeometry(MlLatLng(pose.latitude, pose.longitude).toGeoPoint()).apply {
+                addNumberProperty("heading", pose.heading)
+                addStringProperty("plate", plate)
+                addStringProperty("img", IMG_BUS_PREFIX + (states[plate] ?: BusMapState.Available).key)
             }
         },
     )
@@ -119,20 +135,19 @@ private fun userCollection(userLocation: LatLng?): FeatureCollection =
             ?: emptyList<Feature>(),
     )
 
-/**
- * Sprite top-down del bus. Se normaliza a 96px con densidad mdpi para que
- * `iconSize` sea predecible sin importar la densidad del dispositivo.
- */
-private fun busBitmap(context: Context): Bitmap {
-    val src = BitmapFactory.decodeResource(context.resources, R.drawable.ic_bus_top)
-        ?: return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
-    val scaled = Bitmap.createScaledBitmap(src, 96, 96, true)
-    scaled.density = DisplayMetrics.DENSITY_DEFAULT
-    return scaled
+/** Sprites de bus por estado, dibujados una vez por combinacion de color, forma y tamano (cache). */
+private fun busSprites(colors: MapColors, style: BusStyle?, ringColors: Map<BusMapState, Int>): Map<String, Bitmap> {
+    val icon = BusIcon.parse(style?.icon)
+    return BusMapState.values().associate { state ->
+        val key = BusSpriteKey(colors.busBody, colors.busAccent, ringColors.getValue(state), state, icon, 96)
+        val bmp = BusSpriteCache.get(key).asAndroidBitmap()
+        bmp.density = DisplayMetrics.DENSITY_DEFAULT
+        (IMG_BUS_PREFIX + state.key) to bmp
+    }
 }
 
 /** Instala fuentes y capas una sola vez por style (setStyle resetea todo). */
-private fun Style.installLayers(bus: Bitmap, colors: MapColors) {
+private fun Style.installLayers(sprites: Map<String, Bitmap>, colors: MapColors) {
     if (getSourceAs<GeoJsonSource>(SRC_BUSES) != null) return
 
     // ── Ruta: halo + línea + guía punteada ───────────────────────────────────
@@ -205,15 +220,12 @@ private fun Style.installLayers(bus: Bitmap, colors: MapColors) {
     )
 
     // ── Buses: símbolo rotado por el rumbo (alineado al mapa) ────────────────
-    addImage(IMG_BUS, bus, true)
+    sprites.forEach { (id, bmp) -> addImage(id, bmp, false) }
     addSource(GeoJsonSource(SRC_BUSES, FeatureCollection.fromFeatures(emptyList<Feature>())))
     addLayer(
         SymbolLayer(LYR_BUSES, SRC_BUSES).apply {
             setProperties(
-                PropertyFactory.iconImage(IMG_BUS),
-                PropertyFactory.iconColor(colors.primary),
-                PropertyFactory.iconHaloColor(colors.onPrimary),
-                PropertyFactory.iconHaloWidth(1.5f),
+                PropertyFactory.iconImage(Expression.get("img")),
                 PropertyFactory.iconRotate(Expression.get("heading")),
                 PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER),
@@ -237,12 +249,29 @@ actual fun MapViewComposable(
     stops: List<StopDto>,
     buses: List<BusSummaryDto>,
     path: List<LatLng>?,
+    busStates: Map<String, BusMapState>,
+    busStyle: BusStyle?,
 ) {
     val isDark = LocalIsDarkTheme.current
     val scheme = MaterialTheme.colorScheme
-    val mapColors = remember(scheme.primary, scheme.tertiary, scheme.onPrimary) {
-        MapColors(scheme.primary.toArgb(), scheme.tertiary.toArgb(), scheme.onPrimary.toArgb())
+    val app = MaterialTheme.appColors
+    // Cuerpo y acento del bus: bus_style del tenant o, si es null, primary y secondary.
+    val busBody = busStyle?.body?.let { parseHexColor(it, scheme.primary) } ?: scheme.primary
+    val busAccent = busStyle?.accent?.let { parseHexColor(it, scheme.secondary) } ?: scheme.secondary
+    val mapColors = remember(scheme.primary, scheme.tertiary, scheme.onPrimary, busBody, busAccent) {
+        MapColors(scheme.primary.toArgb(), scheme.tertiary.toArgb(), scheme.onPrimary.toArgb(), busBody.toArgb(), busAccent.toArgb())
     }
+    val ringColors = remember(app.success, app.busFull, app.warning) {
+        mapOf(
+            BusMapState.Available to app.success.toArgb(),
+            BusMapState.Full to app.busFull.toArgb(),
+            BusMapState.Arriving to app.warning.toArgb(),
+        )
+    }
+    val sprites = remember(mapColors, busStyle?.icon, ringColors) { busSprites(mapColors, busStyle, ringColors) }
+    val motion = LocalMotion.current
+    // Ultima pose dibujada de cada bus: punto de partida de la siguiente interpolacion.
+    val displayed = remember { HashMap<String, BusPose>() }
     val context = LocalContext.current
     val lifecycleOwner = remember(context) { context as? LifecycleOwner }
 
@@ -252,7 +281,6 @@ actual fun MapViewComposable(
         true
     }
 
-    val busSprite = remember(context) { busBitmap(context) }
     val mapView = remember(context) {
         MapView(
             context,
@@ -358,11 +386,11 @@ actual fun MapViewComposable(
     }
 
     // ── Estilo (se re-aplica si cambia el tema) ──────────────────────────────
-    LaunchedEffect(map, isDark, mapColors) {
+    LaunchedEffect(map, isDark, sprites) {
         val mlMap = map ?: return@LaunchedEffect
         mapLoaded = false
         mlMap.setStyle(Style.Builder().fromUri(if (isDark) STYLE_DARK else STYLE_LIGHT)) { loaded ->
-            loaded.installLayers(busSprite, mapColors)
+            loaded.installLayers(sprites, mapColors)
             style = loaded
             mapLoaded = true
         }
@@ -383,8 +411,30 @@ actual fun MapViewComposable(
     LaunchedEffect(style, userLocation) {
         style?.getSourceAs<GeoJsonSource>(SRC_USER)?.setGeoJson(userCollection(userLocation))
     }
-    LaunchedEffect(style, buses) {
-        style?.getSourceAs<GeoJsonSource>(SRC_BUSES)?.setGeoJson(busCollection(buses))
+    // Buses: movimiento lineal de 1 s entre posiciones (sin saltos). Solo se actualiza la fuente
+    // GeoJSON, a ~30 fps mientras dura la animacion; ni capas ni imagenes se recrean.
+    LaunchedEffect(style, buses, busStates, motion.animate) {
+        val source = style?.getSourceAs<GeoJsonSource>(SRC_BUSES) ?: return@LaunchedEffect
+        val target = buses.associate { it.plate to BusPose(it.latitude, it.longitude, it.heading.toFloat()) }
+        val from = HashMap(displayed)
+        if (!motion.animate || from.isEmpty()) {
+            displayed.clear(); displayed.putAll(target)
+            source.setGeoJson(busCollection(target, busStates))
+            return@LaunchedEffect
+        }
+        val startNanos = withFrameNanos { it }
+        var lastDraw = 0L
+        while (true) {
+            val now = withFrameNanos { it }
+            val t = ((now - startNanos) / 1_000_000_000f).coerceIn(0f, 1f)
+            if (t >= 1f || now - lastDraw >= 33_000_000L) {
+                val poses = interpolateBuses(from, target, t)
+                displayed.clear(); displayed.putAll(poses)
+                source.setGeoJson(busCollection(poses, busStates))
+                lastDraw = now
+            }
+            if (t >= 1f) break
+        }
     }
 
     // ── Cámara: sigue al usuario (descarta el (0,0) que devuelve el backend) ─

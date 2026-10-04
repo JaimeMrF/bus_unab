@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.map.BusMapState
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.components.CelebrationOverlay
 import com.vibra.bus.presentation.motion.PulseRings
@@ -137,6 +138,8 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                     onBusSelected = {},
                     stops = listOf(stop),
                     buses = bus?.let { listOf(it) } ?: emptyList(),
+                    busStates = if (isArriving) mapOf(plate to BusMapState.Arriving) else emptyMap(),
+                    busStyle = LocalBrand.current.busStyle,
                     path = routePath.ifEmpty {
                         bus?.let {
                             listOf(

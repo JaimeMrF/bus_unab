@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.theme.LocalBrand
+import com.vibra.bus.presentation.map.busStatesFrom
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.motion.platformAppActive
 import com.vibra.bus.presentation.motion.staggerIn
@@ -159,6 +161,8 @@ class HomeScreen : Screen {
                     onBusSelected = { selectedBus = it },
                     stops = stopList,
                     buses = busList,
+                    busStates = remember(occupancyMap) { busStatesFrom(occupancyMap) },
+                    busStyle = LocalBrand.current.busStyle,
                 )
 
                 // ── Panel inferior ────────────────────────────────────────────

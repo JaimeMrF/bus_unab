@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.map.BusMapState
+import com.vibra.bus.domain.brand.BusStyle
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -59,7 +61,9 @@ expect fun MapViewComposable(
     onBusSelected: (com.vibra.bus.data.model.BusSummaryDto) -> Unit,
     stops: List<com.vibra.bus.data.model.StopDto>,
     buses: List<com.vibra.bus.data.model.BusSummaryDto>,
-    path: List<LatLng>? = null
+    path: List<LatLng>? = null,
+    busStates: Map<String, BusMapState> = emptyMap(),
+    busStyle: BusStyle? = null,
 )
 
 /**
