@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.components.CelebrationOverlay
 import androidx.compose.foundation.layout.heightIn
@@ -77,7 +79,14 @@ class QRScannerScreen : Screen {
         val manualCode by viewModel.manualCode.collectAsState()
         var confetti by remember { mutableStateOf(0) }
         var okTick by remember { mutableStateOf(0) }
+        val haptics = LocalHapticFeedback.current
         LaunchedEffect(lastResult) {
+            when (lastResult) {
+                is ScanResult.Charged, is ScanResult.Valid -> haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                is ScanResult.Error, is ScanResult.Invalid, is ScanResult.Expired, is ScanResult.Offline ->
+                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                null -> Unit
+            }
             if (lastResult is ScanResult.Charged) confetti++
             if (lastResult is ScanResult.Valid) okTick++
         }

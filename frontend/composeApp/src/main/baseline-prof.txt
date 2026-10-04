@@ -1,0 +1,25 @@
+# Baseline Profile manual: arranque, tema, Home, listas y mapa. Sin generar con Macrobenchmark:
+# regenerar con un modulo benchmark cuando haya dispositivo (ver frontend/PERFORMANCE.md).
+HSPLcom/vibra/bus/MainActivity;->*(**)**
+HSPLcom/vibra/bus/MainApplication;->*(**)**
+HSPLcom/vibra/bus/AppKt;->*(**)**
+HSPLcom/vibra/bus/presentation/theme/**->*(**)**
+HSPLcom/vibra/bus/presentation/motion/**->*(**)**
+HSPLcom/vibra/bus/presentation/components/**->*(**)**
+HSPLcom/vibra/bus/presentation/screens/SplashScreen;->*(**)**
+HSPLcom/vibra/bus/presentation/screens/LoginScreen;->*(**)**
+HSPLcom/vibra/bus/presentation/screens/MainScreen;->*(**)**
+HSPLcom/vibra/bus/presentation/screens/HomeScreen;->*(**)**
+HSPLcom/vibra/bus/presentation/screens/MapViewComposable_androidKt;->*(**)**
+HSPLcom/vibra/bus/presentation/viewmodel/HomeViewModel;->*(**)**
+HSPLcom/vibra/bus/presentation/viewmodel/AuthViewModel;->*(**)**
+HSPLcom/vibra/bus/data/repository/**->*(**)**
+HSPLcom/vibra/bus/data/api/**->*(**)**
+HSPLcom/vibra/bus/domain/brand/**->*(**)**
+HSPLcom/vibra/bus/util/AppSettings;->*(**)**
+Lcom/vibra/bus/MainActivity;
+Lcom/vibra/bus/presentation/screens/HomeScreen;
+Lcom/vibra/bus/presentation/screens/SplashScreen;
+Lcom/vibra/bus/presentation/screens/LoginScreen;
+Lcom/vibra/bus/presentation/screens/MainScreen;
+Lcom/vibra/bus/presentation/map/BusSpriteCache;

@@ -22,3 +22,23 @@
 - Caché de disco de Coil (comprobar que el logo no se vuelve a descargar) y tamaño de decodificación de imágenes.
 - Build release con R8: probar login, mapa, QR, notificaciones y Google Sign-In (las reglas no se han ejecutado).
 - Backend: `/qr/pay` debería tratar la misma `Idempotency-Key` como el mismo cobro y devolver el resultado original en vez de "replay".
+
+## T18/T19: mascota, bus dinámico y gama media
+### Aplicado
+- **Mascota por poses** (`BrandMascot(pose)`): Coil con tamaño fijo en px (no decodifica de más), crossfade, caché de memoria y disco, shimmer como placeholder; sin pose ni mascota única no emite nada (sin hueco). Flotación de 2.5 dp solo con movimiento ambiental.
+- **Bus del mapa**: el sprite se dibuja una vez por color, estado, forma y tamaño (`BusSpriteCache`, LRU de 16) y se registra 3 veces (disponible, lleno, llegando). Las capas no se recrean: solo cambia la fuente GeoJSON. El movimiento (1 s lineal, rumbo por el camino corto) se calcula a ~30 fps solo mientras dura la interpolación, y sin movimiento ambiental salta directo a la posición.
+- **Tier medio** (`MotionEnv.midTier`, menos de 4 GB): sin confeti ni parallax, aurora de 2 manchas (la mascota y el resto de transiciones se mantienen). `rich` agrupa confeti y parallax.
+- **ETA**: del backend si existe (`/buses/{plate}/eta?stop_id`), con respaldo local por velocidad suavizada; si el endpoint devuelve 404 no se vuelve a pedir.
+- **Listas**: filtros con `remember(lista, consulta)`, favoritas ordenadas una sola vez, `contentType` en todas.
+- **Hilo principal**: el JSON de marca, la serialización de QR y el render del QR corren en `Dispatchers.Default`. El sprite del bus pesa 96x96 px.
+- **Baseline Profile**: `src/main/baseline-prof.txt` escrito a mano (arranque, tema, Home, mapa). NO generado con Macrobenchmark.
+
+### Revisión de recomposición (por lectura)
+Compose compiler 2.1 usa strong skipping: las lambdas y los `List` estables por referencia no fuerzan recomposición. Ahí donde un valor cambia a cada frame (aurora, shimmer, contador, ondas, sprites de bus) se lee en `graphicsLayer` o dibujo. Home recalcula `routeStops`, `filteredBuses` y `busStates` con `remember` y claves explícitas.
+
+### Pendiente de medir en dispositivo
+- Fluidez de Home con mapa + hoja de rutas en gama media (perfilar con GPU rendering y Layout Inspector: recomposiciones por segundo durante el polling a 5 s).
+- Que `baseline-prof.txt` lo recoja AGP con el layout KMP (`src/main`); si no, mover a un módulo `baselineprofile` y generarlo. La instalación fuera de Play requiere `androidx.profileinstaller` (no añadida: sin librerías nuevas).
+- Costo del dibujo de 36 partículas y de la aurora en gama baja/media; consumo de batería.
+- Tamaño real de las poses descargadas (1 MB máx. por imagen según contrato) y tasa de aciertos de la caché de disco.
+- Icono de bus por `bus_style.icon_url` (imagen tintada): aún no consumido, solo la forma vectorial (`classic|modern|minibus`).

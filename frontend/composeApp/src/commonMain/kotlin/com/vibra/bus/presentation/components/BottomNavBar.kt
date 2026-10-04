@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.components
 
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.vibra.bus.presentation.motion.MotionSpec
 import com.vibra.bus.presentation.motion.LocalMotion
 import androidx.compose.ui.Modifier
@@ -54,6 +56,7 @@ fun BottomNavBar(
     onTabSelected: (NavItem) -> Unit,
 ) {
     val env = LocalMotion.current
+    val haptics = LocalHapticFeedback.current
     val selectedIndex = items.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0)
     val position = animateFloatAsState(
         targetValue = selectedIndex.toFloat(),
@@ -96,7 +99,10 @@ fun BottomNavBar(
                         .selectable(
                             selected = selected,
                             role = Role.Tab,
-                            onClick = { onTabSelected(item) },
+                            onClick = {
+                                if (!selected) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onTabSelected(item)
+                            },
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {

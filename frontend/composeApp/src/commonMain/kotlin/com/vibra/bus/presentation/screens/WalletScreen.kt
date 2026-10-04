@@ -1,5 +1,7 @@
 package com.vibra.bus.presentation.screens
 
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.components.CelebrationOverlay
 import com.vibra.bus.presentation.components.BrandMascot
@@ -91,12 +93,16 @@ class WalletScreen : Screen {
         var payVisible by remember { mutableStateOf(false) }
         var rechargeAmount by remember { mutableStateOf(5_000) } // COP
         var confetti by remember { mutableStateOf(0) }
+        val haptics = LocalHapticFeedback.current
         val listState = rememberLazyListState()
 
         LaunchedEffect(Unit) { viewModel.refresh() }
         LaunchedEffect(message) {
             message?.let {
-                if (it.startsWith("Recarga aplicada")) confetti++
+                if (it.startsWith("Recarga aplicada")) {
+                    confetti++
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
                 snackbarHostState.showSnackbar(it)
                 viewModel.consumeMessage()
             }
