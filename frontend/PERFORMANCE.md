@@ -41,4 +41,4 @@ Compose compiler 2.1 usa strong skipping: las lambdas y los `List` estables por 
 - Que `baseline-prof.txt` lo recoja AGP con el layout KMP (`src/main`); si no, mover a un módulo `baselineprofile` y generarlo. `androidx.profileinstaller` 1.4.1 añadido para aplicar el perfil fuera de Play.
 - Costo del dibujo de 36 partículas y de la aurora en gama baja/media; consumo de batería.
 - Tamaño real de las poses descargadas (1 MB máx. por imagen según contrato) y tasa de aciertos de la caché de disco.
-- Icono de bus por `bus_style.icon_url` (imagen tintada): aún no consumido, solo la forma vectorial (`classic|modern|minibus`).
+- `bus_style.icon_url`: PNG/WEBP se tintan y cachean por url y color; SVG no se decodifica (Coil sin módulo SVG) y cae a la forma vectorial. Verificar `coil3.toBitmap` al compilar.
