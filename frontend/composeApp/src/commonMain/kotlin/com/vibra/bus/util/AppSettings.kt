@@ -1,5 +1,6 @@
 package com.vibra.bus.util
 
+import com.vibra.bus.data.api.ConditionalCache
 import com.vibra.bus.data.api.ServerConfig
 import com.russhwolf.settings.Settings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ class AppSettings(private val settings: Settings) {
         set(value) {
             settings.putString("server_url", value)
             ServerConfig.override = value
+            ConditionalCache.clear()
         }
 
     init {
@@ -33,7 +35,10 @@ class AppSettings(private val settings: Settings) {
     /** Organización (tenant) elegida y su último BrandConfig serializado, para arranque offline. */
     var orgSlug: String
         get() = settings.getString("org_slug", "")
-        set(value) = settings.putString("org_slug", value)
+        set(value) {
+            settings.putString("org_slug", value)
+            ConditionalCache.clear()
+        }
 
     var brandJson: String
         get() = settings.getString("brand_json", "")
@@ -163,6 +168,7 @@ class AppSettings(private val settings: Settings) {
     fun isLoggedIn(): Boolean = token.isNotEmpty()
 
     fun clearSession() {
+        ConditionalCache.clear()
         settings.remove("token")
         settings.remove("user_role")
         settings.remove("user_id")

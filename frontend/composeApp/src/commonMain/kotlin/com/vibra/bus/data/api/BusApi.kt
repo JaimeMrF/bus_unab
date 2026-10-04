@@ -24,7 +24,7 @@ import io.ktor.http.contentType
 class BusApi(private val client: HttpClient) {
 
     suspend fun getBusCatalog(): ApiResult<BusCatalogResponse> = safeCall {
-        client.get("$BASE_URL/buses/catalog").body()
+        client.getConditional<BusCatalogResponse>("$BASE_URL/buses/catalog")
     }
 
     suspend fun getBuses(lat: Double, lng: Double): ApiResult<BusesResponse> = safeCall {
