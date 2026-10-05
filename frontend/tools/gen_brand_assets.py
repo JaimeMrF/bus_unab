@@ -78,8 +78,8 @@ def main() -> None:
         sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64)],
     )
 
-    # 5) Logo para la UI (Compose): recortado a su arte, sobre blanco para que lea
-    #    en el gradiente del login y en dark mode.
+    # 5) Logo del tenant demo (BucaraTransit): recortado a su arte, sobre blanco para que lea
+    #    en el gradiente del login y en dark mode. Raster (webp) porque Coil no decodifica SVG.
     bbox = logo.getchannel("A").getbbox()
     pad = 24
     l, t, r, b = bbox
@@ -88,9 +88,9 @@ def main() -> None:
     )
     ui = Image.new("RGBA", cropped.size, WHITE)
     ui.alpha_composite(cropped)
-    ui.convert("RGB").save(
-        RES / "commonMain/composeResources/drawable/logo_bucaratransit.webp", "WEBP", quality=92
-    )
+    seed_logo = ROOT / "bus_unab/database/seeders/assets/bucaratransit/logo.webp"
+    seed_logo.parent.mkdir(parents=True, exist_ok=True)
+    ui.convert("RGB").save(seed_logo, "WEBP", quality=92)
 
     # 6) ic_notification: silueta BLANCA de bus (Android la tinta; multicolor = manchon)
     for d, scale in DENSITY.items():

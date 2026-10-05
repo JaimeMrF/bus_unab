@@ -200,11 +200,11 @@ class DemoSeeder extends Seeder
 
     private function tenant(string $slug, array $org): Transportadora
     {
-        $paths = ['logo_path' => "branding/demo/{$slug}-logo.svg", 'mascot_path' => null, 'mascot_poses' => null];
+        $paths = ['mascot_path' => null, 'mascot_poses' => null];
         if (! empty($org['poses'])) {
             $paths['mascot_poses'] = $this->poses($slug);
         }
-        Storage::disk('public')->put($paths['logo_path'], $this->logoSvg($org['app_name'], $org['logo_color']));
+        $paths['logo_path'] = $this->logo($slug, $org);
 
         if ($org['mascot']) {
             $paths['mascot_path'] = "branding/demo/{$slug}-mascot.svg";
@@ -227,6 +227,24 @@ class DemoSeeder extends Seeder
                 'colors' => $org['colors'],
             ],
         ] + $paths);
+    }
+
+    /**
+     * Logo del tenant: el raster del set de assets si existe (Coil no decodifica SVG y el
+     * placeholder con forma de bus no es la marca real), si no el SVG genérico.
+     */
+    private function logo(string $slug, array $org): string
+    {
+        $source = database_path("seeders/assets/{$slug}/logo.webp");
+        $real = is_file($source);
+        $target = "branding/demo/{$slug}-logo.".($real ? 'webp' : 'svg');
+
+        Storage::disk('public')->put(
+            $target,
+            $real ? file_get_contents($source) : $this->logoSvg($org['app_name'], $org['logo_color']),
+        );
+
+        return $target;
     }
 
     private function users(string $slug, array $org, Transportadora $tenant): void

@@ -131,6 +131,16 @@ class DemoSeederTest extends TestCase
         Storage::disk('public')->assertExists('branding/demo/metrobus-mascot.svg');
     }
 
+    public function test_bucaratransit_serves_the_real_raster_logo(): void
+    {
+        $this->seedDemo();
+
+        $res = $this->getJson('/api/v1/branding/bucaratransit')->assertOk();
+
+        $this->assertStringEndsWith('branding/demo/bucaratransit-logo.webp', $res->json('data.logo_url'));
+        Storage::disk('public')->assertExists('branding/demo/bucaratransit-logo.webp');
+    }
+
     public function test_demo_svgs_pass_the_safe_svg_rule(): void
     {
         $this->seedDemo();
