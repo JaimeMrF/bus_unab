@@ -107,4 +107,4 @@ done
 echo ""
 ${DC} ps
 echo ""
-info "Deployment complete — http://79.143.89.188"
+info "Deployment complete — https://bucaratransit.duckdns.org"

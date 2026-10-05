@@ -4,7 +4,7 @@
 
 param(
     [string]$User = "root",
-    [string]$VpsHost = "79.143.89.188",
+    [string]$VpsHost = "157.56.9.42",
     [string]$AppDir = "/opt/bus_unab/bus_unab"
 )
 
@@ -39,6 +39,6 @@ ssh $Target "bash ${AppDir}/deploy.sh"
 if ($LASTEXITCODE -ne 0) { Write-Host "Deploy script failed" -ForegroundColor Red; exit 1 }
 
 Write-Host ""
-Write-Host "[4/5] Done! Backend at http://${VpsHost}" -ForegroundColor Green
+Write-Host "[4/5] Done! Backend at https://bucaratransit.duckdns.org" -ForegroundColor Green
 Write-Host ""
 Write-Host "Tip: run 'ssh ${Target} make -C ${AppDir} logs-app' to follow app logs" -ForegroundColor DarkGray

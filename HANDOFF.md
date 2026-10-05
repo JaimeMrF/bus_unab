@@ -19,7 +19,7 @@
 
 ## 3. 🖥️ Backend — deploy en la VM (bucaratransit.duckdns.org)
 
-**Estado:** desplegado y funcional → Docker (nginx + Laravel + MySQL + Redis + worker + scheduler) corriendo en la VM Azure `57.156.69.85`; BD migrada + seed (3 users, 2 transportadoras, 3 buses, 22 paradas); API responde (401 sin token ✅, `/auth/google` viva ✅); `GOOGLE_CLIENT_ID` configurado.
+**Estado:** Docker (nginx + Laravel + MySQL + Redis + worker + scheduler) en la VM Azure `157.56.9.42` — la única IP del proyecto hoy (`bucaratransit.duckdns.org` apunta ahí; los scripts `deploy.sh` / `push_to_vps.ps1` ya se actualizaron). Faltaba montar/migrar el stack ahí y abrir los puertos:
 
 **PENDIENTE (bloqueado por el usuario):**
 1. **Abrir puertos 80 y 443** en el Network Security Group de Azure (hoy solo 22). Portal: VM → Networking → NSG → Inbound rules → agregar 80 y 443.
