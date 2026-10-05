@@ -12,3 +12,15 @@ regexes = [
   # OAuth Web Client ID de Google: identificador publico, no secreto
   '''GOOGLE_SERVER_CLIENT_ID\s*[=:]\s*["']?[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com''',
 ]
+
+# API key de Google Maps que estuvo en AndroidManifest.xml y ya NO esta en el
+# archivo (el mapa paso a MapLibre + OpenFreeMap, sin key). La allowlist global
+# evalua sus criterios con OR, asi que esto exime UNICAMENTE esos dos commits: si
+# alguien vuelve a poner una API key en un commit nuevo, el escaneo la detecta.
+#
+# PENDIENTE DEL DUENO: rotar/borrar esa key en Google Cloud. Mientras siga viva,
+# cualquiera que lea el historial publico puede gastarla contra su facturacion.
+commits = [
+  "223922b4cee1ee71cd139a7062f5f2c7dde81bdc",
+  "fa6f47fb27539b15de0ffcc3654b21bb903b092c",
+]

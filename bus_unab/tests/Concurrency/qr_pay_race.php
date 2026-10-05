@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Prueba de concurrencia REAL del cobro QR (requiere MySQL/InnoDB; SQLite no tiene FOR UPDATE).
  * NO es parte de `php artisan test`. Uso (base de pruebas dedicada, ya migrada):
@@ -9,10 +10,14 @@
 require __DIR__.'/../../vendor/autoload.php';
 
 $app = require __DIR__.'/../../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$app->make(Kernel::class)->bootstrap();
 
-use App\Models\{QrPaymentToken, User, Wallet, WalletTransaction};
-use App\Services\{QrPaymentService, WalletService};
+use App\Models\User;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
+use App\Services\QrPaymentService;
+use App\Services\WalletService;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
 
 if (DB::getDriverName() !== 'mysql' || ! str_contains((string) DB::getDatabaseName(), 'qa')) {
@@ -27,11 +32,11 @@ if (($argv[1] ?? '') === 'debit-worker') {
     }
     try {
         app(WalletService::class)->debit(Wallet::findOrFail((int) $walletId), QrPaymentService::FALLBACK_FARE_CENTAVOS, $ref, 'qa');
-        echo "OK
-";
+        echo 'OK
+';
     } catch (Throwable $e) {
-        echo 'ERR '.class_basename($e)."
-";
+        echo 'ERR '.class_basename($e).'
+';
     }
     exit(0);
 }
@@ -117,8 +122,8 @@ for ($r = 1; $r <= $rounds; $r++) {
     $insufficient = count(array_filter($out, fn ($o) => $o === 'ERR InsufficientFundsException'));
     $w = $wallet->fresh();
     $good = $ok === 1 && $insufficient === $procs - 1 && (int) $w->balance_centavos === 0 && $walletSvc->ledgerSum($w) === 0;
-    printf("debito-concurrente %d: ok=%d saldo_insuficiente=%d saldo=%d %s
-", $r, $ok, $insufficient, $w->balance_centavos, $good ? 'PASS' : 'FAIL');
+    printf('debito-concurrente %d: ok=%d saldo_insuficiente=%d saldo=%d %s
+', $r, $ok, $insufficient, $w->balance_centavos, $good ? 'PASS' : 'FAIL');
     if (! $good) {
         $failures++;
         print_r(array_count_values($out));
