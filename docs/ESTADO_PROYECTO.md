@@ -1,6 +1,6 @@
 # Estado del proyecto — plataforma white-label de movilidad
 
-> Documento de lo ya construido en la transición de "app de bus de una universidad" a **plataforma vendible a varias organizaciones**, cada una con su propia marca. Actualizado el 2026-10-02. Para arrancar una demo ver [DEMO.md](DEMO.md); para dar de alta una organización ver [ONBOARDING_TENANT.md](../bus_unab/docs/ONBOARDING_TENANT.md).
+> Documento de lo ya construido en la transición de "app de bus de una universidad" a **plataforma vendible a varias organizaciones**, cada una con su propia marca. Actualizado el 2026-10-05. Para arrancar una demo ver [DEMO.md](DEMO.md); para dar de alta una organización ver [ONBOARDING_TENANT.md](../bus_unab/docs/ONBOARDING_TENANT.md).
 
 ## 1. Idea central
 
@@ -38,6 +38,7 @@ App móvil ──GET /api/v1/branding/{slug}──► Backend Laravel (caché + 
 
 ## 4. Infraestructura y repo
 
+- **Producción:** el backend está publicado en **https://bucaratransit.duckdns.org** (VM Azure `157.56.9.42`, Docker Compose con nginx + Laravel + MySQL + Redis + worker + scheduler, HTTPS de Let's Encrypt con renovación por cron y respaldo diario de la base). El build de la app apunta ahí por defecto. Detalle del despliegue y hallazgos en [PLAN_REVISION.md](PLAN_REVISION.md).
 - **`scripts/dev-up.ps1` / `.sh`**: un comando levanta el servidor accesible desde otros dispositivos de la red, carga datos demo, detecta la IP, abre el firewall e imprime URL, credenciales y comando de instalación. `-Fresh`, `-Simulate`, `-Queue`, `-Port`, `-Stop`. Probado en Windows; la versión `.sh` solo con `bash -n`.
 - **CI** (`.github/workflows`): backend (formato + tests PHP 8.2/8.3), frontend (build debug Android), escaneo de secretos semanal (gitleaks) y Dependabot. Aún sin ejecutar en GitHub.
 - **Hardening**: cabeceras de seguridad y límite de peticiones en nginx, Dockerfile reproducible, `.env.example` genérico sin secretos, `.gitignore` ampliado, archivos de caché y configuración local sacados del control de versiones.
@@ -50,9 +51,10 @@ App móvil ──GET /api/v1/branding/{slug}──► Backend Laravel (caché + 
 | Alta | Secretos en el historial | Clave de Google Maps y keystore `vibra-bus.jks` estuvieron commiteados. Rotar la clave; valorar rotar la firma. Gitleaks fallará sobre el historial hasta entonces. Limpiar historial requiere decisión explícita |
 | Alta | Verificación en dispositivo | La app se compiló en Android Studio y se vio bien; falta medir fluidez de la aurora en gama media y probar "Quitar animaciones" |
 | Media | Rendimiento y QR | En curso: perfilado de arranque/mapa/listas y auditoría de casos límite del QR (replay, expiración, doble cobro, concurrencia) |
-| Media | Nombre del producto | Sin definir un nombre neutro; paquete `com.vibra.bus` y proyecto Gradle `VibraBus` sin renombrar |
-| Media | Íconos de la app | El launcher sigue con el arte anterior; debe generarse por build/organización |
+| Media | Nombre del producto | **Resuelto:** la marca es BUCARATRANSIT; el paquete `com.vibra.bus` y el proyecto Gradle `VibraBus` siguen con el identificador congelado (no es branding visible) |
+| Media | Íconos de la app | **Resuelto:** el launcher y el favicon salen del logo oficial vía `frontend/tools/gen_brand_assets.py`; `ic_notification` es la silueta blanca de bus que Android tiñe |
+| Media | Firma del release | `local.properties` no tiene `KEYSTORE_PASSWORD`/`KEY_ALIAS`/`KEY_PASSWORD`, así que `assembleRelease` no firma. Decidir si se usa el keystore actual o se genera uno nuevo |
 | Baja | Mapa | Sin pulso animado sobre bus/parada (capa nativa de MapLibre) |
-| Baja | CI y nginx | Workflows no ejecutados aún; nginx sin validar con `nginx -t` |
+| Baja | CI y nginx | Workflows sin ejecutar en GitHub; nginx **sí** validado con `nginx -t` en el VPS (producción) |
 | Baja | iOS | Servidor de desarrollo requiere https o `Info.plist`; sin probar en simulador |
 | Baja | Pruebas de UI | Hay tests de tema/branding/URL, no de pantallas Compose |
