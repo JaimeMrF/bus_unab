@@ -53,6 +53,21 @@ class SecurityBaselineTest extends TestCase
             ->assertUnauthorized();
     }
 
+    /**
+     * Regresión: un cliente que NO manda `Accept: application/json` (navegador,
+     * monitor de uptime) provocaba un 500 — `Route [login] not defined` — porque el
+     * middleware de auth evaluaba route('login') al construir la excepción. La API
+     * debe contestar 401 siempre, con o sin esa cabecera.
+     */
+    public function test_api_responds_401_without_the_json_accept_header(): void
+    {
+        foreach (['/api/v1/stops', '/api/v1/buses', '/api/v1/auth/me'] as $path) {
+            // get() manda Accept: text/html; getJson() manda application/json.
+            $this->get($path)->assertStatus(401);
+            $this->getJson($path)->assertStatus(401);
+        }
+    }
+
     public function test_cors_is_not_wildcard_with_credentials_or_open_origins(): void
     {
         $cors = config('cors');

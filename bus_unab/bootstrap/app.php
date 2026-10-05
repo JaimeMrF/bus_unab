@@ -25,6 +25,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Sanctum: autenticación stateless para la app móvil (tokens Bearer)
         $middleware->statefulApi();
 
+        // Laravel registra por defecto `redirectGuestsTo(fn () => route('login'))`.
+        // En esta API no existe una ruta `login`, así que un cliente que no anuncia
+        // JSON (un navegador, un monitor de uptime) hacía explotar esa llamada a
+        // route() dentro del middleware y respondía 500 en vez de 401. Con un
+        // destino literal, /api/* siempre devuelve JSON (ver withExceptions) y los
+        // invitados de las rutas web van al login del panel.
+        $middleware->redirectGuestsTo('/admin/login');
+
         // Alias para el middleware de roles
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
