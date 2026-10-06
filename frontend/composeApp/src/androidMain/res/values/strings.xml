@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Nombre neutro del launcher; el nombre visible dentro de la app viene del BrandConfig. -->
-    <string name="app_name">Transporte</string>
+    <!-- Nombre del launcher, del diálogo de permisos y de "recién usadas": es estático y no puede
+         venir del BrandConfig, así que lleva la marca con la que se publica la app. Con "Transporte"
+         el sistema nombraba a la app distinto que sus propias pantallas. -->
+    <string name="app_name">BUCARATRANSIT</string>
 </resources>
