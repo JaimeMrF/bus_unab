@@ -91,6 +91,13 @@ data class BrandConfig(
 
     fun logoFor(dark: Boolean): String? = if (dark) logoDarkUrl ?: logoUrl else logoUrl
 
+    /**
+     * false mientras no se haya cargado ninguna organización: [Neutral] no tiene nombre, logo ni
+     * mascota propios, así que las pantallas de entrada no deben pintarlo como si fuera la marca
+     * del usuario (se veía "Transporte" al abrir la app por primera vez).
+     */
+    val hasBrand: Boolean get() = slug.isNotBlank()
+
     companion object {
         /** Tema neutro embebido: sin marca. Se usa mientras no hay organización o si todo falla. */
         val Neutral = BrandConfig(

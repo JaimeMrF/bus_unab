@@ -116,9 +116,9 @@ class OrganizationCodeScreen : Screen {
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Staggered(0) {
-                        NeutralBadge(Modifier.size(96.dp), icon = Icons.Outlined.Apartment)
+                        NeutralBadge(Modifier.size(116.dp), icon = Icons.Outlined.Apartment)
                     }
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(24.dp))
                     Staggered(1) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(

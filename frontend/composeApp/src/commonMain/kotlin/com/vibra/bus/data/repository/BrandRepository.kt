@@ -79,12 +79,28 @@ class BrandRepository(
         scope.launch { withTimeoutOrNull(8_000) { refresh() } }
     }
 
+    /**
+     * Arranque: la primera pantalla se arma con la marca cacheada; en una instalación nueva no hay
+     * caché, así que se espera (con tope) la primera respuesta para no pintar el tema neutro
+     * ("Transporte") como si fuera la marca del usuario. Nunca bloquea más de [timeoutMs].
+     */
+    suspend fun awaitBrand(timeoutMs: Long = 4_000) {
+        if (_brand.value.slug.isBlank()) withTimeoutOrNull(timeoutMs) { refresh() }
+        refreshAsync()
+    }
+
     /** Refresca la marca de la organización ya elegida; ante fallo conserva la cacheada. */
     suspend fun refresh() {
         val slug = settings.orgSlug
         if (slug.isBlank()) return
         val result = fetch(slug)
-        if (result is ApiResult.Success && result.data.version != _brand.value.version) apply(result.data)
+        if (result is ApiResult.Success) {
+            val current = _brand.value
+            // También cuando el slug cambia: una marca real con version 0 no se aplicaría nunca.
+            if (result.data.version != current.version || result.data.slug != current.slug) {
+                apply(result.data)
+            }
+        }
     }
 
     /**

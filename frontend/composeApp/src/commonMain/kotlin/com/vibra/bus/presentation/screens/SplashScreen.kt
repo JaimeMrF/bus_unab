@@ -1,28 +1,35 @@
 package com.vibra.bus.presentation.screens
 
 import com.vibra.bus.domain.brand.MascotPose
+import com.vibra.bus.presentation.components.BRAND_LOGO_ASPECT
 import com.vibra.bus.presentation.components.BrandMascot
 import kotlinx.coroutines.launch
 import com.vibra.bus.presentation.theme.Motion
 import com.vibra.bus.presentation.motion.auroraBackground
 import com.vibra.bus.presentation.motion.MotionSpec
 import com.vibra.bus.presentation.motion.LocalMotion
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.runtime.remember
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.background
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,7 +44,6 @@ import com.vibra.bus.data.model.StopDto
 import com.vibra.bus.data.repository.BrandRepository
 import com.vibra.bus.presentation.components.BrandLogo
 import com.vibra.bus.presentation.theme.LocalBrand
-import kotlinx.coroutines.withTimeoutOrNull
 import com.vibra.bus.presentation.viewmodel.AuthEvent
 import com.vibra.bus.presentation.viewmodel.AuthViewModel
 import com.vibra.bus.util.AppSettings
@@ -71,8 +77,9 @@ class SplashScreen : Screen {
                 navigator.replaceAll(OrganizationCodeScreen())
                 return@LaunchedEffect
             }
-            // La marca cacheada ya esta aplicada: el refresco corre en paralelo y no retrasa el arranque.
-            brandRepository.refreshAsync()
+            // Marca y sesión en paralelo: la marca cacheada se refresca sin bloquear, y en una
+            // instalación nueva se espera un poco para no arrancar con el tema neutro.
+            launch { brandRepository.awaitBrand() }
             viewModel.checkSession()
         }
 
@@ -125,23 +132,24 @@ class SplashScreen : Screen {
                     alpha = e * (1f - x)
                 },
             ) {
-                BrandMascot(pose = MascotPose.Greeting, size = 128.dp)
-                BrandLogo(Modifier.size(width = 200.dp, height = 132.dp))
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    text = brand.appName,
-                    style = MaterialTheme.typography.displayMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                brand.tagline?.takeIf { it.isNotBlank() }?.let {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                // El tema neutro no es la marca del usuario: sin organización cargada solo se muestra
+                // el progreso (antes aparecía "Transporte" al abrir la app por primera vez). Cuando la
+                // marca llega, el lockup y el leopardo entran con resorte.
+                AnimatedVisibility(
+                    visible = brand.hasBrand,
+                    enter = if (env.animate) {
+                        fadeIn(tween(MotionSpec.Standard)) +
+                            scaleIn(spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessLow), initialScale = 0.86f)
+                    } else EnterTransition.None,
+                    exit = if (env.animate) fadeOut(tween(Motion.fast)) else ExitTransition.None,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        BrandLogo(Modifier.width(196.dp).aspectRatio(BRAND_LOGO_ASPECT))
+                        Spacer(Modifier.height(24.dp))
+                        BrandMascot(pose = MascotPose.Greeting, size = 196.dp)
+                        Spacer(Modifier.height(36.dp))
+                    }
                 }
-                Spacer(Modifier.height(32.dp))
                 CircularProgressIndicator(
                     color = MaterialTheme.colorScheme.primary,
                     strokeWidth = 2.5.dp,

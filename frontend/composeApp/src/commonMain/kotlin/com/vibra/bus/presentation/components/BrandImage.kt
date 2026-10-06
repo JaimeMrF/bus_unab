@@ -42,6 +42,10 @@ import com.vibra.bus.presentation.theme.AppShape
 import com.vibra.bus.presentation.theme.LocalBrand
 import com.vibra.bus.presentation.theme.LocalIsDarkTheme
 
+/** Relación de aspecto del lockup del logo del tenant (1445×965). Con otro arte el logo se ajusta
+ *  dentro de la caja sin deformarse. */
+const val BRAND_LOGO_ASPECT = 1.4974f
+
 /** Placeholder neutro: círculo tonal con un icono. Sin marca ni mascota propia. */
 @Composable
 fun NeutralBadge(

@@ -37,7 +37,7 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        BrandMascot(pose = pose, size = 132.dp, neutralFallback = true, icon = icon)
+        BrandMascot(pose = pose, size = 160.dp, neutralFallback = true, icon = icon)
         Spacer(Modifier.height(24.dp))
         Text(
             text = message,
