@@ -1,20 +1,24 @@
 """Genera assets de marca BUCARATRANSIT desde new_logo.png (azul rey #01265A + amarillo #FCBB01).
 
-El logo es arte flotante azul+amarillo (sin badge sólido): sobre azul rey su propio arte
-azul desaparece, por eso los iconos y la versión de UI van sobre BLANCO.
+Los iconos van sobre BLANCO: el logo es arte flotante azul+amarillo (sin badge sólido) y sobre
+azul rey su propio arte azul desaparece. El logo de UI, en cambio, va TRANSPARENTE (el cliente
+lo pinta sobre la aurora del login/splash), con una variante para fondos oscuros.
 
 Idempotente. Corre con:
     python frontend/tools/gen_brand_assets.py
 """
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "new_logo.png"
 RES = ROOT / "frontend/composeApp/src"
 
 WHITE = (255, 255, 255, 255)
+
+# Umbral de "tinta azul": el arte del logo es azul rey (~#01265A) y amarillo (~#FCBB01).
+BLUE_MAX_CHANNEL = 120
 
 # fracción del ANCHO del canvas que debe ocupar el arte del logo.
 # El arte real del logo ocupa ~81% de su cuadrado, de ahí el factor 1/0.81.
@@ -52,6 +56,31 @@ def place(logo: Image.Image, size: int, art_w: float, bg) -> Image.Image:
     return canvas
 
 
+def dark_logo(logo: Image.Image) -> Image.Image:
+    """Variante del logo para fondos oscuros: blanquea la tinta azul y conserva la amarilla.
+
+    El arte original es azul rey sobre alfa; el fondo del tema oscuro (#00142F) es casi del mismo
+    azul, así que el monograma y "BUCARA" se pierden. Al voltear el azul a blanco el arte lee
+    completo, y como los huecos interiores (silueta del bus, separaciones) son alfa y no blanco,
+    siguen viéndose como recortes sobre el fondo oscuro.
+    """
+    r, g, b, a = logo.split()
+    blue = ImageChops.multiply(
+        r.point(lambda v: 255 if v < BLUE_MAX_CHANNEL else 0),
+        g.point(lambda v: 255 if v < BLUE_MAX_CHANNEL else 0),
+    )
+    white = Image.new("L", logo.size, 255)
+    return Image.merge(
+        "RGBA",
+        (
+            Image.composite(white, r, blue),
+            Image.composite(white, g, blue),
+            Image.composite(white, b, blue),
+            a,
+        ),
+    )
+
+
 def main() -> None:
     logo = Image.open(SRC).convert("RGBA")
 
@@ -78,19 +107,22 @@ def main() -> None:
         sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64)],
     )
 
-    # 5) Logo del tenant demo (BucaraTransit): recortado a su arte, sobre blanco para que lea
-    #    en el gradiente del login y en dark mode. Raster (webp) porque Coil no decodifica SVG.
+    # 5) Logo del tenant demo (BucaraTransit) para la app: SOLO el arte recortado, con alfa.
+    #    El cliente lo pinta sobre la aurora del login y del splash y sobre el vidrio de los
+    #    paneles flotantes; un plato blanco horneado se ve como un recuadro pegado encima.
+    #    Raster (webp) porque Coil no decodifica SVG.
     bbox = logo.getchannel("A").getbbox()
     pad = 24
     l, t, r, b = bbox
     cropped = logo.crop(
         (max(0, l - pad), max(0, t - pad), min(logo.width, r + pad), min(logo.height, b + pad))
     )
-    ui = Image.new("RGBA", cropped.size, WHITE)
-    ui.alpha_composite(cropped)
-    seed_logo = ROOT / "bus_unab/database/seeders/assets/bucaratransit/logo.webp"
-    seed_logo.parent.mkdir(parents=True, exist_ok=True)
-    ui.convert("RGB").save(seed_logo, "WEBP", quality=92)
+    seed_dir = ROOT / "bus_unab/database/seeders/assets/bucaratransit"
+    seed_dir.mkdir(parents=True, exist_ok=True)
+    cropped.save(seed_dir / "logo.webp", "WEBP", quality=92)
+
+    # 5b) Variante para el tema oscuro (el panel la pide como "Logo (modo oscuro)").
+    dark_logo(cropped).save(seed_dir / "logo-dark.webp", "WEBP", quality=92)
 
     # 6) ic_notification: silueta BLANCA de bus (Android la tinta; multicolor = manchon)
     for d, scale in DENSITY.items():
@@ -98,7 +130,7 @@ def main() -> None:
             RES / f"main/res/mipmap-{d}/ic_notification.webp", "WEBP", lossless=True
         )
 
-    print("assets de marca OK (iconos y logo de UI sobre blanco)")
+    print("assets de marca OK (iconos sobre blanco; logo de UI transparente + variante oscura)")
 
 
 if __name__ == "__main__":

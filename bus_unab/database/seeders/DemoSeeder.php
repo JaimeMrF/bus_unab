@@ -205,6 +205,7 @@ class DemoSeeder extends Seeder
             $paths['mascot_poses'] = $this->poses($slug);
         }
         $paths['logo_path'] = $this->logo($slug, $org);
+        $paths['logo_dark_path'] = $this->logoDark($slug);
 
         if ($org['mascot']) {
             $paths['mascot_path'] = "branding/demo/{$slug}-mascot.svg";
@@ -243,6 +244,23 @@ class DemoSeeder extends Seeder
             $target,
             $real ? file_get_contents($source) : $this->logoSvg($org['app_name'], $org['logo_color']),
         );
+
+        return $target;
+    }
+
+    /**
+     * Variante del logo para el tema oscuro: el arte es azul rey y el fondo oscuro del tema es casi
+     * del mismo azul, así que el logo desaparecería. El asset trae la tinta azul en blanco.
+     */
+    private function logoDark(string $slug): ?string
+    {
+        $source = database_path("seeders/assets/{$slug}/logo-dark.webp");
+        if (! is_file($source)) {
+            return null;
+        }
+
+        $target = "branding/demo/{$slug}-logo-dark.webp";
+        Storage::disk('public')->put($target, file_get_contents($source));
 
         return $target;
     }
