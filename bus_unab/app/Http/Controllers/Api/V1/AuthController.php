@@ -8,7 +8,6 @@ use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends BaseController
 {
@@ -26,6 +25,8 @@ class AuthController extends BaseController
     {
         $request->validate([
             'id_token' => 'required|string',
+            'organization' => 'nullable|string|max:60',
+            'device_name' => 'nullable|string|max:60',
         ]);
 
         // 1. Verificar token con Google
@@ -41,10 +42,15 @@ class AuthController extends BaseController
         //    (El viejo candado @unab.edu.co quedó eliminado junto con el rol student.)
 
         // 3. Buscar o crear usuario en nuestra BD (AuthService crea role=pasajero)
-        $user = $this->authService->findOrCreateUser($payload);
+        $user = $this->authService->findOrCreateUser($payload, $request->input('organization'));
 
-        // 4. Generar token Sanctum propio
-        $token = $this->authService->generateToken($user);
+        // Email sin verificar: no se vincula ni se crea (mismo 401 genérico).
+        if (! $user) {
+            return $this->unauthorized('Token de Google inválido o expirado');
+        }
+
+        // 4. Generar token Sanctum propio (uno por dispositivo)
+        $token = $this->authService->generateToken($user, $request->input('device_name'));
 
         return $this->successResponse($user, $token);
     }
@@ -60,6 +66,7 @@ class AuthController extends BaseController
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
+            'device_name' => 'nullable|string|max:60',
         ]);
 
         $user = $this->authService->attemptLogin($request->email, $request->password);
@@ -68,7 +75,7 @@ class AuthController extends BaseController
             return $this->unauthorized('Credenciales incorrectas');
         }
 
-        $token = $this->authService->generateToken($user);
+        $token = $this->authService->generateToken($user, $request->input('device_name'));
 
         return $this->successResponse($user, $token);
     }
@@ -92,19 +99,11 @@ class AuthController extends BaseController
             'email' => 'required|email|max:190|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'organization' => 'nullable|string|max:60',
+            'device_name' => 'nullable|string|max:60',
         ]);
 
         // Organización opcional: solo se acepta un tenant existente y activo.
-        $organizationId = null;
-        if (! empty($data['organization'])) {
-            $organizationId = Transportadora::where('slug', $data['organization'])
-                ->where('activo', true)
-                ->value('id');
-
-            if (! $organizationId) {
-                throw ValidationException::withMessages(['organization' => 'Organización no válida.']);
-            }
-        }
+        $organizationId = $this->authService->resolveOrganizationId($data['organization'] ?? null);
 
         $user = User::create([
             'name' => $data['name'],
@@ -114,7 +113,7 @@ class AuthController extends BaseController
             'transportadora_id' => $organizationId,
         ]);
 
-        $token = $this->authService->generateToken($user);
+        $token = $this->authService->generateToken($user, $request->input('device_name'));
 
         return $this->successResponse($user, $token);
     }
