@@ -7,11 +7,6 @@
  *     php tests/Concurrency/qr_pay_race.php [procesos=8] [rondas=5]
  * Crea datos propios (prefijo qa_race_) y verifica: 1 solo cobro por QR, saldo y ledger coherentes.
  */
-require __DIR__.'/../../vendor/autoload.php';
-
-$app = require __DIR__.'/../../bootstrap/app.php';
-$app->make(Kernel::class)->bootstrap();
-
 use App\Models\User;
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
@@ -19,6 +14,11 @@ use App\Services\QrPaymentService;
 use App\Services\WalletService;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\DB;
+
+require __DIR__.'/../../vendor/autoload.php';
+
+$app = require __DIR__.'/../../bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
 
 if (DB::getDriverName() !== 'mysql' || ! str_contains((string) DB::getDatabaseName(), 'qa')) {
     fwrite(STDERR, "Rechazado: solo MySQL y bases con 'qa' en el nombre.\n");
