@@ -3,11 +3,12 @@
 # Uso: scripts/dev-up.sh [--fresh] [--stop] [--simulate] [--queue] [--port N] [--org slug]
 set -euo pipefail
 
-FRESH=0; STOP=0; SIMULATE=0; QUEUE=0; PORT=8000; ORG=bucaratransit
+FRESH=0; STOP=0; SIMULATE=0; QUEUE=0; PORT=8000; ORG=bucaratransit; PHONE=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --fresh|-Fresh) FRESH=1;; --stop|-Stop) STOP=1;; --simulate|-Simulate) SIMULATE=1;;
     --queue|-Queue) QUEUE=1;; --port|-Port) PORT="$2"; shift;; --org|-OrgSlug) ORG="$2"; shift;;
+    --phone|-Phone) PHONE=1;; --emulator|-Emulator|--clean-app|-CleanApp) echo "WARN: $1 solo esta soportado en dev-up.ps1 (Windows)" >&2;;
     *) echo "flag desconocido: $1" >&2; exit 2;;
   esac; shift
 done
@@ -65,10 +66,11 @@ else info "migrate + demo:setup --no-fresh"; php artisan migrate --force; php ar
 php artisan storage:link >/dev/null 2>&1 || true
 
 mkdir -p storage/logs
+SETSID=""; command -v setsid >/dev/null && SETSID=setsid
 : > "$PIDFILE"
-nohup php artisan serve --host=0.0.0.0 --port="$PORT" >storage/logs/dev-serve.out.log 2>&1 & echo $! >> "$PIDFILE"
-if [ "$QUEUE" = 1 ]; then nohup php artisan queue:work --tries=1 >/dev/null 2>&1 & echo $! >> "$PIDFILE"; fi
-if [ "$SIMULATE" = 1 ]; then nohup php artisan demo:simulate-buses >storage/logs/dev-simulate.out.log 2>&1 & echo $! >> "$PIDFILE"; fi
+$SETSID nohup php artisan serve --host=0.0.0.0 --port="$PORT" >storage/logs/dev-serve.out.log 2>&1 & echo $! >> "$PIDFILE"
+if [ "$QUEUE" = 1 ]; then $SETSID nohup php artisan queue:work --tries=1 >/dev/null 2>&1 & echo $! >> "$PIDFILE"; fi
+if [ "$SIMULATE" = 1 ]; then $SETSID nohup php artisan demo:simulate-buses >storage/logs/dev-simulate.out.log 2>&1 & echo $! >> "$PIDFILE"; fi
 
 command -v ufw >/dev/null && echo "Si usas ufw: sudo ufw allow $PORT/tcp" || true
 ok=0

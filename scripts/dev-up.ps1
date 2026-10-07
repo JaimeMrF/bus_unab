@@ -1,11 +1,14 @@
-<#
+﻿<#
 .SYNOPSIS
   Levanta el backend Laravel en modo DEV/demo accesible desde la LAN (solo desarrollo).
 .EXAMPLE
   .\scripts\dev-up.ps1                 # instala, prepara demo y arranca
   .\scripts\dev-up.ps1 -Fresh          # recrea la BD demo desde cero
   .\scripts\dev-up.ps1 -Simulate       # ademas simula buses en movimiento
-  .\scripts\dev-up.ps1 -Stop           # detiene lo que lanzo este script
+  .\scripts\dev-up.ps1 -Emulator -CleanApp   # arranca AVD, compila e instala la app (10.0.2.2)
+  .\scripts\dev-up.ps1 -Phone         # imprime el comando para un telefono fisico
+  .\scripts\dev-up.ps1 -Stop           # detiene servidor, simulador y watchdog (no toca el emulador)
+  .\scripts\dev-up.ps1 -Stop -Emulator # ademas cierra el emulador
 #>
 [CmdletBinding()]
 param(
@@ -13,36 +16,79 @@ param(
     [switch]$Stop,
     [switch]$Simulate,
     [switch]$Queue,
+    [switch]$Emulator,
+    [switch]$CleanApp,
+    [switch]$Phone,
+    [string]$Avd = '',
+    [switch]$NoWatchdog,
     [int]$Port = 8000,
     [string]$OrgSlug = 'bucaratransit'
 )
 $ErrorActionPreference = 'Stop'
 $Root    = Split-Path -Parent $PSScriptRoot
 $Backend = Join-Path $Root 'bus_unab'
-$PidFile = Join-Path $Backend 'storage\dev-up.pids'
+$PidFile = Join-Path $Backend 'storage\dev-up.pids'   # legado
+$RunDir  = Join-Path $Backend 'storage\dev-up'
+$AppId   = 'com.vibra.bus'
 
 function Info($m) { Write-Host "[dev-up] $m" -ForegroundColor Cyan }
 function Fail($m) { Write-Host "[dev-up] ERROR: $m" -ForegroundColor Red; exit 1 }
 
 function Stop-Dev {
+    # 1) watchdog primero (si no, reiniciaria el servidor); 2) servicios; 3) listener del puerto
+    if (Test-Path $RunDir) {
+        foreach ($n in 'watchdog', 'serve', 'simulate', 'queue') {
+            $f = Join-Path $RunDir "$n.pid"
+            if (Test-Path $f) {
+                $id = (Get-Content $f | Select-Object -First 1)
+                if ($id -match '^\d+$') {
+                    if (Get-Process -Id ([int]$id) -ErrorAction SilentlyContinue) {
+                        & taskkill /T /F /PID $id 2>$null | Out-Null
+                        Info "detenido $n (arbol PID $id)"
+                    }
+                }
+                Remove-Item $f -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
     if (Test-Path $PidFile) {
         Get-Content $PidFile | ForEach-Object {
             if ($_ -match '^\d+$') {
-                # /T mata el arbol: `artisan serve` lanza un hijo `php -S` que sobrevive al padre
-                & taskkill /T /F /PID $_ 2>$null | Out-Null
-                Info "detenido arbol PID $_"
+                if (Get-Process -Id ([int]$_) -ErrorAction SilentlyContinue) {
+                    & taskkill /T /F /PID $_ 2>$null | Out-Null
+                }
             }
         }
         Remove-Item $PidFile -Force
     }
-    # Red de seguridad: cualquier proceso php escuchando en el puerto
     Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | ForEach-Object {
         $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
         if ($p -and $p.ProcessName -match '^php') { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; Info "detenido php en :$Port (PID $($p.Id))" }
     }
 }
 
-if ($Stop) { Stop-Dev; exit 0 }
+# -- Android SDK / JDK (solo para -Emulator) ----------------------------------
+function Find-Sdk {
+    foreach ($c in $env:ANDROID_HOME, $env:ANDROID_SDK_ROOT, (Join-Path $env:LOCALAPPDATA 'Android\Sdk')) {
+        if ($c -and (Test-Path (Join-Path $c 'platform-tools\adb.exe'))) { return $c }
+    }
+    return $null
+}
+function Find-Jdk17 {
+    $d = Get-ChildItem 'C:\Program Files\Eclipse Adoptium' -Directory -Filter 'jdk-17*' -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1
+    if ($d) { return $d.FullName }
+    if ($env:JAVA_HOME) { return $env:JAVA_HOME }
+    return $null
+}
+
+if ($Stop) {
+    Stop-Dev
+    if ($Emulator) {
+        $sdk = Find-Sdk
+        if ($sdk) { & (Join-Path $sdk 'platform-tools\adb.exe') emu kill 2>$null | Out-Null; Info 'emulador cerrado (adb emu kill)' }
+    }
+    exit 0
+}
 
 # -- Requisitos ---------------------------------------------------------------
 foreach ($c in 'php', 'composer') {
@@ -51,7 +97,7 @@ foreach ($c in 'php', 'composer') {
     }
 }
 $phpMods = (& php -m) -join ','
-if ($phpMods -notmatch '(?im)(^|,)gd(,|$)') { Write-Warning "extension PHP 'gd' no habilitada (opcional; actívala en php.ini si subes imágenes)." }
+if ($phpMods -notmatch '(?im)(^|,)gd(,|$)') { Write-Warning "extension PHP 'gd' no habilitada (opcional; actÃ­vala en php.ini si subes imÃ¡genes)." }
 foreach ($m in 'mbstring', 'pdo_sqlite', 'intl', 'bcmath') {
     if ($phpMods -notmatch "(?im)(^|,)$m(,|$)") { Fail "extension PHP '$m' no habilitada (php.ini)." }
 }
@@ -99,20 +145,24 @@ try {
 
     # -- Arranque -------------------------------------------------------------
     New-Item -ItemType Directory -Force 'storage\logs' | Out-Null
-    $pids = @()
-    $srv = Start-Process php -ArgumentList 'artisan', 'serve', '--host=0.0.0.0', "--port=$Port" -PassThru -WindowStyle Hidden `
-        -RedirectStandardOutput 'storage\logs\dev-serve.out.log' -RedirectStandardError 'storage\logs\dev-serve.err.log'
-    $pids += $srv.Id
-    if ($Queue) {
-        $q = Start-Process php -ArgumentList 'artisan', 'queue:work', '--tries=1' -PassThru -WindowStyle Hidden
-        $pids += $q.Id
+    New-Item -ItemType Directory -Force $RunDir | Out-Null
+    $php = (Get-Command php).Source
+    function Start-Detached($name, $cmd) {
+        # Win32_Process.Create: el proceso queda fuera del job/consola de esta sesion y sobrevive a su cierre
+        $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "cmd.exe /c $cmd"; CurrentDirectory = (Get-Location).Path }
+        if ($r.ReturnValue -ne 0) { Fail "no se pudo lanzar $name (rc=$($r.ReturnValue))" }
+        Set-Content (Join-Path $RunDir "$name.pid") $r.ProcessId
     }
-    if ($Simulate) {
-        $s = Start-Process php -ArgumentList 'artisan', 'demo:simulate-buses' -PassThru -WindowStyle Hidden `
-            -RedirectStandardOutput 'storage\logs\dev-simulate.out.log' -RedirectStandardError 'storage\logs\dev-simulate.err.log'
-        $pids += $s.Id
+    Start-Detached 'serve' "`"$php`" artisan serve --host=0.0.0.0 --port=$Port >> storage\logs\dev-serve.out.log 2>&1"
+    if ($Queue)    { Start-Detached 'queue'    "`"$php`" artisan queue:work --tries=1 >> storage\logs\dev-queue.out.log 2>&1" }
+    if ($Simulate) { Start-Detached 'simulate' "`"$php`" artisan demo:simulate-buses >> storage\logs\dev-simulate.out.log 2>&1" }
+    if (-not $NoWatchdog) {
+        $wd = Join-Path $PSScriptRoot 'dev-watchdog.ps1'
+        $wdArgs = "-Backend `"$Backend`" -Php `"$php`" -Port $Port -OrgSlug $OrgSlug"
+        if ($Simulate) { $wdArgs += ' -Simulate' }
+        if ($Queue)    { $wdArgs += ' -Queue' }
+        Start-Detached 'watchdog' "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$wd`" $wdArgs"
     }
-    $pids | Set-Content $PidFile
 
     # -- Firewall -------------------------------------------------------------
     $rule = "BusDev-$Port"
@@ -133,6 +183,57 @@ try {
 }
 finally { Pop-Location }
 
+# -- Emulador Android ---------------------------------------------------------
+$gradleCmd = "./gradlew :composeApp:installDebug -PapiBaseUrl=http://10.0.2.2:$Port/api/v1 -PdefaultOrgSlug=$OrgSlug"
+$emuResult = $null
+if ($Emulator) {
+    $sdk = Find-Sdk
+    if (-not $sdk) { Fail 'Android SDK no encontrado (define ANDROID_HOME o instala en %LOCALAPPDATA%\Android\Sdk).' }
+    $adb = Join-Path $sdk 'platform-tools\adb.exe'
+    $emu = Join-Path $sdk 'emulator\emulator.exe'
+    $jdk = Find-Jdk17
+    if ($jdk) { $env:JAVA_HOME = $jdk; Info "JAVA_HOME=$jdk" } else { Write-Warning 'JDK 17 no encontrado; usando el del PATH.' }
+
+    $running = (& $adb devices) -match '^emulator-\d+\s+device'
+    if (-not $running) {
+        if (-not $Avd) { $Avd = (& $emu -list-avds | Where-Object { $_ -match '\S' } | Select-Object -First 1) }
+        if (-not $Avd) { Fail 'No hay AVDs (emulator -list-avds vacio). Crea uno en Android Studio.' }
+        Info "lanzando AVD '$Avd' (desacoplado)"
+        $r = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "`"$emu`" -avd $Avd -no-snapshot-save -no-boot-anim"; CurrentDirectory = $sdk }
+        if ($r.ReturnValue -ne 0) { Fail "no se pudo lanzar el emulador (rc=$($r.ReturnValue))" }
+    } else { Info 'emulador ya en ejecucion' }
+
+    & $adb wait-for-device
+    Info 'esperando sys.boot_completed...'
+    $booted = $false
+    for ($i = 0; $i -lt 120 -and -not $booted; $i++) {
+        $v = (& $adb shell getprop sys.boot_completed 2>$null)
+        if ("$v".Trim() -eq '1') { $booted = $true } else { Start-Sleep -Seconds 3 }
+    }
+    if (-not $booted) { Fail 'el emulador no termino de arrancar (6 min)' }
+
+    Info 'compilando e instalando la app (la primera vez puede tardar varios minutos)...'
+    Push-Location (Join-Path $Root 'frontend')
+    try {
+        & .\gradlew.bat ':composeApp:installDebug' "-PapiBaseUrl=http://10.0.2.2:$Port/api/v1" "-PdefaultOrgSlug=$OrgSlug"
+        if ($LASTEXITCODE) { Fail 'gradle installDebug fallo' }
+    } finally { Pop-Location }
+
+    if ($CleanApp) { Info 'pm clear'; & $adb shell pm clear $AppId | Out-Null }
+    foreach ($perm in 'ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'CAMERA', 'POST_NOTIFICATIONS') {
+        & $adb shell pm grant $AppId "android.permission.$perm" 2>$null | Out-Null
+    }
+    & $adb shell am start -n "$AppId/$AppId.MainActivity" | Out-Null
+    Start-Sleep -Seconds 8
+    $pidApp = "$(& $adb shell pidof $AppId 2>$null)".Trim()
+    $focus = (& $adb shell dumpsys window 2>$null | Select-String 'mCurrentFocus' | Select-Object -First 1).Line
+    $shot = Join-Path $Backend 'storage\logs\dev-emulator.png'
+    cmd /c "`"$adb`" exec-out screencap -p > `"$shot`""
+    $emuResult = if ($pidApp -and $focus -match [regex]::Escape($AppId)) { "app abierta (PID $pidApp), captura: $shot" } else { "LA APP NO PARECE ABIERTA (pid='$pidApp', focus='$focus')" }
+    Info $emuResult
+}
+
+
 $gradle = "./gradlew :composeApp:installDebug -PapiBaseUrl=$AppUrl/api/v1 -PdefaultOrgSlug=$OrgSlug"
 Write-Host ''
 Write-Host '================ BUS DEV LISTO (solo desarrollo) ================' -ForegroundColor Green
@@ -143,8 +244,14 @@ Write-Host " Orgs demo: bucaratransit, metrobus, campus, logistica  (default: $O
 Write-Host ' Login    : admin.<slug>@demo.test / driver.<slug>@demo.test / pasajero.<slug>@demo.test  -  clave Demo12345!'
 Write-Host ' Super    : superadmin@demo.test (panel /admin; tenant en /empresa)  -  detalle: docs/DEMO.md'
 if ($Simulate) { Write-Host ' Simulador: activo (demo:simulate-buses)' }
-Write-Host ' Detener  : .\scripts\dev-up.ps1 -Stop'
+if (-not $NoWatchdog) { Write-Host ' Watchdog : activo (health-check 10 s, reinicia el servidor si no responde)' }
+if ($emuResult) { Write-Host " Emulador : $emuResult" }
+Write-Host ' Detener  : .\scripts\dev-up.ps1 -Stop   (con -Emulator tambien cierra el AVD)'
 Write-Host ''
-Write-Host ' Build de la app (desde frontend/):' -ForegroundColor Yellow
+Write-Host ' Build para TELEFONO FISICO (misma red Wi-Fi; desde frontend/):' -ForegroundColor Yellow
 Write-Host "   $gradle"
+if ($Phone) { Write-Host " TELEFONO: conecta al mismo Wi-Fi y ejecuta el comando de arriba (IP LAN $Ip). Si no conecta, abre el firewall (ver aviso previo)." -ForegroundColor Green }
+Write-Host ' Build para EMULADOR (o usa -Emulator):' -ForegroundColor Yellow
+Write-Host "   $gradleCmd"
 Write-Host '================================================================='
+

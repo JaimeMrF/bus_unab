@@ -58,6 +58,15 @@ class AppSettings(private val settings: Settings) {
         get() = settings.getString("favorite_pending_removes", "")
         set(value) = settings.putString("favorite_pending_removes", value)
 
+    /** Ya se mostro la explicacion previa del permiso de ubicacion (no se repite al abrir). */
+    var locationPromptShown: Boolean
+        get() = settings.getBoolean("location_prompt_shown", false)
+        set(value) = settings.putBoolean("location_prompt_shown", value)
+
+    var notificationPromptShown: Boolean
+        get() = settings.getBoolean("notification_prompt_shown", false)
+        set(value) = settings.putBoolean("notification_prompt_shown", value)
+
     var token: String
         get() = settings.getString("token", "")
         set(value) = settings.putString("token", value)

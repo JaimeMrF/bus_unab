@@ -1,5 +1,8 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.permissions.rememberPermissionState
+import com.vibra.bus.presentation.permissions.PermissionRationaleDialog
+import com.vibra.bus.presentation.permissions.AppPermission
 import com.vibra.bus.domain.brand.MascotPose
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.background
@@ -96,6 +99,16 @@ class DriverModeScreen : Screen {
         val snackbarMsg by viewModel.snackbarMessage.collectAsState()
         val snackbarHostState = remember { SnackbarHostState() }
         var showStopSelector by remember { mutableStateOf(false) }
+        val phoneLocation = rememberPermissionState(AppPermission.Location)
+        var showPhoneRationale by remember { mutableStateOf(false) }
+        if (showPhoneRationale) {
+            PermissionRationaleDialog(
+                title = "Enviar la ubicación del bus",
+                message = "Para usar tu teléfono como GPS del bus necesitamos tu ubicación mientras conduces. Se envía solo en modo conductor.",
+                state = phoneLocation,
+                onDismiss = { showPhoneRationale = false },
+            )
+        }
 
         LaunchedEffect(snackbarMsg) {
             snackbarMsg?.let {
@@ -258,7 +271,10 @@ class DriverModeScreen : Screen {
                 item {
                     LocationSourceCard(
                         current = locationSource,
-                        onChange = { viewModel.setLocationSource(it) },
+                        onChange = {
+                            if (it == LocationSource.PHONE_GPS && !phoneLocation.granted) showPhoneRationale = true
+                            viewModel.setLocationSource(it)
+                        },
                     )
                 }
 

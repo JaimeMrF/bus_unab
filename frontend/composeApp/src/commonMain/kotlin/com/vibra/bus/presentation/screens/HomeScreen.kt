@@ -1,5 +1,8 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.permissions.rememberPermissionState
+import com.vibra.bus.presentation.permissions.PermissionRationaleDialog
+import com.vibra.bus.presentation.permissions.AppPermission
 import kotlinx.coroutines.delay
 import com.vibra.bus.presentation.components.matchesQuery
 import com.vibra.bus.presentation.components.SearchField
@@ -131,7 +134,25 @@ class HomeScreen : Screen {
         }
         // Polling solo con la app en primer plano y esta pantalla visible.
         val appActive = platformAppActive()
-        LaunchedEffect(appActive) {
+        val locationPermission = rememberPermissionState(AppPermission.Location)
+        var showLocationRationale by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            // La explicacion previa se muestra una sola vez, al llegar al mapa (no al abrir la app).
+            if (!locationPermission.granted && !settings.locationPromptShown) showLocationRationale = true
+        }
+        if (showLocationRationale) {
+            PermissionRationaleDialog(
+                title = "Ver buses cerca de ti",
+                message = "Usamos tu ubicación solo mientras usas el mapa, para mostrarte los buses y paradas más cercanos. Puedes seguir sin ella.",
+                state = locationPermission,
+                onDismiss = {
+                    settings.locationPromptShown = true
+                    showLocationRationale = false
+                },
+            )
+        }
+        // Al conceder el permiso se reinicia el polling para que arranque con la ubicacion.
+        LaunchedEffect(appActive, locationPermission.granted) {
             if (appActive) viewModel.startPolling() else viewModel.stopPolling()
         }
         LaunchedEffect(selectedBus) {

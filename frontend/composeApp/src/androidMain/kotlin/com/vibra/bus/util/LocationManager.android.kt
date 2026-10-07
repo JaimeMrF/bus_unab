@@ -1,6 +1,9 @@
 package com.vibra.bus.util
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import android.content.Context
 import android.location.Location
 import android.os.Looper
@@ -18,8 +21,14 @@ actual class LocationManager(private val context: Context) {
 
     private var locationCallback: LocationCallback? = null
 
+    /** Sin permiso concedido no se toca el proveedor de ubicacion (evitaria SecurityException). */
+    private fun hasPermission(): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
     @SuppressLint("MissingPermission")
     actual fun requestLocation(callback: (LatLng?) -> Unit) {
+        if (!hasPermission()) { callback(null); return }
         fusedClient.lastLocation.addOnSuccessListener { location: Location? ->
             callback(location?.let { LatLng(it.latitude, it.longitude) })
         }
@@ -27,6 +36,8 @@ actual class LocationManager(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     actual fun startLocationUpdates(callback: (LatLng) -> Unit) {
+        if (!hasPermission()) return
+        stopLocationUpdates()
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10_000)
             .setMinUpdateIntervalMillis(5_000)
             .build()

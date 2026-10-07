@@ -13,24 +13,14 @@ class MainActivity : ComponentActivity() {
 
     private val googleSignInManager: GoogleSignInManager by inject()
 
-    private val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { /* handle results */ }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         googleSignInManager.setActivity(this)
 
-        permissionLauncher.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.CAMERA,
-                Manifest.permission.POST_NOTIFICATIONS,
-            )
-        )
+        // Sin permisos al abrir: ubicacion, camara y notificaciones se piden en contexto, con una
+        // explicacion previa (ver presentation/permissions y el escaner).
 
         setContent {
             App()

@@ -1,5 +1,8 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.presentation.permissions.rememberPermissionState
+import com.vibra.bus.presentation.permissions.PermissionRationaleDialog
+import com.vibra.bus.presentation.permissions.AppPermission
 import com.vibra.bus.util.formatEta
 import com.vibra.bus.util.showLocalNotification
 import com.vibra.bus.util.shareText
@@ -82,6 +85,16 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 showLocalNotification("Tu bus está cerca", "${bus?.name ?: plate} llega en ${formatEta(eta)}")
             }
+        }
+        val notificationPermission = rememberPermissionState(AppPermission.Notifications)
+        var showNotificationRationale by remember { mutableStateOf(false) }
+        if (showNotificationRationale) {
+            PermissionRationaleDialog(
+                title = "Avisarte cuando llegue",
+                message = "Necesitamos permiso para mostrarte una notificación cuando tu bus esté a pocos minutos.",
+                state = notificationPermission,
+                onDismiss = { showNotificationRationale = false },
+            )
         }
         var arrivals by remember { mutableStateOf(0) }
         LaunchedEffect(isArriving) { if (isArriving) arrivals++ }
@@ -300,6 +313,7 @@ data class WaitingBusScreen(val plate: String, val stop: StopDto) : Screen {
                                     onClick = {
                                         haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                         viewModel.setAlert(if (alertMinutes == m) null else m)
+                                        if (alertMinutes != m && !notificationPermission.granted) showNotificationRationale = true
                                     },
                                     label = { Text("$m min") },
                                 )
