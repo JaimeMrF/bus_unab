@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Transportadora;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class AuthService
@@ -98,7 +100,16 @@ class AuthService
      *   2. Si no existe, por email — para vincular cuentas preexistentes
      *      (ej. admin creado manualmente) sin duplicar registros.
      */
-    public function findOrCreateUser(array $googlePayload): User
+    /**
+     * Busca/vincula/crea el usuario de un id_token de Google ya verificado.
+     * Devuelve null si habría que VINCULAR o CREAR con un email que Google no
+     * marca como verificado (evita tomar cuentas existentes, p. ej. admin/driver).
+     * Una cuenta ya vinculada por `sub` entra siempre. `$organizationSlug` solo
+     * se usa al CREAR un pasajero nuevo; nunca cambia la org de un usuario existente.
+     *
+     * @throws ValidationException slug de organización inválido al crear
+     */
+    public function findOrCreateUser(array $googlePayload, ?string $organizationSlug = null): ?User
     {
         $googleId = $googlePayload['sub'];
         $email = $googlePayload['email'] ?? '';
@@ -113,6 +124,11 @@ class AuthService
             $user->update(['name' => $name, 'avatar' => $avatar]);
 
             return $user;
+        }
+
+        // Vincular o crear exige email verificado por Google.
+        if (! $this->emailVerified($googlePayload) || $email === '') {
+            return null;
         }
 
         // Intento 2: vincular una cuenta existente por email
@@ -130,7 +146,10 @@ class AuthService
 
         // Intento 3: crear nuevo usuario — H1: quien llega por la app es PASAJERO
         // (el antiguo 'student' quedó eliminado del producto; ver migration 130000).
+        $organizationId = $this->resolveOrganizationId($organizationSlug);
+
         return User::create([
+            'transportadora_id' => $organizationId,
             'google_id' => $googleId,
             'name' => $name,
             'email' => $email,
@@ -139,14 +158,48 @@ class AuthService
         ]);
     }
 
-    /**
-     * Genera un token Sanctum para el usuario.
-     * Revoca tokens anteriores (un token activo por usuario).
-     */
-    public function generateToken(User $user): string
+    /** Google envía email_verified como bool o como string "true"/"false". */
+    private function emailVerified(array $payload): bool
     {
-        $user->tokens()->delete();
+        $v = $payload['email_verified'] ?? false;
 
-        return $user->createToken('mobile_app')->plainTextToken;
+        return $v === true || $v === 'true';
+    }
+
+    /** Slug opcional de organización: solo tenants existentes y activos. */
+    public function resolveOrganizationId(?string $slug): ?int
+    {
+        if ($slug === null || $slug === '') {
+            return null;
+        }
+
+        $id = Transportadora::where('slug', $slug)->where('activo', true)->value('id');
+
+        if (! $id) {
+            throw ValidationException::withMessages(['organization' => 'Organización no válida.']);
+        }
+
+        return $id;
+    }
+
+    /** Máximo de sesiones (dispositivos) activas por usuario. */
+    public const MAX_ACTIVE_TOKENS = 5;
+
+    /**
+     * Genera un token Sanctum por dispositivo. Reemplaza solo el token del mismo
+     * nombre y conserva como máximo MAX_ACTIVE_TOKENS (borra los más viejos).
+     */
+    public function generateToken(User $user, ?string $deviceName = null): string
+    {
+        $name = trim((string) $deviceName) !== '' ? trim((string) $deviceName) : 'mobile_app';
+
+        $user->tokens()->where('name', $name)->delete();
+
+        $excess = $user->tokens()->count() - (self::MAX_ACTIVE_TOKENS - 1);
+        if ($excess > 0) {
+            $user->tokens()->orderBy('id')->limit($excess)->get()->each->delete();
+        }
+
+        return $user->createToken($name)->plainTextToken;
     }
 }
