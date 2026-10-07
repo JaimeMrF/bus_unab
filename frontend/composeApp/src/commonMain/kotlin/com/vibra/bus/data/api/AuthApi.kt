@@ -25,10 +25,14 @@ class AuthApi(private val client: HttpClient) {
         }.body()
     }
 
-    suspend fun loginWithGoogle(idToken: String): ApiResult<AuthResponse> = safeCall {
+    suspend fun loginWithGoogle(
+        idToken: String,
+        organization: String? = null,
+        deviceName: String? = null,
+    ): ApiResult<AuthResponse> = safeCall {
         client.post("$BASE_URL/auth/google") {
             contentType(ContentType.Application.Json)
-            setBody(GoogleTokenRequest(idToken))
+            setBody(GoogleTokenRequest(idToken, organization?.takeIf { it.isNotBlank() }, deviceName))
         }.body()
     }
 

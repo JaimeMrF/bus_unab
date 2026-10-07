@@ -111,7 +111,10 @@ class AuthViewModel(
                         }
                     }
                 } else {
-                    _uiState.value = UiState.Idle
+                    // Cancelado o no disponible: se avisa con claridad y se ofrece el correo como alternativa.
+                    val msg = "No se pudo iniciar sesión con Google. Inténtalo de nuevo o usa tu correo."
+                    _uiState.value = UiState.Error(msg)
+                    _event.value = AuthEvent.ShowError(msg)
                 }
             } catch (e: Exception) {
                 val errorMsg = e.message ?: "Error desconocido con Google"

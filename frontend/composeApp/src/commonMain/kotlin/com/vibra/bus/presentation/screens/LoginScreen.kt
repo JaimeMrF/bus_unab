@@ -1,5 +1,6 @@
 package com.vibra.bus.presentation.screens
 
+import com.vibra.bus.util.isGoogleSignInAvailable
 import com.vibra.bus.domain.brand.MascotPose
 import com.vibra.bus.presentation.components.BrandMascot
 import com.vibra.bus.presentation.components.NeutralBadge
@@ -87,7 +88,8 @@ class LoginScreen : Screen {
 
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
-        var showDriverForm by remember { mutableStateOf(false) }
+        // Sin Google (iOS sin SDK o client id ausente) el formulario de correo es el acceso principal.
+        var showDriverForm by remember { mutableStateOf(!isGoogleSignInAvailable) }
 
         val isLoading = uiState is UiState.Loading
         val canSubmit = email.isNotBlank() && password.isNotBlank() && !isLoading
@@ -183,7 +185,7 @@ class LoginScreen : Screen {
 
                         Spacer(Modifier.height(28.dp))
 
-                        Staggered(2) {
+                        if (isGoogleSignInAvailable) Staggered(2) {
                             GoogleSignInButton(
                                 text = "Continuar con Google",
                                 onClick = { viewModel.loginWithGoogle() },
@@ -194,7 +196,7 @@ class LoginScreen : Screen {
 
                         Spacer(Modifier.height(4.dp))
 
-                        Staggered(3) {
+                        if (isGoogleSignInAvailable) Staggered(3) {
                             TextButton(
                                 onClick = { showDriverForm = !showDriverForm },
                                 modifier = Modifier.heightIn(min = Sizing.touchTarget),

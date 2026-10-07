@@ -37,6 +37,9 @@ data class MeResponse(
 @Serializable
 data class GoogleTokenRequest(
     @SerialName("id_token") val idToken: String,
+    /** Slug de la organizacion activa; null si el usuario aun no eligio una. */
+    val organization: String? = null,
+    @SerialName("device_name") val deviceName: String? = null,
 )
 
 @Serializable

@@ -1,5 +1,6 @@
 package com.vibra.bus.data.repository
 
+import com.vibra.bus.util.DEVICE_NAME
 import com.vibra.bus.data.api.AuthApi
 import com.vibra.bus.data.model.AuthResponse
 import com.vibra.bus.data.model.BasicResponse
@@ -23,7 +24,7 @@ class AuthRepository(
     }
 
     suspend fun loginWithGoogle(idToken: String): ApiResult<AuthResponse> {
-        return api.loginWithGoogle(idToken).also { result ->
+        return api.loginWithGoogle(idToken, settings.orgSlug, DEVICE_NAME).also { result ->
             if (result is ApiResult.Success) {
                 saveSession(result.data)
                 brandRepository.adoptOrganization(result.data.data?.organizationSlug ?: result.data.data?.user?.organizationSlug)
