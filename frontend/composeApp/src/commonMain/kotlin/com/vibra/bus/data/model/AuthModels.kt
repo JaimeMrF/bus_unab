@@ -46,6 +46,8 @@ data class GoogleTokenRequest(
 data class LoginRequest(
     val email: String,
     val password: String,
+    /** Un token por dispositivo: iniciar sesion aqui no cierra la sesion de otros equipos. */
+    @SerialName("device_name") val deviceName: String? = null,
 )
 
 @Serializable

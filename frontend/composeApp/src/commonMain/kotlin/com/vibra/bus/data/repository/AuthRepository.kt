@@ -15,7 +15,7 @@ class AuthRepository(
     private val brandRepository: BrandRepository,
 ) {
     suspend fun login(email: String, password: String): ApiResult<AuthResponse> {
-        return api.login(LoginRequest(email, password)).also { result ->
+        return api.login(LoginRequest(email, password, DEVICE_NAME)).also { result ->
             if (result is ApiResult.Success) {
                 saveSession(result.data)
                 brandRepository.adoptOrganization(result.data.data?.organizationSlug ?: result.data.data?.user?.organizationSlug)
