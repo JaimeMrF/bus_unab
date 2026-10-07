@@ -6,6 +6,7 @@ import com.vibra.bus.domain.brand.BrandConfig
 import com.vibra.bus.util.ApiResult
 import com.vibra.bus.util.AppSettings
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
@@ -74,19 +75,31 @@ class BrandRepository(
         }
     }
 
-    /** Refresco sin bloquear al llamador (arranque): corre en segundo plano con tope de 8 s. */
+    /** Peticion de marca en curso. Vive en el ambito de la app: salir de una pantalla no la cancela. */
+    private var inflight: Job? = null
+
+    private fun startRefresh(): Job {
+        inflight?.takeIf { it.isActive }?.let { return it }
+        return scope.launch { withTimeoutOrNull(8_000) { refresh() } }.also { inflight = it }
+    }
+
+    /** Refresco sin bloquear al llamador: corre en segundo plano con tope de 8 s. */
     fun refreshAsync() {
-        scope.launch { withTimeoutOrNull(8_000) { refresh() } }
+        startRefresh()
     }
 
     /**
-     * Arranque: la primera pantalla se arma con la marca cacheada; en una instalación nueva no hay
-     * caché, así que se espera (con tope) la primera respuesta para no pintar el tema neutro
-     * ("Transporte") como si fuera la marca del usuario. Nunca bloquea más de [timeoutMs].
+     * Arranque: con caché se pinta la marca guardada y se refresca en segundo plano. Sin caché
+     * se espera (con tope de [timeoutMs]) la primera respuesta para no pintar el tema neutro
+     * ("Transporte") como si fuera la marca del usuario.
+     *
+     * La peticion corre en el ambito de la app, no en el de quien llama: si el llamador se cancela
+     * (la pantalla de arranque se cierra) o vence el tope, la peticion sigue y, al llegar, el
+     * StateFlow actualiza el tema solo.
      */
     suspend fun awaitBrand(timeoutMs: Long = 4_000) {
-        if (_brand.value.slug.isBlank()) withTimeoutOrNull(timeoutMs) { refresh() }
-        refreshAsync()
+        val job = startRefresh()
+        if (_brand.value.slug.isBlank()) withTimeoutOrNull(timeoutMs) { job.join() }
     }
 
     /** Refresca la marca de la organización ya elegida; ante fallo conserva la cacheada. */

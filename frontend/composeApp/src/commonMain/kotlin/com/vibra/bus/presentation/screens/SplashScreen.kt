@@ -77,9 +77,9 @@ class SplashScreen : Screen {
                 navigator.replaceAll(OrganizationCodeScreen())
                 return@LaunchedEffect
             }
-            // Marca y sesión en paralelo: la marca cacheada se refresca sin bloquear, y en una
-            // instalación nueva se espera un poco para no arrancar con el tema neutro.
-            launch { brandRepository.awaitBrand() }
+            // Con marca cacheada no espera (refresca en segundo plano); en una instalación nueva
+            // espera hasta 4 s a la primera respuesta, y si no llega el tema se actualiza solo después.
+            brandRepository.awaitBrand()
             viewModel.checkSession()
         }
 
