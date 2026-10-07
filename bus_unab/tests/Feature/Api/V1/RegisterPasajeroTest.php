@@ -89,6 +89,7 @@ class RegisterPasajeroTest extends TestCase
                 'picture' => null,
                 'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
+                'email_verified' => 'true',
                 'exp' => time() + 3600,
             ], 200),
         ]);

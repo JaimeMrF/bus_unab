@@ -113,6 +113,7 @@ class AuthTest extends TestCase
                 'picture' => 'https://example.com/photo.jpg',
                 'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
+                'email_verified' => 'true',
                 'exp' => time() + 3600,
             ], 200),
         ]);
@@ -147,6 +148,7 @@ class AuthTest extends TestCase
                 'picture' => null,
                 'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
+                'email_verified' => 'true',
                 'exp' => time() + 3600,
             ], 200),
         ]);
@@ -196,6 +198,7 @@ class AuthTest extends TestCase
                 'name' => 'Usuario Externo',
                 'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
+                'email_verified' => 'true',
                 'exp' => time() + 3600,
             ], 200),
         ]);
@@ -221,6 +224,7 @@ class AuthTest extends TestCase
                 'name' => 'Estudiante UNAB',
                 'aud' => 'test-client.apps.googleusercontent.com',
                 'iss' => 'https://accounts.google.com',
+                'email_verified' => 'true',
                 'exp' => time() + 3600,
             ], 200),
         ]);
