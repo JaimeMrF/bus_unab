@@ -295,3 +295,17 @@ con las cuentas demo de pasajero y conductor, y el mapa del panel `/admin`.
 
 - Login con Google, escáner QR con cámara física, iOS.
 - Los cambios del backend no están desplegados en la VM.
+
+## 10. Revisión de paneles (2026-10-25, segunda ronda)
+
+| Hallazgo | Causa | Arreglo |
+|---|---|---|
+| `/admin/wallets` → 500 en producción | ícono `heroicon-o-plus-minus` no existe | `heroicon-o-adjustments-horizontal` |
+| `/empresa/fares/create` → 500 | `Select::numeric()` no existe | Select con las rutas (buses) de la empresa |
+| Mapas de paradas, puntos de interés y editor de rutas en blanco | usaban Google Maps y `GOOGLE_MAPS_API_KEY` está vacía (también en producción) | Leaflet + OpenStreetMap; búsqueda con Nominatim; vista previa por calles con OSRM |
+| Escritorio mostraba el login de Google | widget de Google Calendar sin `GOOGLE_CALENDAR_ID` | el widget se oculta si no hay calendario |
+| Broadcast decía "enviada" sin enviar nada | sin `FIREBASE_CREDENTIALS_B64` el servicio salía en silencio | avisa "Push no configurado" / "Sin destinatarios" |
+| `/empresa` sin datos ni mapa | solo tenía el saludo | indicadores de la empresa + Mapa en Vivo de su flota (filtrado por `transportadora_id`) |
+
+Detalle en el commit `c65f2f4`. Guion de la demo y pasos de despliegue: `docs/GUION_DEMO.md`.
+Decisión: mapas sin API key (OSM) para no depender de facturación de Google en la demo.
