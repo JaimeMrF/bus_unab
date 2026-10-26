@@ -118,13 +118,16 @@ class BusRequestService
             ->where('status', 'pending')
             ->count();
 
+        $manualFull = $bus->isManuallyFull();
+
         return [
             'bus_id' => $bus->id,
             'bus_name' => $bus->name,
             'current_occupancy' => $pending,
             'capacity' => $bus->capacity,
-            'percentage' => $this->calcPercentage($pending, $bus->capacity),
-            'level' => $this->calcLevel($pending, $bus->capacity),
+            'percentage' => $manualFull ? 100.0 : $this->calcPercentage($pending, $bus->capacity),
+            'level' => $manualFull ? 'full' : $this->calcLevel($pending, $bus->capacity),
+            'manually_full' => $manualFull,
         ];
     }
 

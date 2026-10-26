@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,9 +79,23 @@ class BrandRepository(
     /** Peticion de marca en curso. Vive en el ambito de la app: salir de una pantalla no la cancela. */
     private var inflight: Job? = null
 
+    /**
+     * Sin marca cargada (instalación nueva) un fallo no puede dejar la app en el tema neutro hasta
+     * el próximo arranque: se reintenta con espera creciente. Con marca cacheada basta un intento.
+     */
     private fun startRefresh(): Job {
         inflight?.takeIf { it.isActive }?.let { return it }
-        return scope.launch { withTimeoutOrNull(8_000) { refresh() } }.also { inflight = it }
+        return scope.launch {
+            var wait = 2_000L
+            for (attempt in 1..REFRESH_ATTEMPTS) {
+                withTimeoutOrNull(8_000) { refresh() }
+                if (_brand.value.slug.isNotBlank() || settings.orgSlug.isBlank()) break
+                if (attempt < REFRESH_ATTEMPTS) {
+                    delay(wait)
+                    wait = (wait * 2).coerceAtMost(30_000)
+                }
+            }
+        }.also { inflight = it }
     }
 
     /** Refresco sin bloquear al llamador: corre en segundo plano con tope de 8 s. */
@@ -153,6 +168,11 @@ class BrandRepository(
             is ApiResult.HttpError -> r
             is ApiResult.NetworkError -> r
         }
+    }
+
+    private companion object {
+        /** 2 + 4 + 8 + 16 + 30 s de espera: cubre un servidor lento o una red que tarda en subir. */
+        const val REFRESH_ATTEMPTS = 6
     }
 
     private fun normalizeSlug(raw: String): String =

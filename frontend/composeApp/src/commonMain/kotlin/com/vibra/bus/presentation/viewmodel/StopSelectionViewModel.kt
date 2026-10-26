@@ -95,26 +95,44 @@ class StopSelectionViewModel(
         _selectedStop.value = stop
     }
 
-    fun confirmStop(busId: Int, stopId: Int) {
+    /**
+     * Confirma la parada. Si el detalle del bus no llegó al abrir la pantalla (red lenta), se pide
+     * otra vez aquí: antes el botón no hacía nada y no avisaba.
+     */
+    fun confirmStop(plate: String, stopId: Int) {
         viewModelScope.launch {
             _requestState.value = UiState.Loading
-            when (val result = requestRepository.createRequest(busId, stopId)) {
-                is ApiResult.Success -> {
-                    val data = result.data.data
-                    if (data != null) _requestState.value = UiState.Success(data)
-                    else _requestState.value = UiState.Error("Respuesta inválida del servidor")
-                }
-                is ApiResult.HttpError -> {
-                    if (result.code == 422) {
-                        _requestState.value = UiState.Error("Error de validación")
-                    } else {
-                        _requestState.value = UiState.Error(result.message)
-                    }
-                }
-                is ApiResult.NetworkError -> {
-                    _snackbarMessage.value = result.message
+            val bus = _busDetail.value ?: when (val r = busRepository.getBusDetail(plate)) {
+                is ApiResult.Success -> r.data.data?.also { _busDetail.value = it }
+                else -> null
+            }
+            if (bus == null) {
+                val msg = "No pudimos cargar el bus. Revisa tu conexión e intenta de nuevo."
+                _snackbarMessage.value = msg
+                _requestState.value = UiState.Error(msg)
+                return@launch
+            }
+            createRequest(bus.id, stopId)
+        }
+    }
+
+    private suspend fun createRequest(busId: Int, stopId: Int) {
+        when (val result = requestRepository.createRequest(busId, stopId)) {
+            is ApiResult.Success -> {
+                val data = result.data.data
+                if (data != null) _requestState.value = UiState.Success(data)
+                else _requestState.value = UiState.Error("Respuesta inválida del servidor")
+            }
+            is ApiResult.HttpError -> {
+                if (result.code == 422) {
+                    _requestState.value = UiState.Error("Error de validación")
+                } else {
                     _requestState.value = UiState.Error(result.message)
                 }
+            }
+            is ApiResult.NetworkError -> {
+                _snackbarMessage.value = result.message
+                _requestState.value = UiState.Error(result.message)
             }
         }
     }

@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -18,7 +19,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import com.vibra.bus.data.model.OccupancyDto
 
-/** Estado visual del bus en el mapa; cambia el anillo del marcador. */
+/** Estado visual del bus en el mapa; cambia el color del resplandor del marcador. */
 enum class BusMapState(val key: String) {
     Available("available"),
     Full("full"),
@@ -78,7 +79,7 @@ private fun darken(c: Color, f: Float) = lerp(c, Color.Black, f)
 
 /**
  * Dibuja el bus apuntando hacia arriba (norte) en un lienzo cuadrado de [BusSpriteKey.sizePx].
- * El anillo exterior codifica el estado; la rotacion por rumbo la aplica el mapa.
+ * El resplandor codifica el estado; la rotacion por rumbo la aplica el mapa.
  */
 fun renderBusSprite(key: BusSpriteKey, custom: ImageBitmap? = null): ImageBitmap {
     val s = key.sizePx
@@ -98,15 +99,23 @@ private fun DrawScope.drawBus(key: BusSpriteKey, custom: ImageBitmap?) {
     val ring = Color(key.ring)
     val glass = darken(body, 0.62f)
 
-    // Halo y anillo de estado
-    drawCircle(Color.White.copy(alpha = 0.92f), radius = 45f * u, center = c)
-    drawCircle(ring, radius = 44f * u, center = c, style = Stroke(width = 5f * u))
-    if (key.state == BusMapState.Arriving) {
-        drawCircle(ring.copy(alpha = 0.45f), radius = 38.5f * u, center = c, style = Stroke(width = 2f * u))
-    }
+    // Resplandor de estado: degradado radial transparente, sin disco ni borde blanco.
+    // "Llegando" brilla mas fuerte para que se note sin agregar anillos.
+    val core = if (key.state == BusMapState.Arriving) 0.85f else 0.65f
+    drawCircle(
+        brush = Brush.radialGradient(
+            0f to ring.copy(alpha = core),
+            0.45f to ring.copy(alpha = core * 0.55f),
+            1f to Color.Transparent,
+            center = c,
+            radius = 47f * u,
+        ),
+        radius = 47f * u,
+        center = c,
+    )
 
     if (custom != null) {
-        // Imagen del tenant: silueta tintada con el color del cuerpo, centrada dentro del anillo.
+        // Imagen del tenant: silueta tintada con el color del cuerpo, centrada sobre el resplandor.
         val side = (66f * u).toInt().coerceAtLeast(1)
         drawImage(
             image = custom,
@@ -129,8 +138,9 @@ private fun DrawScope.drawBus(key: BusSpriteKey, custom: ImageBitmap?) {
 
     // Sombra suave
     drawRoundRect(Color.Black.copy(alpha = 0.18f), Offset(left + 1.5f * u, top + 2f * u), Size(bw, bh), CornerRadius(r * u))
-    // Carroceria
+    // Carroceria con contorno oscuro fino: sin el disco blanco, el contorno lo despega del mapa
     drawRoundRect(body, Offset(left, top), Size(bw, bh), CornerRadius(r * u))
+    drawRoundRect(darken(body, 0.45f), Offset(left, top), Size(bw, bh), CornerRadius(r * u), style = Stroke(width = 1.6f * u))
     // Franja de acento
     drawRect(accent, Offset(left, top + bh * 0.58f), Size(bw, 5f * u))
     // Parabrisas (frente = arriba)

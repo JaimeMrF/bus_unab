@@ -258,3 +258,40 @@ Trae `superadmin@demo.test` (para `/admin`) y `admin.bucaratransit@demo.test` (p
   claves ya son aleatorias, pero conviene decidir si se borran los tenants que no se usan (`metrobus`,
   `campus`, `logistica`).
 - La contraseña de la VM que se pegó en el chat sigue sin rotar.
+
+## 9. Revisión como usuario nuevo (2026-10-25)
+
+Recorrido completo en el emulador (`Medium_Phone`, backend local con `scripts/dev-up.ps1 -Simulate`)
+con las cuentas demo de pasajero y conductor, y el mapa del panel `/admin`.
+
+### Cambios
+
+| Área | Qué cambió | Archivo |
+|---|---|---|
+| Marcador del bus (app) | Sin disco ni anillo blanco: resplandor radial transparente del color de estado (verde disponible, ámbar llegando, rojo lleno) y contorno oscuro fino en la carrocería. Ícono a 0.6 | `presentation/map/BusSprite.kt`, `MapViewComposable.android.kt` |
+| Marcador del bus (panel) | Igual en Leaflet: sin borde blanco ni sombra, `radial-gradient` del color de estado y `drop-shadow` en el glifo | `resources/views/filament/pages/bus-map.blade.php` |
+| Cámara del mapa | Centro por defecto en Bucaramanga (antes Bogotá), zoom 13.5 a la ubicación del usuario; al elegir un bus encuadra ruta + paradas + bus por encima del panel inferior | `MapViewComposable.android.kt` |
+| Marca en instalación nueva | Si `/branding/{slug}` falla o tarda, reintenta con backoff (6 intentos, 2→30 s) en vez de quedarse en el tema neutro | `data/repository/BrandRepository.kt` |
+| Confirmar parada | El botón no hacía nada si el detalle del bus no había cargado; ahora lo recarga y si falla muestra un aviso | `StopSelectionViewModel.kt`, `StopSelectionScreen.kt` |
+| "¡Tu bus está llegando!" | Ya no queda pegado: exige < 200 m **y** ETA ≤ 2 min (en rutas en bucle el bus pasa cerca yendo en sentido contrario) | `WaitingBusViewModel.kt` |
+| Mapa del panel vacío | `/admin/map-data` daba 403 al `super_admin`; ahora acepta admin y super_admin | `Admin/BusMapController.php` |
+| "Bus lleno" del conductor | La bandera manual (`bus_manually_full_{placa}`) no llegaba a pasajeros ni al panel; ahora fuerza nivel `full` / 100 % y se expone `manually_full` | `Models/Bus.php`, `Services/BusRequestService.php`, `Api/V1/BusRequestController.php` |
+
+### Cómo probar
+
+- Pruebas: `php vendor/phpunit/phpunit/phpunit --no-coverage tests/Feature/Api/V1/BusRequestTest.php tests/Feature/Admin/BusMapDataTest.php`
+  (17 + 3 OK) y `:composeApp:testDebugUnitTest` (72 OK).
+- Manual: pasajero → mapa con buses en verde → "Buscar rutas" → elegir ruta → el mapa encuadra la ruta →
+  parada → "Confirmar" → "Siguiendo bus". Conductor → elegir ruta → "Bus lleno": el pasajero y el panel
+  lo ven en rojo al 100 %.
+
+### Decisiones
+
+- El color del resplandor es el estado del bus (no el color de marca) para que se lea de un vistazo qué
+  bus sirve.
+- La bandera manual de lleno manda sobre el conteo de solicitudes: el conductor ve el bus real.
+
+### Sin probar (requiere dispositivo o cuenta real)
+
+- Login con Google, escáner QR con cámara física, iOS.
+- Los cambios del backend no están desplegados en la VM.

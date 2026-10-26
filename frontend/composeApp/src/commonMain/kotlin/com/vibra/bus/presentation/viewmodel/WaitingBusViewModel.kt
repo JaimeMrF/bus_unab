@@ -162,9 +162,17 @@ class WaitingBusViewModel(
         _etaConfidence.value = "low"
         evaluateAlert()
 
-        if (distance < 200 && !_isArriving.value) {
-            _isArriving.value = true
-        }
+        updateArriving()
+    }
+
+    /**
+     * "Llegando" exige cercanía en línea recta Y una ETA corta: en rutas circulares el bus pasa a
+     * menos de 200 m de la parada en el sentido contrario y faltan aún varios minutos por la ruta.
+     */
+    private fun updateArriving() {
+        val d = _distanceMeters.value
+        val eta = _etaMinutes.value
+        _isArriving.value = d != null && d < 200 && (eta == null || eta <= 2)
     }
 
     /**
@@ -184,6 +192,7 @@ class WaitingBusViewModel(
                     dto.distanceM?.let { _distanceMeters.value = it }
                     _etaConfidence.value = dto.confidence ?: "medium"
                     evaluateAlert()
+                    updateArriving()
                 }
             }
             is ApiResult.HttpError -> when (r.code) {

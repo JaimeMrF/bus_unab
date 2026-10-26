@@ -43,7 +43,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -58,6 +60,7 @@ import com.vibra.bus.util.LatLng
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.geometry.LatLng as MlLatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapLibreMapOptions
@@ -81,9 +84,12 @@ private const val STYLE_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
 private const val STYLE_DARK = "https://tiles.openfreemap.org/styles/dark"
 
 // Vista inicial genérica (sin ubicación del usuario); se recentra en cuanto hay GPS o buses.
-private const val CITY_LAT = 4.6
-private const val CITY_LNG = -74.08
+// Centro de Bucaramanga: antes era Bogotá y las pantallas sin ubicación abrían allá.
+private const val CITY_LAT = 7.1193
+private const val CITY_LNG = -73.1227
 private const val CITY_ZOOM = 11.0
+/** Zoom de barrio al seguir al usuario: a 11 los buses se veían diminutos y encimados. */
+private const val USER_ZOOM = 13.5
 
 private const val SRC_ROUTE = "src-route"
 private const val LYR_ROUTE_HALO = "lyr-route-halo"
@@ -243,7 +249,7 @@ private fun Style.installLayers(sprites: Map<String, Bitmap>, colors: MapColors)
                 PropertyFactory.iconRotate(Expression.get("heading")),
                 PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP),
                 PropertyFactory.iconAnchor(Property.ICON_ANCHOR_CENTER),
-                PropertyFactory.iconSize(0.55f), // ← perilla: tamaño del bus en pantalla
+                PropertyFactory.iconSize(0.6f), // ← perilla: tamaño del bus en pantalla
                 PropertyFactory.iconAllowOverlap(true),
                 PropertyFactory.iconIgnorePlacement(true),
             )
@@ -469,12 +475,42 @@ actual fun MapViewComposable(
     }
 
     // ── Cámara: sigue al usuario (descarta el (0,0) que devuelve el backend) ─
-    LaunchedEffect(map, userLocation) {
+    // Con un bus elegido manda el encuadre de su ruta; seguir al usuario lo desharía.
+    val routeFocused = selectedBus != null
+    LaunchedEffect(map, userLocation, routeFocused) {
         val mlMap = map ?: return@LaunchedEffect
+        if (routeFocused) return@LaunchedEffect
         userLocation?.takeIf { it.latitude < 15.0 }?.let {
             mlMap.animateCamera(
-                CameraUpdateFactory.newLatLngZoom(MlLatLng(it.latitude, it.longitude), CITY_ZOOM),
+                CameraUpdateFactory.newLatLngZoom(MlLatLng(it.latitude, it.longitude), USER_ZOOM),
             )
         }
+    }
+
+    // ── Cámara: encuadra ruta, paradas y bus elegido, libres del panel inferior ─
+    // Aplica con un bus elegido o en pantallas sin ubicación del usuario (paradas, ruta, espera).
+    val density = LocalDensity.current
+    val screenHeightPx = with(density) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
+    LaunchedEffect(map, selectedBus?.plate, stops, path, routeFocused || userLocation == null) {
+        val mlMap = map ?: return@LaunchedEffect
+        if (!routeFocused && userLocation != null) return@LaunchedEffect
+        val busPoint = selectedBus?.let { listOf(MlLatLng(it.latitude, it.longitude)) }.orEmpty()
+        val points = (path.orEmpty().map { MlLatLng(it.latitude, it.longitude) } +
+            stops.map { MlLatLng(it.latitude, it.longitude) } + busPoint)
+            .filter { it.latitude < 15.0 && it.latitude != 0.0 }
+        when (points.distinct().size) {
+            0 -> return@LaunchedEffect
+            1 -> {
+                mlMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.first(), USER_ZOOM), 700)
+                return@LaunchedEffect
+            }
+        }
+        val bounds = LatLngBounds.Builder().includes(points).build()
+        val side = with(density) { 48.dp.roundToPx() }
+        // Si el mapa ocupa casi toda la pantalla, el panel inferior (tarjeta, hoja de espera) lo
+        // tapa por debajo; si el mapa termina donde empieza el panel basta un margen corto.
+        val coversScreen = mlMap.height > screenHeightPx * 0.7f
+        val bottom = (mlMap.height * if (coversScreen) 0.55f else 0.18f).toInt()
+        mlMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, side, side * 2, side, bottom), 700)
     }
 }

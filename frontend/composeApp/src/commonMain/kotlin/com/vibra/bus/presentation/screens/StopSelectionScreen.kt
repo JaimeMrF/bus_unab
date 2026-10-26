@@ -224,9 +224,7 @@ data class StopSelectionScreen(val plate: String) : Screen {
                         loading = isLoading,
                         enabled = selectedStop != null,
                         onClick = {
-                            selectedStop?.let { stop ->
-                                busDetail?.let { bus -> viewModel.confirmStop(bus.id, stop.id) }
-                            }
+                            selectedStop?.let { stop -> viewModel.confirmStop(plate, stop.id) }
                         },
                     )
                     Spacer(Modifier.height(8.dp))

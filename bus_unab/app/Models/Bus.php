@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class Bus extends Model
 {
@@ -81,6 +82,10 @@ class Bus extends Model
      */
     public function occupancyLevel(): string
     {
+        if ($this->isManuallyFull()) {
+            return 'full';
+        }
+
         $pct = $this->occupancyPercentage();
 
         return match (true) {
@@ -89,5 +94,19 @@ class Bus extends Model
             $pct >= 30 => 'medium',
             default => 'low',
         };
+    }
+
+    /**
+     * El conductor marcó "Bus lleno" (POST /buses/{plate}/occupancy). Se guarda en caché 24 h;
+     * manda sobre el conteo de solicitudes para que pasajeros y panel lo vean lleno.
+     */
+    public function isManuallyFull(): bool
+    {
+        return (bool) Cache::get(self::manualFullKey($this->plate), false);
+    }
+
+    public static function manualFullKey(string $plate): string
+    {
+        return "bus_manually_full_{$plate}";
     }
 }

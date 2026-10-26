@@ -21,8 +21,11 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.9);
-            box-shadow: 0 2px 8px rgba(0,0,0,.35);
+            /* Resplandor transparente del color de ocupación: sin disco ni borde blanco. */
+            background: radial-gradient(circle, var(--glow-color) 0%, transparent 70%);
+        }
+        .bus-marker .bus-glyph {
+            filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.55));
         }
         .bus-pulse::after {
             content: '';
@@ -334,7 +337,7 @@
                 className: '',
                 html: `
                 <div class="bus-marker bus-pulse"
-                     style="width:${size}px; height:${size}px; background:${color}; position:relative; --pulse-color:${color};">
+                     style="width:${size}px; height:${size}px; position:relative; --pulse-color:${color}; --glow-color:${color}99;">
                     <!-- Flecha de dirección -->
                     <div style="
                         position:absolute; top:-12px; left:50%;
@@ -346,7 +349,8 @@
                         </svg>
                     </div>
                     <!-- Ícono de bus -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white"
+                    <svg class="bus-glyph" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="${color}"
+                         stroke="rgba(0,0,0,.45)" stroke-width="0.6"
                          style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);">
                         <path d="M4 16c0 .88.39 1.67 1 2.22V20a1 1 0 001 1h1a1 1 0 001-1v-1h8v1a1 1 0 001 1h1a1 1 0 001-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
                     </svg>

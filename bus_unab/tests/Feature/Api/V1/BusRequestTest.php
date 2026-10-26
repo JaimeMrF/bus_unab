@@ -296,6 +296,28 @@ class BusRequestTest extends TestCase
             ->assertJson(['data' => ['notified_users' => 0]]);
     }
 
+    public function test_driver_full_flag_is_reported_to_passengers_until_cleared(): void
+    {
+        $driver = User::factory()->driver()->create();
+
+        $this->actingAs($driver, 'sanctum')
+            ->postJson('/api/v1/buses/RUTA1/occupancy', ['is_full' => true])
+            ->assertStatus(200)
+            ->assertJson(['data' => ['level' => 'full', 'manually_full' => true]]);
+
+        // Sin solicitudes pendientes, el pasajero igual lo ve lleno.
+        $this->actingAs($this->student, 'sanctum')
+            ->getJson('/api/v1/buses/RUTA1/occupancy')
+            ->assertJson(['data' => ['level' => 'full', 'percentage' => 100]]);
+
+        $this->actingAs($driver, 'sanctum')
+            ->postJson('/api/v1/buses/RUTA1/occupancy', ['is_full' => false]);
+
+        $this->actingAs($this->student, 'sanctum')
+            ->getJson('/api/v1/buses/RUTA1/occupancy')
+            ->assertJson(['data' => ['level' => 'low', 'manually_full' => false]]);
+    }
+
     public function test_bus_arrived_returns_zero_when_no_pending_requests(): void
     {
         $admin = User::factory()->admin()->create();

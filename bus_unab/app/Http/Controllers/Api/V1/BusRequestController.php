@@ -146,7 +146,7 @@ class BusRequestController extends BaseController
             return $this->notFound("La ruta '{$plate}' no existe");
         }
 
-        $cacheKey = "bus_manually_full_{$plate}";
+        $cacheKey = Bus::manualFullKey($plate);
         if ($validated['is_full']) {
             Cache::put($cacheKey, true, 86400);
         } else {

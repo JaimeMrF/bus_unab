@@ -26,7 +26,7 @@ class BusMapController extends Controller
         // Doble validación de seguridad — el middleware web + sesión Filament
         $user = auth()->user();
 
-        if (! $user || ! $user->isAdmin()) {
+        if (! $user || ! $user->isSuperAdmin()) {
             abort(403);
         }
 
@@ -41,6 +41,10 @@ class BusMapController extends Controller
             $pct = $bus->capacity > 0
                 ? round(min(($pending / $bus->capacity) * 100, 100), 1)
                 : 0.0;
+
+            if ($bus->isManuallyFull()) {
+                $pct = 100.0;
+            }
 
             $level = match (true) {
                 $pct >= 90 => 'full',
