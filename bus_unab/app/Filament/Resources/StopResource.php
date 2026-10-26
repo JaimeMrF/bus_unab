@@ -35,7 +35,7 @@ class StopResource extends Resource
                     ->columnSpanFull(),
 
                 Forms\Components\TextInput::make('address')
-                    ->label('Dirección (Buscar en Google Maps)')
+                    ->label('Dirección')
                     ->maxLength(255)
                     ->id('stop-address-input')
                     ->columnSpanFull(),

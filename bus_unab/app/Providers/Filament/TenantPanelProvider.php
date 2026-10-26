@@ -54,10 +54,12 @@ class TenantPanelProvider extends PanelProvider
             ])
             ->pages([
                 Pages\Dashboard::class,
+                \App\Filament\Pages\BusMap::class,
                 BrandingPage::class,
             ])
             ->widgets([
                 Widgets\AccountWidget::class,
+                \App\Filament\Tenant\Widgets\TenantStatsWidget::class,
             ])
             ->resources([
                 BusResource::class,

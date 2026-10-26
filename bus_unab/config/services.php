@@ -42,6 +42,7 @@ return [
     */
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
+        'calendar_id' => env('GOOGLE_CALENDAR_ID'),
     ],
 
     /*

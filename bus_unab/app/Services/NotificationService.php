@@ -79,12 +79,18 @@ class NotificationService
         );
     }
 
-    public function broadcast(string $title, string $body, array $data = [], string $role = 'all'): void
+    /** @return int dispositivos a los que FCM aceptó el mensaje */
+    public function broadcast(string $title, string $body, array $data = [], string $role = 'all'): int
     {
         $tokens = DeviceToken::when($role !== 'all', fn ($q) => $q->whereHas('user', fn ($u) => $u->where('role', $role))
         )->pluck('token')->toArray();
 
-        $this->sendToTokens($tokens, $title, $body, $data);
+        return $this->sendToTokens($tokens, $title, $body, $data);
+    }
+
+    public function isConfigured(): bool
+    {
+        return filled(config('services.fcm.credentials_b64'));
     }
 
     // -------------------------------------------------------------------------
@@ -95,16 +101,18 @@ class NotificationService
         $this->sendToTokens($tokens, $title, $body, $data);
     }
 
-    private function sendToTokens(array $tokens, string $title, string $body, array $data = []): void
+    private function sendToTokens(array $tokens, string $title, string $body, array $data = []): int
     {
         if (empty($tokens)) {
-            return;
+            return 0;
         }
 
         $accessToken = $this->getAccessToken();
         if (! $accessToken) {
-            return;
+            return 0;
         }
+
+        $sent = 0;
 
         $projectId = $this->getProjectId();
         $endpoint = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
@@ -122,7 +130,9 @@ class NotificationService
                         ],
                     ]);
 
-                if (! $response->successful()) {
+                if ($response->successful()) {
+                    $sent++;
+                } else {
                     Log::warning('NotificationService FCM v1 error', [
                         'status' => $response->status(),
                         'body' => $response->json('error.message'),
@@ -132,6 +142,8 @@ class NotificationService
                 Log::error('NotificationService exception', ['error' => $e->getMessage()]);
             }
         }
+
+        return $sent;
     }
 
     private function getAccessToken(): ?string

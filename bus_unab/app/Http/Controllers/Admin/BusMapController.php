@@ -19,21 +19,32 @@ class BusMapController extends Controller
      * Devuelve el snapshot de todos los buses + paradas para el mapa del admin.
      *
      * GET /admin/map-data
-     * Protegido: solo usuarios autenticados con rol admin (validado manualmente).
+     * Protegido: super admin ve toda la flota; el admin de empresa (/empresa) solo la suya.
      */
     public function data(Request $request): JsonResponse
     {
         // Doble validación de seguridad — el middleware web + sesión Filament
         $user = auth()->user();
 
-        if (! $user || ! $user->isSuperAdmin()) {
+        if (! $user || ! ($user->isSuperAdmin() || $user->isTenantAdmin())) {
             abort(403);
         }
 
-        $buses = Bus::active()->get();
+        // Esta ruta no pasa por EnsureTenantScope: el filtro por empresa va explícito.
+        $tenantId = $user->isSuperAdmin() ? null : $user->transportadora_id;
+        $scoped = fn ($query) => $tenantId === null ? $query : $query->withoutGlobalScopes()->where('transportadora_id', $tenantId);
 
-        $busData = $buses->map(function (Bus $bus) {
-            $detail = $this->gpsService->getBusDetail($bus->external_vehicle_id);
+        $buses = $scoped(Bus::query())->where('is_active', true)->get();
+
+        // Una sola llamada al listado del GPS: el detalle se pide solo para placas que el proveedor
+        // reporta. Pedirlo bus por bus a ciegas sumaba un timeout por cada bus sin GPS real y el
+        // mapa terminaba en "GPS no disponible".
+        $reported = collect($this->gpsService->getAllBuses() ?? [])->pluck('Placa')->flip();
+
+        $busData = $buses->map(function (Bus $bus) use ($reported) {
+            $detail = isset($reported[$bus->plate]) && ! DriverLocation::get($bus->plate)
+                ? $this->gpsService->getBusDetail($bus->external_vehicle_id)
+                : null;
             $pending = BusRequest::where('bus_id', $bus->id)
                 ->where('status', 'pending')
                 ->count();
@@ -107,7 +118,7 @@ class BusMapController extends Controller
             ];
         });
 
-        $stops = Stop::where('is_active', true)
+        $stops = $scoped(Stop::query())->where('is_active', true)
             ->get(['id', 'name', 'address', 'latitude', 'longitude', 'radius_meters']);
 
         return response()->json([

@@ -12,10 +12,15 @@ class GoogleCalendarWidget extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
+    // Sin calendario configurado Google muestra su pantalla de inicio de sesión: mejor ocultarlo.
+    public static function canView(): bool
+    {
+        return filled(config('services.google.calendar_id'));
+    }
+
     public function getCalendarUrl(): string
     {
-        $calendarId = config('services.google.calendar_id', env('GOOGLE_CALENDAR_ID', 'primary'));
-        $apiKey = config('services.maps.key');
+        $calendarId = config('services.google.calendar_id');
 
         return 'https://calendar.google.com/calendar/embed?src='.urlencode($calendarId).'&ctz=America/Bogota';
     }

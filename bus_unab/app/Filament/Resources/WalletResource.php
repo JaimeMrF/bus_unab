@@ -92,17 +92,17 @@ class WalletResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('estado')
-                    ->label('Tipo/Estado')
+                    ->label('Estado')
                     ->badge()
                     ->color(fn ($state) => $state === Wallet::ESTADO_ACTIVA ? 'success' : 'danger')
                     ->formatStateUsing(fn ($state) => $state === Wallet::ESTADO_ACTIVA ? 'Activa' : 'Congelada'),
 
                 Tables\Columns\TextColumn::make('transactions_count')
-                    ->label('Asientos')
+                    ->label('Movimientos')
                     ->counts('transactions'),
 
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Movida')
+                    ->label('Último movimiento')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
@@ -119,7 +119,7 @@ class WalletResource extends Resource
 
                 Tables\Actions\Action::make('adjust')
                     ->label('Ajustar saldo')
-                    ->icon('heroicon-o-plus-minus')
+                    ->icon('heroicon-o-adjustments-horizontal')
                     ->color('warning')
                     ->form([
                         Forms\Components\TextInput::make('monto_pesos')

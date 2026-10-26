@@ -44,7 +44,7 @@ class BusRequestResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Estudiante')
+                    ->label('Pasajero')
                     ->searchable()
                     ->sortable(),
 

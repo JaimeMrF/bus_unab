@@ -2,7 +2,6 @@
     $record = $getRecord();
     $initLat = $record?->latitude ? (float) $record->latitude : null;
     $initLng = $record?->longitude ? (float) $record->longitude : null;
-    $apiKey = config('services.maps.key');
 
     $others = \App\Models\PointOfInterest::active()
         ->whereNotNull('latitude')
@@ -12,12 +11,15 @@
         ->toArray();
 @endphp
 
-<div wire:ignore x-data="googlePoiMapPicker(@js($initLat), @js($initLng), @js($others))" class="col-span-full space-y-3">
-    {{-- Buscador de Google Places --}}
-    <div class="w-full relative">
-        <input id="poi-search-input" type="text" placeholder="Buscar lugar en Google Maps..." 
-            class="w-full transition duration-75 rounded-lg shadow-sm focus:border-primary-500 focus:ring-1 focus:ring-inset focus:ring-primary-500 disabled:opacity-70 bg-white dark:bg-white/5 border-gray-300 dark:border-white/10"
+<div wire:ignore x-data="poiMapPicker(@js($initLat), @js($initLng), @js($others))" class="col-span-full space-y-3">
+    @include('filament.partials.leaflet-loader')
+
+    {{-- Buscador de lugares (OpenStreetMap) --}}
+    <div class="flex gap-2">
+        <input x-model="query" @keydown.enter.prevent="search()" type="text" placeholder="Buscar lugar en Bucaramanga..."
+            class="flex-1 rounded-lg shadow-sm bg-white dark:bg-white/5 border-gray-300 dark:border-white/10 text-sm"
             style="padding: 0.5rem 0.75rem;">
+        <button type="button" @click="search()" class="fi-btn rounded-lg px-3 py-2 text-sm font-semibold bg-primary-600 text-white">Buscar</button>
     </div>
 
     {{-- Leyenda --}}
@@ -25,166 +27,69 @@
         <div class="flex items-center gap-4">
             <div class="flex items-center gap-1.5">
                 <span class="inline-block w-3 h-3 rounded-full bg-amber-500 border-2 border-white shadow-sm"></span>
-                <span>Punto de Interés actual</span>
+                <span>Punto de Interés actual (clic en el mapa o arrastra)</span>
             </div>
             <div class="flex items-center gap-1.5">
                 <span class="inline-block w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-sm"></span>
                 <span>Otros puntos</span>
             </div>
         </div>
+        <span x-show="busy" class="text-primary-500 animate-pulse" style="display:none;">Buscando...</span>
+        <span x-show="notFound" class="text-danger-500" style="display:none;">Sin resultados</span>
     </div>
 
-    {{-- Contenedor del mapa --}}
-    <div id="google-poi-map"
-        class="w-full rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
-        style="height: 480px;"></div>
-
-    {{-- Cargar Google Maps API --}}
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places,marker&callback=initGoogleMapPoiPicker&loading=async"
-        async></script>
+    <div x-ref="map" class="w-full rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden" style="height: 480px;"></div>
 
     <script>
-        window.initGoogleMapPoiPicker = () => {
-            window.dispatchEvent(new CustomEvent('google-maps-loaded'));
-        };
-
-        function googlePoiMapPicker(initLat, initLng, otherPois) {
+        function poiMapPicker(initLat, initLng, otherPois) {
+            const lf = { L: null, map: null, marker: null, circle: null };
             return {
-                map: null,
-                marker: null,
+                // (lf: objetos de Leaflet fuera del estado reactivo de Alpine)
+                query: '', busy: false, notFound: false,
 
-                init() {
-                    if (window.google && window.google.maps) {
-                        this.setupMap();
-                    } else {
-                        window.addEventListener('google-maps-loaded', () => this.setupMap());
-                    }
+                async init() {
+                    const L = lf.L = await window.loadLeaflet();
+                    const hasPos = initLat != null && initLng != null;
+                    lf.map = L.map(this.$refs.map).setView(hasPos ? [initLat, initLng] : [7.1193, -73.1227], hasPos ? 17 : 14);
+                    window.osmLayer(L).addTo(lf.map);
+
+                    otherPois.forEach(s => L.marker([+s.latitude, +s.longitude], { icon: window.pinIcon(L, '#3b82f6', 14) })
+                        .bindTooltip(s.name).addTo(lf.map));
+
+                    if (hasPos) this.placeMarker(initLat, initLng, false);
+                    lf.map.on('click', e => this.placeMarker(e.latlng.lat, e.latlng.lng, true));
                 },
 
-                setupMap() {
-                    const hasPos = initLat != null && initLng != null;
-                    const center = hasPos ? {
-                        lat: initLat,
-                        lng: initLng
-                    } : {
-                        lat: 7.1193,
-                        lng: -73.1227
-                    };
-
-                    this.map = new google.maps.Map(document.getElementById('google-poi-map'), {
-                        center: center,
-                        zoom: hasPos ? 17 : 14,
-                        mapId: 'POI_PICKER_MAP', // Requerido para marcadores avanzados
-                        mapTypeControl: false,
-                        streetViewControl: false,
-                        fullscreenControl: true,
-                    });
-
-                    // Configurar el Autocomplete clásico de Google Maps en nuestro input
-                    const searchInput = document.getElementById('poi-search-input');
-                    if (searchInput) {
-                        const autocomplete = new google.maps.places.Autocomplete(searchInput, {
-                            componentRestrictions: { country: 'co' },
-                            fields: ['geometry', 'name']
-                        });
-
-                        autocomplete.addListener('place_changed', () => {
-                            const place = autocomplete.getPlace();
-                            if (!place.geometry || !place.geometry.location) return;
-                            
-                            const lat = place.geometry.location.lat();
-                            const lng = place.geometry.location.lng();
-                            
-                            this.map.setCenter({ lat, lng });
-                            this.map.setZoom(17);
-                            this.placeMarker(lat, lng, true);
-
-                            // Opcional: setear el nombre del punto si está vacío
-                            const nameEl = document.getElementById('data.name');
-                            if (nameEl && nameEl.value.trim() === '') {
-                                this.$wire.$set('data.name', place.name ?? '');
-                            }
-                        });
-
-                        // Evitar submit del formulario con Enter
-                        searchInput.addEventListener('keydown', (e) => {
-                            if (e.key === 'Enter') {
-                                e.preventDefault();
-                            }
-                        });
-                    }
-
-                    // Marcadores de referencia: otros puntos (azul)
-                    otherPois.forEach(s => {
-                        if (!s.latitude || !s.longitude) return;
-
-                        const pinView = new google.maps.marker.PinElement({
-                            background: "#3b82f6",
-                            borderColor: "white",
-                            glyphColor: "white",
-                            scale: 0.7
-                        });
-
-                        new google.maps.marker.AdvancedMarkerElement({
-                            map: this.map,
-                            position: {
-                                lat: parseFloat(s.latitude),
-                                lng: parseFloat(s.longitude)
-                            },
-                            title: s.name,
-                            content: pinView.element
-                        });
-                    });
-
-                    // Si ya tiene posición, colocar marcador
-                    if (hasPos) {
-                        this.placeMarker(initLat, initLng, false);
-                    }
-
-                    // Clic en el mapa para mover marcador
-                    this.map.addListener('click', (e) => {
-                        this.placeMarker(e.latLng.lat(), e.latLng.lng(), true);
-                    });
+                async search() {
+                    if (!this.query.trim()) return;
+                    this.busy = true; this.notFound = false;
+                    try {
+                        const hit = await window.geoSearch(this.query + ', Santander');
+                        if (!hit) { this.notFound = true; return; }
+                        lf.map.setView([hit.lat, hit.lng], 17);
+                        this.placeMarker(hit.lat, hit.lng, true);
+                        const nameEl = document.getElementById('data.name');
+                        if (nameEl && !nameEl.value.trim() && hit.name) this.$wire.$set('data.name', hit.name);
+                    } finally { this.busy = false; }
                 },
 
                 placeMarker(lat, lng, updateForm) {
-                    const position = {
-                        lat,
-                        lng
-                    };
-
-                    if (this.marker) {
-                        this.marker.position = position;
+                    if (lf.marker) {
+                        lf.marker.setLatLng([lat, lng]);
                     } else {
-                        const pinView = new google.maps.marker.PinElement({
-                            background: "#f59e0b", // Amber 500
-                            borderColor: "white",
-                            glyphColor: "white",
-                        });
-
-                        this.marker = new google.maps.marker.AdvancedMarkerElement({
-                            map: this.map,
-                            position: position,
-                            gmpDraggable: true,
-                            content: pinView.element
-                        });
-
-                        this.marker.addListener('dragend', (e) => {
-                            const pos = this.marker.position;
-                            this.pushCoords(pos.lat, pos.lng);
+                        lf.marker = lf.L.marker([lat, lng], { draggable: true, icon: window.pinIcon(lf.L, '#f59e0b', 22) }).addTo(lf.map);
+                        lf.marker.on('dragend', () => {
+                            const p = lf.marker.getLatLng();
+                            this.pushCoords(p.lat, p.lng);
                         });
                     }
-
-                    if (updateForm) {
-                        this.pushCoords(lat, lng);
-                    }
+                    if (updateForm) this.pushCoords(lat, lng);
                 },
 
                 pushCoords(lat, lng) {
-                    this.$wire.$set('data.latitude', parseFloat(lat).toFixed(7));
-                    this.$wire.$set('data.longitude', parseFloat(lng).toFixed(7));
-                }
+                    this.$wire.$set('data.latitude', (+lat).toFixed(7));
+                    this.$wire.$set('data.longitude', (+lng).toFixed(7));
+                },
             };
         }
     </script>

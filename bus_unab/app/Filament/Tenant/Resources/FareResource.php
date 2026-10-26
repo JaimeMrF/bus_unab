@@ -3,6 +3,7 @@
 namespace App\Filament\Tenant\Resources;
 
 use App\Filament\Tenant\Resources\FareResource\Pages;
+use App\Models\Bus;
 use App\Models\Concerns\TenantContext;
 use App\Models\Fare;
 use Filament\Forms;
@@ -81,9 +82,12 @@ class FareResource extends Resource
 
                 Forms\Components\Select::make('ruta_id')
                     ->label('Ruta (opcional)')
-                    ->numeric()
+                    // Las rutas son los buses del tenant (GlobalTenantScope ya filtra).
+                    ->options(fn () => Bus::query()->orderBy('name')->get()
+                        ->mapWithKeys(fn (Bus $b) => [$b->id => "{$b->name} ({$b->plate})"]))
+                    ->searchable()
                     ->placeholder('Sin ruta específica')
-                    ->helperText('ID numérico de la ruta; vacío = tarifa general del tenant.'),
+                    ->helperText('Vacío = tarifa general del tenant.'),
             ])->columns(2),
 
             Forms\Components\Section::make('Vigencia')->schema([

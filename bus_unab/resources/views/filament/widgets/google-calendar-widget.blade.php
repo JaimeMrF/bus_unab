@@ -26,7 +26,7 @@
             ></iframe>
             
             {{-- Overlay para cuando no hay ID configurado o es el default --}}
-            @if(env('GOOGLE_CALENDAR_ID') === null)
+            @if(blank(config('services.google.calendar_id')))
                 <div class="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/80 dark:bg-gray-800/80 backdrop-blur-sm pointer-events-none">
                     <div class="p-4 text-center">
                         <p class="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Para ver tu calendario real:</p>

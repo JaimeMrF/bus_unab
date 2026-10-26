@@ -1,6 +1,4 @@
 @php
-    $apiKey = config('services.maps.key');
-
     // Todas las paradas activas
     $allStops = \App\Models\Stop::active()
         ->whereNotNull('latitude')
@@ -61,16 +59,10 @@
             opacity: .5;
         }
 
-        /* Estilos para los pines personalizados de Google */
-        .custom-pin-label {
-            font-weight: bold;
-            color: white;
-            font-size: 12px;
-            font-family: sans-serif;
-        }
     </style>
 
-    <div wire:ignore x-data="googleBusRouteEditor(@js($allStops), @js($assignedStops), @js($existingWaypoints))" class="space-y-3">
+    <div wire:ignore x-data="busRouteEditor(@js($allStops), @js($assignedStops), @js($existingWaypoints))" class="space-y-3">
+        @include('filament.partials.leaflet-loader')
 
         {{-- ══ TOOLBAR ══════════════════════════════════════════════════════════ --}}
         <div
@@ -125,7 +117,7 @@
 
             {{-- Acciones --}}
             <div class="flex items-center gap-2">
-                <button @click="loadGoogleDirections()" :disabled="previewLoading || route.length < 2"
+                <button @click="loadStreetPreview()" :disabled="previewLoading || route.length < 2"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 ring-1 ring-gray-200 dark:ring-gray-600 transition hover:bg-gray-100 disabled:opacity-40">
                     <svg x-show="!previewLoading" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2"
                         stroke="currentColor">
@@ -137,7 +129,7 @@
                             stroke-width="4" />
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Vista previa (Google)
+                    Vista previa por calles
                 </button>
 
                 <button @click="clearWaypoints()"
@@ -258,7 +250,7 @@
             {{-- ── Mapa ── --}}
             <div
                 class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden relative">
-                <div id="route-map-google" style="width:100%;height:100%;"></div>
+                <div x-ref="map" style="width:100%;height:100%;"></div>
 
                 {{-- Badge de carga --}}
                 <div x-show="previewLoading"
@@ -269,8 +261,7 @@
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
                         </path>
                     </svg>
-                    <span class="text-xs font-medium text-gray-700 dark:text-gray-200">Calculando ruta con
-                        Google...</span>
+                    <span class="text-xs font-medium text-gray-700 dark:text-gray-200">Calculando ruta por calles...</span>
                 </div>
             </div>
         </div>
@@ -292,87 +283,41 @@
 
     </div>
 
-    {{-- Cargar Google Maps API --}}
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key={{ $apiKey }}&libraries=places,marker&callback=initGoogleRouteEditor&loading=async"
-        async></script>
 
     <script>
-        window.initGoogleRouteEditor = () => {
-            window.dispatchEvent(new CustomEvent('google-maps-loaded'));
-        };
+        function busRouteEditor(allStops, assignedStops, existingWaypoints) {
+            // Objetos de Leaflet FUERA del estado reactivo de Alpine: sus proxies rompen Leaflet.
+            const lf = { L: null, map: null, stopMarkers: {}, waypointMarkers: [], guideLine: null, previewLine: null };
 
-        function googleBusRouteEditor(allStops, assignedStops, existingWaypoints) {
             return {
                 allStops,
                 route: [], // [{stop_id, name, lat, lng, estimated_minutes}]
                 waypoints: [], // [{lat, lng, label, _seg, _t}]
-                waypointMarkers: [], // AdvancedMarkerElement[]
-                stopMarkers: {}, // stop_id → AdvancedMarkerElement
-                guideLine: null, // Polyline punteada
-                directionsRenderer: null,
-                directionsService: null,
                 directionsActive: false,
-                map: null,
                 mode: 'stop',
                 saving: false,
                 previewLoading: false,
 
-                init() {
+                async init() {
                     assignedStops.forEach(s => this.route.push({
-                        stop_id: s.stop_id,
-                        name: s.name,
-                        lat: s.lat,
-                        lng: s.lng,
+                        stop_id: s.stop_id, name: s.name, lat: s.lat, lng: s.lng,
                         estimated_minutes: s.estimated_minutes ?? 0,
                     }));
 
-                    if (window.google && window.google.maps) {
-                        this.setupMap();
-                    } else {
-                        window.addEventListener('google-maps-loaded', () => this.setupMap());
-                    }
+                    await this.setupMap();
 
                     this.$watch('route', () => {
                         this.refreshStopMarkers();
                         this.refreshWaypointSegments();
                         this.drawGuideLine();
-                        if (this.directionsActive) this.loadGoogleDirections();
+                        if (this.directionsActive) this.loadStreetPreview();
                     });
                 },
 
-                setupMap() {
-                    const center = this.route.length ?
-                        {
-                            lat: this.route[0].lat,
-                            lng: this.route[0].lng
-                        } :
-                        (allStops.length ? {
-                            lat: allStops[0].lat,
-                            lng: allStops[0].lng
-                        } : {
-                            lat: 7.1193,
-                            lng: -73.1227
-                        });
-
-                    this.map = new google.maps.Map(document.getElementById('route-map-google'), {
-                        center,
-                        zoom: 14,
-                        mapId: 'ROUTE_EDITOR_MAP',
-                        mapTypeControl: false,
-                        streetViewControl: false,
-                    });
-
-                    this.directionsService = new google.maps.DirectionsService();
-                    this.directionsRenderer = new google.maps.DirectionsRenderer({
-                        map: this.map,
-                        suppressMarkers: true, // No queremos los globos A, B, C... de Google
-                        polylineOptions: {
-                            strokeColor: "#22c55e",
-                            strokeWeight: 6,
-                            strokeOpacity: 0.8
-                        }
-                    });
+                async setupMap() {
+                    const L = lf.L = await window.loadLeaflet();
+                    lf.map = L.map(this.$refs.map).setView([7.1193, -73.1227], 14);
+                    window.osmLayer(L).addTo(lf.map);
 
                     allStops.forEach(s => this.createStopMarker(s));
                     this.refreshStopMarkers();
@@ -380,78 +325,37 @@
                     existingWaypoints.forEach(wp => this.addWaypointAt(wp.lat, wp.lng, wp.label || ''));
                     this.drawGuideLine();
 
-                    const bounds = new google.maps.LatLngBounds();
-                    allStops.forEach(s => bounds.extend({
-                        lat: s.lat,
-                        lng: s.lng
-                    }));
-                    if (allStops.length > 0) this.map.fitBounds(bounds, 40);
+                    const focus = this.route.length ? this.route : allStops;
+                    if (focus.length) lf.map.fitBounds(L.latLngBounds(focus.map(s => [s.lat, s.lng])), { padding: [40, 40] });
 
-                    this.map.addListener('click', e => {
-                        if (this.mode === 'waypoint') {
-                            this.addWaypointAt(e.latLng.lat(), e.latLng.lng(), '');
-                            this.drawGuideLine();
-                            if (this.directionsActive) this.loadGoogleDirections();
-                        }
+                    lf.map.on('click', e => {
+                        if (this.mode !== 'waypoint') return;
+                        this.addWaypointAt(e.latlng.lat, e.latlng.lng, '');
+                        this.drawGuideLine();
+                        if (this.directionsActive) this.loadStreetPreview();
                     });
                 },
 
                 // ── Marcadores de paradas ────────────────────────────────────────────
                 createStopMarker(stop) {
-                    const pinView = this.getGrayPin();
-
-                    const marker = new google.maps.marker.AdvancedMarkerElement({
-                        map: this.map,
-                        position: {
-                            lat: stop.lat,
-                            lng: stop.lng
-                        },
-                        title: stop.name,
-                        content: pinView.element,
-                        zIndex: 100
-                    });
-
-                    marker.addListener('click', () => {
-                        if (this.mode === 'stop') this.toggleStop(stop);
-                    });
-
-                    this.stopMarkers[stop.id] = marker;
-                },
-
-                getGrayPin() {
-                    return new google.maps.marker.PinElement({
-                        background: "#9ca3af",
-                        borderColor: "white",
-                        glyphColor: "white",
-                        scale: 0.7
-                    });
-                },
-
-                getNumberedPin(n) {
-                    const div = document.createElement("div");
-                    div.className = "custom-pin-label";
-                    div.innerText = n;
-
-                    return new google.maps.marker.PinElement({
-                        background: "#4f46e5",
-                        borderColor: "white",
-                        glyph: div,
-                        scale: 1.0
-                    });
+                    const marker = lf.L.marker([stop.lat, stop.lng], { icon: window.pinIcon(lf.L, '#9ca3af', 14), zIndexOffset: 100 })
+                        .bindTooltip(stop.name)
+                        .addTo(lf.map);
+                    marker.on('click', () => { if (this.mode === 'stop') this.toggleStop(stop); });
+                    lf.stopMarkers[stop.id] = marker;
                 },
 
                 refreshStopMarkers() {
                     allStops.forEach(stop => {
-                        const marker = this.stopMarkers[stop.id];
+                        const marker = lf.stopMarkers[stop.id];
                         if (!marker) return;
-
                         const idx = this.route.findIndex(r => r.stop_id === stop.id);
                         if (idx >= 0) {
-                            marker.content = this.getNumberedPin(idx + 1).element;
-                            marker.zIndex = 500 + idx;
+                            marker.setIcon(window.pinIcon(lf.L, '#4f46e5', 24, idx + 1));
+                            marker.setZIndexOffset(500 + idx);
                         } else {
-                            marker.content = this.getGrayPin().element;
-                            marker.zIndex = 100;
+                            marker.setIcon(window.pinIcon(lf.L, '#9ca3af', 14));
+                            marker.setZIndexOffset(100);
                         }
                     });
                 },
@@ -461,13 +365,7 @@
                     if (idx >= 0) {
                         this.route.splice(idx, 1);
                     } else {
-                        this.route.push({
-                            stop_id: stop.id,
-                            name: stop.name,
-                            lat: stop.lat,
-                            lng: stop.lng,
-                            estimated_minutes: 0,
-                        });
+                        this.route.push({ stop_id: stop.id, name: stop.name, lat: stop.lat, lng: stop.lng, estimated_minutes: 0 });
                     }
                 },
 
@@ -486,81 +384,45 @@
 
                 // ── Waypoints ─────────────────────────────────────────────────────────
                 addWaypointAt(lat, lng, label) {
-                    const {
-                        seg,
-                        t
-                    } = this.findBestSegment(lat, lng);
+                    const { seg, t } = this.findBestSegment(lat, lng);
                     const insertIdx = this.findInsertIndex(seg, t);
 
-                    const pinView = new google.maps.marker.PinElement({
-                        background: "#f97316",
-                        borderColor: "white",
-                        glyphColor: "white",
-                        scale: 0.7
-                    });
+                    const marker = lf.L.marker([lat, lng], { draggable: true, icon: window.pinIcon(lf.L, '#f97316', 14), zIndexOffset: 200 }).addTo(lf.map);
 
-                    const marker = new google.maps.marker.AdvancedMarkerElement({
-                        map: this.map,
-                        position: {
-                            lat,
-                            lng
-                        },
-                        gmpDraggable: true,
-                        content: pinView.element,
-                        zIndex: 200
-                    });
+                    this.waypoints.splice(insertIdx, 0, { lat, lng, label, _seg: seg, _t: t });
+                    lf.waypointMarkers.splice(insertIdx, 0, marker);
 
-                    this.waypoints.splice(insertIdx, 0, {
-                        lat,
-                        lng,
-                        label,
-                        _seg: seg,
-                        _t: t
-                    });
-                    this.waypointMarkers.splice(insertIdx, 0, marker);
-
-                    marker.addListener('dragend', () => {
-                        const i = this.waypointMarkers.indexOf(marker);
+                    marker.on('dragend', () => {
+                        const i = lf.waypointMarkers.indexOf(marker);
                         if (i === -1) return;
-                        const pos = marker.position;
-                        const {
-                            seg: newSeg,
-                            t: newT
-                        } = this.findBestSegment(pos.lat, pos.lng);
+                        const pos = marker.getLatLng();
+                        const { seg: newSeg, t: newT } = this.findBestSegment(pos.lat, pos.lng);
                         const savedLabel = this.waypoints[i].label;
 
                         // Quitar y reinsertar ordenado
                         this.waypoints.splice(i, 1);
-                        this.waypointMarkers.splice(i, 1);
+                        lf.waypointMarkers.splice(i, 1);
                         const newIdx = this.findInsertIndex(newSeg, newT);
-                        this.waypoints.splice(newIdx, 0, {
-                            lat: pos.lat,
-                            lng: pos.lng,
-                            label: savedLabel,
-                            _seg: newSeg,
-                            _t: newT
-                        });
-                        this.waypointMarkers.splice(newIdx, 0, marker);
+                        this.waypoints.splice(newIdx, 0, { lat: pos.lat, lng: pos.lng, label: savedLabel, _seg: newSeg, _t: newT });
+                        lf.waypointMarkers.splice(newIdx, 0, marker);
 
                         this.drawGuideLine();
-                        if (this.directionsActive) this.loadGoogleDirections();
+                        if (this.directionsActive) this.loadStreetPreview();
                     });
 
-                    marker.addListener('click', () => {
-                        const i = this.waypointMarkers.indexOf(marker);
+                    marker.on('click', () => {
+                        const i = lf.waypointMarkers.indexOf(marker);
                         if (i === -1) return;
 
                         if (this.mode === 'delete') {
-                            marker.map = null;
+                            marker.remove();
                             this.waypoints.splice(i, 1);
-                            this.waypointMarkers.splice(i, 1);
+                            lf.waypointMarkers.splice(i, 1);
                             this.drawGuideLine();
-                            if (this.directionsActive) this.loadGoogleDirections();
+                            if (this.directionsActive) this.loadStreetPreview();
                         } else if (this.mode === 'waypoint') {
                             const newLabel = prompt("Nombre del waypoint (opcional):", this.waypoints[i].label || "");
-                            if (newLabel !== null) {
-                                this.waypoints[i].label = newLabel;
-                            }
+                            if (newLabel !== null) this.waypoints[i].label = newLabel;
                         }
                     });
                 },
@@ -568,73 +430,43 @@
                 refreshWaypointSegments() {
                     if (this.waypoints.length === 0) return;
                     this.waypoints.forEach(wp => {
-                        const {
-                            seg,
-                            t
-                        } = this.findBestSegment(wp.lat, wp.lng);
+                        const { seg, t } = this.findBestSegment(wp.lat, wp.lng);
                         wp._seg = seg;
                         wp._t = t;
                     });
-                    const indices = Array.from({
-                        length: this.waypoints.length
-                    }, (_, i) => i);
+                    const indices = Array.from({ length: this.waypoints.length }, (_, i) => i);
                     indices.sort((a, b) => {
-                        const wa = this.waypoints[a],
-                            wb = this.waypoints[b];
+                        const wa = this.waypoints[a], wb = this.waypoints[b];
                         return wa._seg !== wb._seg ? wa._seg - wb._seg : wa._t - wb._t;
                     });
                     this.waypoints = indices.map(i => this.waypoints[i]);
-                    this.waypointMarkers = indices.map(i => this.waypointMarkers[i]);
+                    lf.waypointMarkers = indices.map(i => lf.waypointMarkers[i]);
                 },
 
                 clearWaypoints() {
-                    this.waypointMarkers.forEach(m => m.map = null);
+                    lf.waypointMarkers.forEach(m => m.remove());
                     this.waypoints = [];
-                    this.waypointMarkers = [];
-                    this.directionsRenderer.setDirections({
-                        routes: []
-                    });
+                    lf.waypointMarkers = [];
+                    lf.previewLine?.remove();
+                    lf.previewLine = null;
                     this.directionsActive = false;
                     this.drawGuideLine();
                 },
 
-                // ── Línea guía y Dibujo ─────────────────────────────────────────────
+                // ── Línea guía ──────────────────────────────────────────────────────
                 drawGuideLine() {
-                    if (this.guideLine) {
-                        this.guideLine.setMap(null);
-                        this.guideLine = null;
-                    }
+                    lf.guideLine?.remove();
+                    lf.guideLine = null;
                     const path = this.buildOrderedPath();
                     if (path.length < 2) return;
-
-                    this.guideLine = new google.maps.Polyline({
-                        path: path.map(p => ({
-                            lat: p.lat,
-                            lng: p.lng
-                        })),
-                        geodesic: true,
-                        strokeColor: "#6366f1",
-                        strokeOpacity: 0.4,
-                        strokeWeight: 3,
-                        map: this.map,
-                        icons: [{
-                            icon: {
-                                path: 'M 0,-1 0,1',
-                                strokeOpacity: 1,
-                                scale: 2
-                            },
-                            offset: '0',
-                            repeat: '12px'
-                        }]
-                    });
+                    lf.guideLine = lf.L.polyline(path.map(p => [p.lat, p.lng]), {
+                        color: '#6366f1', weight: 3, opacity: 0.6, dashArray: '6 8',
+                    }).addTo(lf.map);
                 },
 
                 buildOrderedPath() {
                     const N = this.route.length;
-                    if (N === 0) return this.waypoints.map(w => ({
-                        lat: w.lat,
-                        lng: w.lng
-                    }));
+                    if (N === 0) return this.waypoints.map(w => ({ lat: w.lat, lng: w.lng }));
                     const path = [];
                     let wi = 0;
                     for (let i = 0; i < N; i++) {
@@ -647,40 +479,25 @@
                     return path;
                 },
 
-                // ── Google Directions API ──────────────────────────────────────────
-                async loadGoogleDirections() {
+                // ── Vista previa por calles (OSRM, ruteador libre de OpenStreetMap) ──
+                async loadStreetPreview() {
                     if (this.route.length < 2 || this.previewLoading) return;
                     this.previewLoading = true;
                     this.directionsActive = true;
 
-                    const path = this.buildOrderedPath();
-                    const origin = {
-                        lat: path[0].lat,
-                        lng: path[0].lng
-                    };
-                    const destination = {
-                        lat: path[path.length - 1].lat,
-                        lng: path[path.length - 1].lng
-                    };
-
-                    // Google permite máx 25 waypoints
-                    const waypts = path.slice(1, -1).map(p => ({
-                        location: new google.maps.LatLng(p.lat, p.lng),
-                        stopover: true
-                    }));
-
+                    const coords = this.buildOrderedPath().map(p => `${p.lng},${p.lat}`).join(';');
                     try {
-                        const result = await this.directionsService.route({
-                            origin,
-                            destination,
-                            waypoints: waypts,
-                            travelMode: google.maps.TravelMode.DRIVING,
-                            optimizeWaypoints: false
-                        });
-                        this.directionsRenderer.setDirections(result);
+                        const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`);
+                        const j = await r.json();
+                        if (j.code !== 'Ok') throw new Error(j.code);
+                        lf.previewLine?.remove();
+                        lf.previewLine = lf.L.polyline(j.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]), {
+                            color: '#22c55e', weight: 6, opacity: 0.8,
+                        }).addTo(lf.map);
                     } catch (e) {
-                        console.error("Directions request failed: " + e);
-                        alert("No se pudo trazar la ruta. Verifica que Directions API esté activa.");
+                        console.error('Route preview failed: ' + e);
+                        alert('No se pudo trazar la ruta por calles. Revisa la conexión e intenta de nuevo.');
+                        this.directionsActive = false;
                     } finally {
                         this.previewLoading = false;
                     }

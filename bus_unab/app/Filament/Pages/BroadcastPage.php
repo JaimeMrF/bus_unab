@@ -81,9 +81,21 @@ class BroadcastPage extends Page implements HasForms
     public function send(): void
     {
         $data = $this->form->getState();
+        $notifier = app(NotificationService::class);
+
+        // Sin credenciales de Firebase no sale nada: decirlo en vez de fingir éxito.
+        if (! $notifier->isConfigured()) {
+            Notification::make()
+                ->title('Push no configurado')
+                ->body('Falta FIREBASE_CREDENTIALS_B64 en el servidor; no se envió ninguna notificación.')
+                ->warning()
+                ->send();
+
+            return;
+        }
 
         try {
-            app(NotificationService::class)->broadcast(
+            $sent = $notifier->broadcast(
                 title: $data['title'],
                 body: $data['body'],
                 data: ['type' => 'general'],
@@ -91,9 +103,9 @@ class BroadcastPage extends Page implements HasForms
             );
 
             Notification::make()
-                ->title('Notificación enviada')
-                ->body("Broadcast enviado a: {$data['role']}")
-                ->success()
+                ->title($sent > 0 ? 'Notificación enviada' : 'Sin destinatarios')
+                ->body($sent > 0 ? "Entregada a {$sent} dispositivo(s)." : 'Ningún dispositivo registrado recibió el mensaje.')
+                ->{$sent > 0 ? 'success' : 'warning'}()
                 ->send();
 
             $this->form->fill(['role' => 'all']);
