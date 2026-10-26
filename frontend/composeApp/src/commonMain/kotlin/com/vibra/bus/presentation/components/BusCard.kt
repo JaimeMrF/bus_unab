@@ -140,7 +140,14 @@ fun OccupancyBadge(level: String, percentage: Float, color: Color) {
             color = content,
         )
         Text(
-            text = level.replaceFirstChar { it.uppercase() },
+            // El backend manda el nivel en inglés (low/medium/high/full); se muestra en español
+            text = when (level.lowercase()) {
+                "low" -> "Bajo"
+                "medium" -> "Medio"
+                "high" -> "Alto"
+                "full" -> "Lleno"
+                else -> level.replaceFirstChar { it.uppercase() }
+            },
             style = MaterialTheme.typography.labelSmall,
             color = content,
         )

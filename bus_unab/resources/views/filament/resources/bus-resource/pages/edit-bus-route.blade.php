@@ -59,6 +59,17 @@
             opacity: .5;
         }
 
+        /* Layout propio: el CSS compilado de Filament no trae lg:flex-row ni lg:w-72,
+           y sin esto la lista ocupaba todo el ancho y el mapa quedaba sin espacio. */
+        .route-editor-body { display: flex; flex-direction: column; gap: .75rem; }
+        .route-editor-list { width: 100%; max-height: 320px; }
+        .route-editor-map { height: 480px; }
+        @media (min-width: 1024px) {
+            .route-editor-body { flex-direction: row; height: 650px; }
+            .route-editor-list { width: 18rem; max-height: none; flex-shrink: 0; }
+            .route-editor-map { flex: 1; height: auto; }
+        }
+
     </style>
 
     <div wire:ignore x-data="busRouteEditor(@js($allStops), @js($assignedStops), @js($existingWaypoints))" class="space-y-3">
@@ -159,11 +170,11 @@
         </div>
 
         {{-- ══ CUERPO: lista de paradas + mapa ════════════════════════════════ --}}
-        <div class="flex flex-col lg:flex-row gap-3" style="height: 650px;">
+        <div class="route-editor-body">
 
             {{-- ── Panel lateral: paradas en orden ── --}}
             <div
-                class="w-full lg:w-72 flex-shrink-0 flex flex-col rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                class="route-editor-list flex flex-col rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div
                     class="px-3 py-2.5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                     <span class="text-sm font-semibold text-gray-700 dark:text-gray-200">
@@ -249,7 +260,7 @@
 
             {{-- ── Mapa ── --}}
             <div
-                class="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden relative">
+                class="route-editor-map rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden relative">
                 <div x-ref="map" style="width:100%;height:100%;"></div>
 
                 {{-- Badge de carga --}}

@@ -7,6 +7,9 @@
 <style>
     .leaflet-container { z-index: 0; }
     .leaflet-pane, .leaflet-top, .leaflet-bottom { z-index: 1 !important; }
+    /* Colores de leyendas y pines de lista: el CSS compilado de Filament no trae estas utilidades */
+    .bg-red-500 { background: #ef4444; } .bg-blue-500 { background: #3b82f6; } .bg-amber-500 { background: #f59e0b; }
+    .bg-indigo-600 { background: #4f46e5; } .bg-gray-400 { background: #9ca3af; } .bg-orange-500 { background: #f97316; }
 </style>
 <script>
     window.loadLeaflet ??= () => window.__leafletPromise ??= new Promise((resolve, reject) => {

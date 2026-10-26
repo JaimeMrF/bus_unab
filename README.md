@@ -1,8 +1,44 @@
-# 🚍 BUCARATRANSIT — Plataforma de Movilidad para Bucaramanga (antes Bus UNAB — VibraBus)
+# 🚍 BUCARATRANSIT — Plataforma de Movilidad para Bucaramanga
 
-> **Antes Bus UNAB — VibraBus.** El proyecto ha evolucionado hacia **BUCARATRANSIT**, un **SaaS de movilidad urbana multi-tenant** para Bucaramanga (marca definitiva confirmada — ver [NAMING_DECISION.md](Bucaramanga_Mobility_Rebranding/NAMING_DECISION.md)).
+> Antes *Bus UNAB — VibraBus*. Hoy es **BUCARATRANSIT**, un **SaaS de movilidad urbana multi-tenant** (ver [NAMING_DECISION.md](Bucaramanga_Mobility_Rebranding/NAMING_DECISION.md)).
 
-Plataforma de movilidad compuesta por un **backend Laravel (API REST + paneles Filament multi-tenant)** y una **app móvil Kotlin Multiplatform (Android/iOS)**: unificación de transportadoras con wallet prepago, QR dinámico de pago y cobro a bordo (mPOS conductor).
+Plataforma compuesta por un **backend Laravel (API REST + paneles Filament `/admin` y `/empresa`)** y una **app móvil Kotlin Multiplatform (Android/iOS)**: rutas y buses en vivo, wallet prepago, QR dinámico de pago y cobro a bordo (modo conductor). La app es *white-label*: logo, mascota, colores y textos de cada organización se descargan de la API.
+
+- **Producción:** https://bucaratransit.duckdns.org (paneles en `/admin` y `/empresa`).
+- **Guion de la demo:** [docs/GUION_DEMO.md](docs/GUION_DEMO.md) — ciclos a mostrar, checklist previo y qué no enseñar.
+- **Estado y hallazgos:** [docs/PLAN_REVISION.md](docs/PLAN_REVISION.md).
+
+---
+
+## 📸 Cómo se ve
+
+### App móvil (pasajero y conductor)
+
+| Login con marca | Inicio | Buscar rutas | Ruta elegida |
+|---|---|---|---|
+| <img src="docs/img/app-login.jpg" width="200"> | <img src="docs/img/app-inicio.jpg" width="200"> | <img src="docs/img/app-rutas.jpg" width="200"> | <img src="docs/img/app-ruta-elegida.jpg" width="200"> |
+
+| Parada | Siguiendo un bus | Wallet | Modo conductor |
+|---|---|---|---|
+| <img src="docs/img/app-parada.jpg" width="200"> | <img src="docs/img/app-siguiendo-bus.jpg" width="200"> | <img src="docs/img/app-wallet.jpg" width="200"> | <img src="docs/img/app-conductor.jpg" width="200"> |
+
+Los buses se dibujan sobre el mapa (MapLibre + OpenFreeMap, sin API key) con un *glow* translúcido del color de su estado, sin disco blanco.
+
+### Panel Super Admin (`/admin`)
+
+| Escritorio | Mapa en vivo |
+|---|---|
+| ![Escritorio admin](docs/img/panel-admin-escritorio.png) | ![Mapa en vivo](docs/img/panel-admin-mapa.png) |
+| **Editor de ruta** (arrastrar paradas + vista previa por calles) | **Crear parada** (buscar dirección y mover el pin) |
+| ![Editor de ruta](docs/img/panel-admin-editor-ruta.png) | ![Crear parada](docs/img/panel-admin-crear-parada.png) |
+| **Wallets** | **Transportadoras (tenants)** |
+| ![Wallets](docs/img/panel-admin-wallets.png) | ![Transportadoras](docs/img/panel-admin-transportadoras.png) |
+
+### Panel de la transportadora (`/empresa`)
+
+| Escritorio con métricas propias | Mapa en vivo de su flota |
+|---|---|
+| ![Escritorio empresa](docs/img/panel-empresa-escritorio.png) | ![Mapa empresa](docs/img/panel-empresa-mapa.png) |
 
 ---
 
@@ -26,7 +62,7 @@ Instala dependencias, prepara datos demo (orgs `bucaratransit`, `metrobus`, `cam
 ```
 ./gradlew :composeApp:installDebug -PapiBaseUrl=http://<IP>:8000/api/v1 -PdefaultOrgSlug=bucaratransit
 ```
-Flags: `-Fresh` (recrea BD), `-Stop`, `-Port`. Detalle y credenciales en [docs/DEMO.md](docs/DEMO.md). Solo para desarrollo.
+Flags: `-Fresh` (recrea BD), `-Stop`, `-Port`. Detalle en [docs/DEMO.md](docs/DEMO.md). Para que los buses se muevan, agrega `-Simulate` (o en la VM: `php artisan demo:simulate-buses --speed=30`). En emulador Android usa `http://10.0.2.2:8000/api/v1` como `apiBaseUrl`. Solo para desarrollo.
 
 ---
 
@@ -183,30 +219,33 @@ En Android Studio:
 
 ---
 
-## 🔑 Credenciales de prueba por defecto
+## 🔑 Credenciales demo (solo local)
 
-Después de ejecutar `php artisan db:seed`:
+`DemoSeeder` (lo corre `scripts/dev-up.ps1`) crea 4 organizaciones y estas cuentas, todas con la clave **`Demo12345!`**:
 
-| Rol | Email | Contraseña |
+| Rol | Email | Dónde entra |
 |---|---|---|
-| Administrador | `admin@unab.edu.co` | `password` |
-| Conductor | `driver@unab.edu.co` | `password` |
-| Estudiante | `student@unab.edu.co` | `password` |
+| Super Admin | `superadmin@demo.test` | `/admin` |
+| Admin de transportadora | `admin.bucaratransit@demo.test` | `/empresa` |
+| Conductor | `driver.bucaratransit@demo.test` | App → "Acceso de conductores" |
+| Pasajero | `pasajero.bucaratransit@demo.test` | App |
 
-> ⚠️ Cambia estas credenciales antes de desplegar en producción.
+> ⚠️ Estas claves son públicas (están en el repo). En producción se rotan y quedan solo en la VM; nunca uses las de demo fuera de tu máquina.
 
 ---
 
-## 🌐 Panel de Administración
+## 🌐 Paneles web
 
-- **Super Admin** (`http://localhost:8000/admin`) — panel maestro del equipo plataforma: transportadoras (tenants), usuarios, soporte, auditoría y modelo SaaS. Acceso con las credenciales de administrador.
-- **Panel de la Transportadora** (`/empresa`) — en construcción (M3 del plan): cada transportadora gestionará su flota, rutas, conductores, tarifas y recaudo, aislada de los demás tenants.
+Los mapas de los paneles usan **Leaflet + OpenStreetMap** (búsqueda de direcciones con Nominatim y vista previa de recorrido con OSRM), así que funcionan sin `GOOGLE_MAPS_API_KEY`.
 
-Desde el panel puedes gestionar:
-- 👥 Usuarios y roles (Super Admin / Admin de transportadora / Conductor / Pasajero)
-- 🚌 Buses y rutas (scoped por tenant)
-- 📍 Paradas
-- 📊 Reportes y recaudo
+- **Super Admin — `/admin`**: transportadoras (tenants), usuarios y roles, buses, rutas y paradas, editor visual de rutas, mapa en vivo de toda la flota, wallets y movimientos, solicitudes de bus, puntos de interés, tarifas, auditoría y difusión de notificaciones push.
+- **Transportadora — `/empresa`**: cada empresa ve solo lo suyo (aislamiento por tenant): métricas de su flota, mapa en vivo, buses y editor de rutas, paradas, conductores, tarifas por ruta, recaudo y su marca (logo, mascota, colores) que la app descarga.
+
+Avisos que muestran los paneles cuando falta configuración:
+- **Difusión push** avisa "Push no configurado" si falta `FIREBASE_CREDENTIALS_B64`, y "Sin destinatarios" si no hay dispositivos registrados.
+- El **widget de Google Calendar** se oculta si `GOOGLE_CALENDAR_ID` está vacío.
+
+Pruebas de humo: `tests/Feature/Admin/PanelPagesSmokeTest.php` abre cada página de ambos paneles y exige 200; `BusMapDataTest` verifica que un admin de empresa solo vea su flota.
 
 ---
 
