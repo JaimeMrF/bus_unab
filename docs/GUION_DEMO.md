@@ -8,7 +8,7 @@ Duración objetivo: 8–10 minutos. Cada ciclo dice qué mostrar y qué decir.
 1. **Backend desplegado** con el último `main` (ver "Despliegue" abajo).
 2. **Buses en movimiento.** En producción el simulador NO corre solo. Arráncalo para la demo:
    ```bash
-   ssh -i bus_unab/vmbucaratransit_key.pem azureuser@bucaratransit.duckdns.org
+   ssh -i bus_unab/vmbucaratransit_key.pem azureuser@bucaratransit.lat
    cd /opt/bus_unab/bus_unab && sudo docker compose --env-file .env.production exec -d app php artisan demo:simulate-buses --speed=30
    ```
    (Alternativa: el celular del conductor en "Modo conductor" comparte su GPS y mueve ese bus.)
@@ -67,7 +67,7 @@ Duración objetivo: 8–10 minutos. Cada ciclo dice qué mostrar y qué decir.
 ## Despliegue del backend
 
 ```bash
-ssh -i bus_unab/vmbucaratransit_key.pem azureuser@bucaratransit.duckdns.org
+ssh -i bus_unab/vmbucaratransit_key.pem azureuser@bucaratransit.lat
 cd /opt/bus_unab && git pull --ff-only && cd bus_unab
 sudo docker compose --env-file .env.production build app worker scheduler
 sudo docker compose --env-file .env.production up -d app worker scheduler

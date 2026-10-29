@@ -30,7 +30,7 @@ responde el 22. Todo lo demás que fallaba en marca/logo ya quedó corregido en 
 ### 2.1 BLOQUEANTE — puertos 80 y 443 cerrados en el VPS
 
 - DNS resuelve bien; SSH (22) responde; 80, 443 y 8000 **no** (timeout de conexión, no error de certificado: no hay nada escuchando desde fuera).
-- Consecuencia directa: el build de la app apunta por defecto a `https://bucaratransit.duckdns.org/api/v1` (`composeApp/build.gradle.kts`), así que **hoy la app no puede descargar la marca**, y cae al tema neutro con respaldo local. Ahí es donde aparecen los "símbolos de bus" genéricos en vez del logo/leopardo.
+- Consecuencia directa: el build de la app apunta por defecto a `https://bucaratransit.lat/api/v1` (`composeApp/build.gradle.kts`), así que **hoy la app no puede descargar la marca**, y cae al tema neutro con respaldo local. Ahí es donde aparecen los "símbolos de bus" genéricos en vez del logo/leopardo.
 
 Acción 1 — **Abrir los puertos en el NSG de Azure.** Portal → la VM → *Redes* → *Reglas de puerto de entrada* → **Agregar regla de puerto de entrada**, dos veces:
 
@@ -56,11 +56,11 @@ Acción 2 — **Certificado y nginx en la VM.** Ojo con el orden: el `default.co
 ```
 cd /opt/bus_unab/bus_unab
 docker compose stop nginx
-docker compose run --rm -p 80:80 certbot certonly --standalone -d bucaratransit.duckdns.org --email jtellez312@unab.edu.co --agree-tos --no-eff-email
+docker compose run --rm -p 80:80 certbot certonly --standalone -d bucaratransit.lat --email jtellez312@unab.edu.co --agree-tos --no-eff-email
 docker compose up -d nginx
 ```
 
-Después, desde cualquier dispositivo: `https://bucaratransit.duckdns.org/admin` y `https://bucaratransit.duckdns.org/empresa`.
+Después, desde cualquier dispositivo: `https://bucaratransit.lat/admin` y `https://bucaratransit.lat/empresa`.
 
 ### 2.2 CORREGIDO en este pase — el logo del tenant demo no era la marca real
 
@@ -122,14 +122,14 @@ Usuario demo: `pasajero.bucaratransit@demo.test` · conductor: `driver.bucaratra
 ### Camino B — contra el VPS (solo después de abrir 80/443)
 
 ```
-curl -sS -o NUL -w "%{http_code}`n" https://bucaratransit.duckdns.org/api/v1/branding/bucaratransit
+curl -sS -o NUL -w "%{http_code}`n" https://bucaratransit.lat/api/v1/branding/bucaratransit
 cd "D:\jose sin tilde\bus_unab-1\frontend"
 .\gradlew.bat :composeApp:assembleDebug
 C:\Users\jose\AppData\Local\Android\Sdk\platform-tools\adb.exe install -r composeApp\build\outputs\apk\debug\composeApp-debug.apk
 ```
 
 Sin `-PapiBaseUrl` el build ya trae la URL del dominio. Antes de instalar, subir el logo real en
-`https://bucaratransit.duckdns.org/empresa` → Marca (§2.2), o la app mostrará el respaldo neutro.
+`https://bucaratransit.lat/empresa` → Marca (§2.2), o la app mostrará el respaldo neutro.
 
 ## 4. Checklist de revisión en el teléfono
 

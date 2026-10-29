@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BUCARATRANSIT · Sustentación</title>
+<link rel="icon" type="image/png" href="../landing/img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noche: #02132f; --azul: #083064; --azul2: #0d4088; --oro: #fcbb02; --oro2: #ffd24d;
+    --arena: #fdf8f0; --tinta: #0a1a33; --texto: #dbe6f7; --apagado: #93a8c9; --gris: #4a5a76;
+    --linea: rgba(255,255,255,.14); --verde: #3fd08a; --rojo: #ff6b6b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #010b1d; overflow: hidden; font-family: "Poppins", system-ui, sans-serif; color: var(--texto); }
+  #escenario { position: absolute; width: 1920px; height: 1080px; left: 50%; top: 50%; transform-origin: center; }
+  .slide { position: absolute; inset: 0; padding: 96px 120px 100px; background: linear-gradient(160deg, #031a3d, var(--noche) 70%); opacity: 0; visibility: hidden; transform: scale(1.015); transition: opacity .5s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1), visibility .5s; overflow: hidden; }
+  .slide.activa { opacity: 1; visibility: visible; transform: none; }
+  .slide.activa .entra { animation: entra .55s cubic-bezier(.16,1,.3,1) both; }
+  .slide.activa .entra:nth-child(2) { animation-delay: .08s } .slide.activa .entra:nth-child(3) { animation-delay: .16s }
+  .slide.activa .entra:nth-child(4) { animation-delay: .24s } .slide.activa .entra:nth-child(5) { animation-delay: .32s }
+  @keyframes entra { from { opacity: 0; transform: translateY(18px) } to { opacity: 1; transform: none } }
+  @media (prefers-reduced-motion: reduce) { .slide.activa .entra { animation: none } .slide { transition: none; transform: none; } }
+  #progreso { position: absolute; left: 0; bottom: 0; height: 6px; background: var(--oro); transition: width .5s cubic-bezier(.16,1,.3,1); z-index: 5; }
+  .numero { position: absolute; right: 120px; bottom: 40px; font-size: 20px; color: var(--apagado); font-variant-numeric: tabular-nums; z-index: 4; }
+  .marcaagua { position: absolute; left: 120px; bottom: 34px; width: 92px; opacity: .8; z-index: 4; }
+  .clara .marcaagua { filter: brightness(0) saturate(100%) invert(14%) sepia(60%) saturate(2700%) hue-rotate(205deg); opacity: .55; }
+
+  h1 { font-size: 100px; line-height: 1.02; font-weight: 800; letter-spacing: -.035em; color: #fff; }
+  h1 em { font-style: italic; color: var(--oro); }
+  h2 { font-size: 68px; line-height: 1.08; font-weight: 700; letter-spacing: -.025em; color: #fff; max-width: 1560px; }
+  h3 { font-size: 34px; font-weight: 700; color: #fff; letter-spacing: -.01em; }
+  p, li { font-size: 30px; line-height: 1.45; color: var(--texto); }
+  .kicker { font-size: 22px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--oro); margin-bottom: 20px; }
+  .acento { color: var(--oro); }
+  .sub { font-size: 30px; color: var(--apagado); margin-top: 22px; max-width: 1400px; }
+  code { font: 600 .86em ui-monospace, Consolas, monospace; background: rgba(252,187,2,.15); color: var(--oro2); padding: .08em .4em; border-radius: 8px; }
+  .clara { background: var(--arena); } .clara h2, .clara h3 { color: var(--tinta); } .clara p, .clara li { color: var(--gris); }
+  .clara .kicker { color: #b27d00; } .clara .sub { color: #5a6a86; } .clara code { background: rgba(8,48,100,.1); color: var(--azul); } .clara .numero { color: #8a96ab; }
+
+  /* portada */
+  .portada { padding: 0; background: radial-gradient(1100px 800px at 82% 40%, rgba(13,64,136,.9), transparent 70%), radial-gradient(800px 600px at 0 100%, rgba(252,187,2,.16), transparent 70%), linear-gradient(180deg, #02132f, #06204a); }
+  .portada .logo { position: absolute; left: 120px; top: 80px; width: 190px; }
+  .portada h1 { position: absolute; left: 120px; top: 300px; max-width: 1060px; }
+  .portada .lema { position: absolute; left: 124px; top: 640px; font-size: 32px; color: var(--apagado); max-width: 900px; }
+  .portada .leo { position: absolute; right: 70px; top: 130px; width: 760px; filter: drop-shadow(0 30px 40px rgba(0,0,0,.5)); }
+  .portada .equipo { position: absolute; left: 0; right: 0; bottom: 0; height: 210px; background: var(--oro); padding: 0 120px; display: flex; align-items: center; justify-content: space-between; }
+  .portada .equipo div { color: #241807; font-size: 29px; font-weight: 700; line-height: 1.25; } .portada .equipo span { display: block; font-size: 21px; font-weight: 500; opacity: .75; }
+  .portada .equipo .curso { text-align: right; font-weight: 500; font-size: 23px; line-height: 1.4; }
+
+  /* abstract */
+  .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 36px; }
+  .caja { padding: 40px 44px; border-radius: 28px; background: rgba(255,255,255,.06); border: 1px solid var(--linea); }
+  .caja h3 { font-size: 26px; letter-spacing: .12em; text-transform: uppercase; color: var(--oro); margin-bottom: 18px; }
+  .caja p { font-size: 25px; line-height: 1.5; }
+  .caja.en p { font-style: italic; }
+  .palabras { margin-top: 18px; font-size: 21px !important; color: var(--apagado) !important; font-style: normal !important; }
+
+  /* cifras */
+  .cifras { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; margin-top: 90px; }
+  .cifras > div { border-top: 6px solid var(--linea); padding-top: 30px; }
+  .cifras > div:first-child { border-top-color: var(--oro); }
+  .grande { font-size: 150px; font-weight: 800; letter-spacing: -.045em; line-height: 1; color: var(--oro); font-variant-numeric: tabular-nums; }
+  .etiqueta { font-size: 25px; color: var(--apagado); margin-top: 14px; line-height: 1.35; }
+
+  /* tarjetas / listas */
+  .tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 56px; }
+  .tarjeta { padding: 40px 38px; border-radius: 28px; background: rgba(255,255,255,.06); border: 1px solid var(--linea); }
+  .tarjeta .n { font-size: 22px; font-weight: 800; color: var(--oro); letter-spacing: .12em; margin-bottom: 18px; }
+  .tarjeta h3 { margin-bottom: 14px; } .tarjeta p { font-size: 25px; color: var(--apagado); line-height: 1.45; }
+  .clara .tarjeta { background: #fff; border: 1px solid #e8dfcc; box-shadow: 0 20px 40px -26px rgba(8,48,100,.3); }
+  .clara .tarjeta p { color: var(--gris); }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; height: 100%; }
+  .split .texto p { margin-top: 28px; }
+  ul.limpia { list-style: none; margin-top: 30px; } ul.limpia li { padding: 16px 0 16px 46px; position: relative; border-top: 1px solid var(--linea); font-size: 27px; }
+  ul.limpia li::before { content: ""; position: absolute; left: 6px; top: 31px; width: 18px; height: 18px; border-radius: 50%; background: var(--oro); }
+  .clara ul.limpia li { border-top-color: #e3d9c4; } .clara ul.limpia li::before { background: var(--azul); }
+  ul.limpia li b { color: #fff; } .clara ul.limpia li b { color: var(--tinta); }
+
+  /* figuras */
+  .figura { margin-top: 28px; border-radius: 26px; background: rgba(255,255,255,.05); border: 1px solid var(--linea); padding: 22px; }
+  .figura svg { width: 100%; height: auto; display: block; }
+  .pie { font-size: 20px !important; color: var(--apagado) !important; margin-top: 14px; text-align: center; }
+  svg text { font-family: "Poppins", sans-serif; }
+
+  /* capturas */
+  .tel { border-radius: 44px; padding: 10px; background: linear-gradient(160deg,#1b3a6b,#07142c); box-shadow: 0 40px 80px -30px rgba(0,0,0,.8), inset 0 0 0 2px rgba(255,255,255,.18); }
+  .tel img { width: 100%; border-radius: 36px; display: block; }
+  .fila-tel { display: flex; gap: 34px; justify-content: center; align-items: flex-start; margin-top: 30px; }
+  .fila-tel figure { width: 300px; text-align: center; } .fila-tel figcaption { margin-top: 18px; font-size: 24px; font-weight: 600; color: var(--texto); }
+  .nav-win { border-radius: 18px; overflow: hidden; background: #0b1424; box-shadow: 0 40px 80px -34px rgba(0,0,0,.7); border: 1px solid var(--linea); }
+  .nav-win .barra { padding: 12px 16px; background: #131f36; display: flex; gap: 8px; } .nav-win .barra i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; } .nav-win .barra i:nth-child(2){background:#febc2e} .nav-win .barra i:nth-child(3){background:#28c840}
+  .nav-win img { width: 100%; display: block; }
+
+  /* tabla */
+  table { width: 100%; border-collapse: collapse; margin-top: 34px; }
+  th { text-align: left; font-size: 20px; letter-spacing: .12em; text-transform: uppercase; color: var(--apagado); font-weight: 600; padding: 0 20px 16px 0; }
+  td { padding: 20px 20px 20px 0; border-top: 1px solid var(--linea); font-size: 25px; line-height: 1.35; vertical-align: top; }
+  td:first-child { font-weight: 600; color: #fff; }
+  .ok, .mal { display: inline-block; padding: 4px 16px; border-radius: 999px; font-weight: 600; font-size: 21px; }
+  .ok { background: rgba(63,208,138,.16); color: var(--verde); } .mal { background: rgba(255,107,107,.16); color: var(--rojo); }
+
+  /* referencias */
+  .refs { columns: 2; column-gap: 70px; margin-top: 34px; }
+  .refs li { font-size: 19.5px; line-height: 1.4; margin-bottom: 15px; break-inside: avoid; list-style: none; padding-left: 52px; position: relative; color: var(--texto); }
+  .refs li span { position: absolute; left: 0; top: 0; color: var(--oro); font-weight: 700; }
+  .refs li i { color: #fff; }
+
+  /* cierre */
+  .cierre { text-align: center; background: radial-gradient(900px 700px at 50% 40%, rgba(13,64,136,.85), transparent 70%), linear-gradient(180deg,#02132f,#06204a); }
+  .cierre .leo { width: 330px; margin: 0 auto; filter: drop-shadow(0 24px 30px rgba(0,0,0,.5)); }
+  .cierre h2 { margin: 18px auto 0; max-width: 1400px; font-size: 76px; }
+  .cierre .url { margin-top: 34px; display: inline-block; padding: 18px 44px; border-radius: 999px; background: var(--oro); color: #241807; font-size: 38px; font-weight: 800; letter-spacing: -.01em; }
+  .cierre p { margin-top: 26px; color: var(--apagado); font-size: 26px; }
+
+  /* presentador */
+  #presentador { position: fixed; right: 16px; bottom: 16px; width: 440px; max-height: 60vh; overflow: auto; z-index: 10; background: rgba(1,11,29,.95); color: #fff; border: 1px solid var(--linea); border-radius: 18px; padding: 18px 20px; font: 16px/1.5 Poppins, system-ui, sans-serif; box-shadow: 0 20px 50px rgba(0,0,0,.5); display: none; }
+  #presentador.visible { display: block; }
+  #presentador .reloj { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; } #presentador .reloj.alerta { color: var(--oro); } #presentador .reloj.fuera { color: #ff6b6b; }
+  #presentador .quien { color: var(--oro); font-weight: 600; margin-top: 8px; } #presentador .notas { margin-top: 6px; color: rgba(255,255,255,.88); }
+  #presentador .ayuda { margin-top: 10px; font-size: 13px; color: rgba(255,255,255,.5); }
+</style>
+</head>
+<body>
+<div id="escenario">
+
+<!-- 1 · PORTADA -->
+<section class="slide portada" data-quien="José · 0:00–0:25" data-notas="«Buenos días. Somos tres estudiantes y les presentamos BUCARATRANSIT: una plataforma que une a las transportadoras de Bucaramanga en una sola app, con wallet y pago por QR.»">
+  <img class="logo entra" src="../landing/img/logo.webp" alt="BucaraTransit">
+  <h1 class="entra">Muévete por <em>Bucaramanga</em> sin efectivo.</h1>
+  <p class="lema entra">Plataforma de movilidad urbana multi-tenant: buses en vivo, wallet prepago y QR dinámico firmado.</p>
+  <img class="leo entra" src="../landing/img/leo-saludo.webp" alt="">
+  <div class="equipo">
+    <div>José Alejandro Téllez Prada<span>U00060479 · Arquitectura</span></div>
+    <div>Marcos Valera Daza<span>U00177223 · Backend</span></div>
+    <div>Jaime Alejandro Vega Barbosa<span>U00178766 · App móvil</span></div>
+    <div class="curso">Backend · Sexto semestre<br>UNAB · 2026</div>
+  </div>
+</section>
+
+<!-- 2 · ABSTRACT -->
+<section class="slide" data-quien="José · 0:25–1:00" data-notas="Leer solo la idea fuerza del resumen: un wallet, un ledger, un QR de un solo uso, aislamiento por transportadora y resiliencia validada con Chaos Engineering. El abstract en inglés es parte del informe.">
+  <p class="kicker entra">Resumen · Abstract</p>
+  <h2 class="entra">Qué construimos, en dos idiomas.</h2>
+  <div class="dos entra">
+    <div class="caja">
+      <h3>Resumen</h3>
+      <p>BUCARATRANSIT es una plataforma SaaS multi-tenant de movilidad urbana para Bucaramanga. Unifica a las transportadoras en un único wallet prepago con ledger contable de doble entrada y cobra a bordo con códigos QR dinámicos firmados (HMAC-SHA256, 60 s, un solo uso), donde el teléfono del conductor actúa como terminal de cobro. El aislamiento entre empresas se impone en tres capas y el sistema se verifica con 304 pruebas automatizadas y experimentos de Chaos Engineering.</p>
+      <p class="palabras">Palabras clave: movilidad urbana, multi-tenant, wallet, QR dinámico, resiliencia.</p>
+    </div>
+    <div class="caja en">
+      <h3>Abstract</h3>
+      <p>BUCARATRANSIT is a multi-tenant urban-mobility SaaS platform for Bucaramanga, Colombia. It unifies bus operators under one prepaid wallet backed by a double-entry ledger, and collects fares on board with signed, single-use dynamic QR codes (HMAC-SHA256, 60-second TTL) while the driver's phone acts as a mobile POS. Tenant isolation is enforced in three layers, and the system is verified by 304 automated tests and Chaos Engineering experiments covering graceful degradation, fallback, bulkhead, cache-aside, asynchronous processing and rate limiting.</p>
+      <p class="palabras">Keywords: urban mobility, multi-tenant, wallet, dynamic QR, resilience.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · PROBLEMA -->
+<section class="slide" data-quien="José · 1:00–1:35" data-notas="El transporte público de la ciudad está fragmentado por empresa, se paga en efectivo y el pasajero no sabe cuándo llega su bus. Esas tres fricciones son el problema; cada una tiene un pilar en nuestra solución.">
+  <p class="kicker entra">Problema y justificación</p>
+  <h2 class="entra">Tres fricciones diarias en el bus de Bucaramanga.</h2>
+  <div class="tres entra">
+    <div class="tarjeta"><div class="n">01 · EFECTIVO</div><h3>Cobro manual</h3><p>El conductor maneja dinero y vuelto mientras conduce: lento, riesgoso y sin trazabilidad. Cada pasaje en efectivo es una fuga potencial de recaudo.</p></div>
+    <div class="tarjeta"><div class="n">02 · FRAGMENTACIÓN</div><h3>Cada empresa, un silo</h3><p>No existe un medio de pago ni una vista de rutas común entre transportadoras. El pasajero y la ciudad pagan el costo de la desconexión.</p></div>
+    <div class="tarjeta"><div class="n">03 · INCERTIDUMBRE</div><h3>¿Cuándo llega mi bus?</h3><p>Sin ubicación en vivo ni tiempo estimado, planear un trayecto es adivinar. El tiempo de espera se pierde sin información.</p></div>
+  </div>
+  <p class="sub entra" style="margin-top:44px">Justificación: una plataforma neutral que unifique pago, rutas y datos <b class="acento">sin que ninguna empresa vea a las otras</b>.</p>
+</section>
+
+<!-- 4 · REFERENTE TEÓRICO -->
+<section class="slide clara" data-quien="José · 1:35–2:15" data-notas="Cada decisión de diseño tiene respaldo: multi-tenancy de esquema compartido, ledger de doble entrada con idempotencia, firma HMAC, y resiliencia con Chaos Engineering. Las referencias completas están en la última diapositiva.">
+  <p class="kicker entra">Referente teórico</p>
+  <h2 class="entra">Cada decisión de diseño tiene una base.</h2>
+  <div class="tres entra">
+    <div class="tarjeta"><div class="n" style="color:#b27d00">MULTI-TENANCY</div><h3>Esquema compartido</h3><p>Una base de datos, una discriminación por <code>transportadora_id</code>: menor costo operativo, mayor riesgo de fuga si falla el aislamiento. [1][2]</p></div>
+    <div class="tarjeta"><div class="n" style="color:#b27d00">DINERO COMO INFRAESTRUCTURA</div><h3>Ledger e idempotencia</h3><p>Asientos inmutables de doble entrada, montos enteros y operaciones idempotentes para tolerar reintentos sin duplicar cobros. [3][4]</p></div>
+    <div class="tarjeta"><div class="n" style="color:#b27d00">AUTENTICIDAD</div><h3>HMAC y un solo uso</h3><p>Un código firmado con clave del servidor no se puede falsificar; un TTL corto y consumo atómico impiden la reutilización. [5][6][7]</p></div>
+    <div class="tarjeta"><div class="n" style="color:#b27d00">RESILIENCIA</div><h3>Chaos Engineering</h3><p>Inyectar fallas controladas para validar patrones de degradación elegante, fallback, bulkhead y cache-aside. [8][9][10]</p></div>
+    <div class="tarjeta"><div class="n" style="color:#b27d00">IDENTIDAD Y API</div><h3>REST + tokens</h3><p>API REST sin estado con tokens personales (Sanctum) y OAuth 2.0 para el ingreso con Google. [11][12]</p></div>
+    <div class="tarjeta"><div class="n" style="color:#b27d00">MARCO NORMATIVO</div><h3>Datos y calidad</h3><p>Tratamiento de datos personales (Ley 1581 de 2012) y atributos de calidad de software (ISO/IEC 25010). [13][14]</p></div>
+  </div>
+</section>
+
+<!-- 5 · SOLUCIÓN -->
+<section class="slide" data-quien="Marcos · 2:15–2:50" data-notas="Tres pilares, tres actores: el pasajero ve y paga, el conductor cobra con su teléfono, la transportadora administra su flota. Todo en una sola plataforma.">
+  <div class="split">
+    <div class="texto">
+      <p class="kicker entra">La solución</p>
+      <h2 class="entra">Una plataforma, tres actores.</h2>
+      <ul class="limpia entra">
+        <li><b>Pasajero.</b> Mapa en vivo, ETA, wallet y QR de pago.</li>
+        <li><b>Conductor.</b> Su teléfono es el mPOS: escanea y cobra.</li>
+        <li><b>Transportadora.</b> Panel propio de flota, rutas y tarifas.</li>
+        <li><b>Plataforma.</b> Super admin con vista global y kill-switch.</li>
+      </ul>
+    </div>
+    <div style="display:flex;justify-content:center;gap:30px;align-items:flex-end"><img class="entra" src="../landing/img/leo-celular.webp" style="width:360px" alt=""><img class="entra" src="../landing/img/leo-conductor.webp" style="width:360px;border-radius:30px" alt=""></div>
+  </div>
+</section>
+
+<!-- 6 · ARQUITECTURA (FIGURA 1) -->
+<section class="slide" data-quien="Marcos · 2:50–3:35" data-notas="Figura 1. De izquierda a derecha: clientes (app y dos paneles Filament) entran por Nginx con TLS y rate limiting; Laravel concentra las reglas de negocio; MySQL guarda la verdad, Redis cachea, el worker procesa notificaciones. Servicios externos opcionales por abajo.">
+  <p class="kicker entra">Figura 1 · Arquitectura general</p>
+  <h2 class="entra" style="font-size:56px">Seis contenedores, una sola entrada.</h2>
+  <div class="figura entra">
+  <svg viewBox="0 0 1680 640" role="img" aria-label="Diagrama de arquitectura general">
+    <defs><marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fcbb02"/></marker></defs>
+    <!-- clientes -->
+    <text x="20" y="34" fill="#93a8c9" font-size="19" font-weight="600" letter-spacing="2">CLIENTES</text>
+    <g font-size="23" font-weight="600" fill="#fff">
+      <rect x="20" y="52" width="270" height="110" rx="18" fill="#0d4088" stroke="#fcbb02" stroke-width="2"/><text x="155" y="100" text-anchor="middle">App móvil</text><text x="155" y="132" text-anchor="middle" font-size="18" fill="#dbe6f7" font-weight="400">Kotlin Multiplatform</text>
+      <rect x="20" y="190" width="270" height="110" rx="18" fill="#0b2a5c" stroke="#3a64a8"/><text x="155" y="238" text-anchor="middle">Panel /empresa</text><text x="155" y="270" text-anchor="middle" font-size="18" fill="#dbe6f7" font-weight="400">Filament · 1 tenant</text>
+      <rect x="20" y="328" width="270" height="110" rx="18" fill="#0b2a5c" stroke="#3a64a8"/><text x="155" y="376" text-anchor="middle">Panel /admin</text><text x="155" y="408" text-anchor="middle" font-size="18" fill="#dbe6f7" font-weight="400">Filament · super admin</text>
+    </g>
+    <!-- nginx -->
+    <rect x="380" y="52" width="230" height="386" rx="22" fill="#0b2a5c" stroke="#3a64a8"/>
+    <text x="495" y="96" text-anchor="middle" fill="#fff" font-size="25" font-weight="700">Nginx</text>
+    <g font-size="18" fill="#dbe6f7" text-anchor="middle"><text x="495" y="140">TLS · Let's Encrypt</text><text x="495" y="172">Rate limiting</text><text x="495" y="204">Cabeceras de seguridad</text><text x="495" y="236">Archivos estáticos</text></g>
+    <text x="495" y="400" text-anchor="middle" fill="#fcbb02" font-size="17" font-weight="600">punto único de entrada</text>
+    <!-- laravel -->
+    <rect x="700" y="20" width="450" height="440" rx="22" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
+    <text x="925" y="66" text-anchor="middle" fill="#fff" font-size="26" font-weight="700">Laravel 12 · PHP-FPM</text>
+    <g font-size="19" fill="#fff" font-weight="600">
+      <rect x="730" y="92" width="390" height="56" rx="12" fill="#02132f"/><text x="925" y="128" text-anchor="middle">API REST /api/v1 · Sanctum</text>
+      <rect x="730" y="162" width="390" height="56" rx="12" fill="#02132f"/><text x="925" y="198" text-anchor="middle" fill="#fcbb02">EnsureTenantScope · GlobalScope</text>
+      <rect x="730" y="232" width="188" height="56" rx="12" fill="#02132f"/><text x="824" y="268" text-anchor="middle">WalletService</text>
+      <rect x="932" y="232" width="188" height="56" rx="12" fill="#02132f"/><text x="1026" y="268" text-anchor="middle">QrPaymentService</text>
+      <rect x="730" y="302" width="188" height="56" rx="12" fill="#02132f"/><text x="824" y="338" text-anchor="middle">BrandingService</text>
+      <rect x="932" y="302" width="188" height="56" rx="12" fill="#02132f"/><text x="1026" y="338" text-anchor="middle">ETA · GPS</text>
+      <rect x="730" y="372" width="390" height="56" rx="12" fill="#02132f"/><text x="925" y="408" text-anchor="middle">Paneles Filament (admin / empresa)</text>
+    </g>
+    <!-- datos -->
+    <g font-size="23" font-weight="600" fill="#fff" text-anchor="middle">
+      <rect x="1250" y="20" width="410" height="110" rx="18" fill="#0b2a5c" stroke="#3a64a8"/><text x="1455" y="68">MySQL 8</text><text x="1455" y="100" font-size="18" fill="#dbe6f7" font-weight="400">tenants · wallets · ledger · QR</text>
+      <rect x="1250" y="150" width="410" height="110" rx="18" fill="#0b2a5c" stroke="#3a64a8"/><text x="1455" y="198">Redis</text><text x="1455" y="230" font-size="18" fill="#dbe6f7" font-weight="400">GPS 30 s · rutas 24 h</text>
+      <rect x="1250" y="280" width="410" height="110" rx="18" fill="#0b2a5c" stroke="#3a64a8"/><text x="1455" y="328">Worker + Scheduler</text><text x="1455" y="360" font-size="18" fill="#dbe6f7" font-weight="400">colas · notificaciones push</text>
+    </g>
+    <!-- externos -->
+    <text x="20" y="500" fill="#93a8c9" font-size="19" font-weight="600" letter-spacing="2">SERVICIOS EXTERNOS (OPCIONALES)</text>
+    <g font-size="20" font-weight="600" fill="#dbe6f7" text-anchor="middle">
+      <rect x="20" y="524" width="380" height="76" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/><text x="210" y="570">Google OAuth</text>
+      <rect x="430" y="524" width="380" height="76" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/><text x="620" y="570">GPS del proveedor</text>
+      <rect x="840" y="524" width="380" height="76" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/><text x="1030" y="570">Firebase FCM</text>
+      <rect x="1250" y="524" width="410" height="76" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/><text x="1455" y="570">Teselas OpenFreeMap</text>
+    </g>
+    <g stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#f)">
+      <path d="M290 107 H378"/><path d="M290 245 H378"/><path d="M290 383 H378"/><path d="M610 245 H698"/>
+      <path d="M1150 75 H1248"/><path d="M1150 205 H1248"/><path d="M1150 335 H1248"/>
+    </g>
+    <g stroke="#5b76a3" stroke-width="2" stroke-dasharray="6 6" fill="none"><path d="M925 460 V520"/><path d="M830 460 V520"/><path d="M1030 460 V520"/></g>
+  </svg>
+  </div>
+</section>
+
+<!-- 7 · AISLAMIENTO -->
+<section class="slide clara" data-quien="Marcos · 3:35–4:05" data-notas="Tres capas: GlobalScope de Eloquent filtra por tenant; el middleware valida el recurso de la ruta; y el 404 silencioso evita revelar la existencia de datos ajenos. Todo probado en TenantIsolationTest.">
+  <p class="kicker entra">Aislamiento multi-tenant</p>
+  <h2 class="entra">Tres capas para que una empresa nunca vea a otra.</h2>
+  <div class="tres entra">
+    <div class="tarjeta"><div class="n" style="color:#b27d00">CAPA 1 · DATOS</div><h3>GlobalScope</h3><p>El trait <code>BelongsToTenant</code> filtra automáticamente toda consulta por <code>transportadora_id</code> cuando hay un tenant en contexto.</p></div>
+    <div class="tarjeta"><div class="n" style="color:#b27d00">CAPA 2 · API</div><h3>Middleware</h3><p><code>EnsureTenantScope</code> verifica que el recurso de la ruta pertenezca al tenant y activa el contexto durante toda la petición.</p></div>
+    <div class="tarjeta"><div class="n" style="color:#b27d00">CAPA 3 · RESPUESTA</div><h3>404 silencioso</h3><p>Pedir un recurso ajeno devuelve <code>404</code>, nunca <code>403</code>: ni siquiera se revela que existe.</p></div>
+  </div>
+  <p class="sub entra" style="margin-top:50px">Verificado en <code>TenantIsolationTest</code>: el usuario del tenant A recibe 404 en recursos del tenant B.</p>
+</section>
+
+<!-- 8 · MODELO DE DATOS (FIGURA 2) -->
+<section class="slide" data-quien="Marcos · 4:05–4:40" data-notas="Figura 2. La transportadora es la raíz del tenant. El wallet es una proyección del ledger append-only: nadie edita ni borra asientos. Los montos son BIGINT en centavos, jamás flotantes.">
+  <p class="kicker entra">Figura 2 · Modelo de datos esencial</p>
+  <h2 class="entra" style="font-size:56px">El dinero vive en un libro que no se edita.</h2>
+  <div class="figura entra">
+  <svg viewBox="0 0 1680 560" role="img" aria-label="Modelo entidad-relación simplificado">
+    <defs><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fcbb02"/></marker></defs>
+    <g font-size="19" fill="#dbe6f7">
+      <rect x="20" y="180" width="360" height="220" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
+      <rect x="20" y="180" width="360" height="52" rx="16" fill="#fcbb02"/><text x="200" y="215" text-anchor="middle" fill="#241807" font-size="23" font-weight="700">transportadoras</text>
+      <text x="40" y="266">id · slug UNIQUE</text><text x="40" y="296">nombre · nit · plan</text><text x="40" y="326">activo (kill-switch)</text><text x="40" y="356">branding · versión</text><text x="40" y="386" fill="#fcbb02">raíz del tenant</text>
+
+      <rect x="500" y="20" width="340" height="190" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
+      <rect x="500" y="20" width="340" height="48" rx="16" fill="#3a64a8"/><text x="670" y="53" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">users</text>
+      <text x="520" y="100">role: super_admin · tenant_admin</text><text x="520" y="130">driver · pasajero</text><text x="520" y="160" fill="#fcbb02">transportadora_id (nulo = ciudad)</text><text x="520" y="190">email · google_id</text>
+
+      <rect x="500" y="250" width="340" height="150" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
+      <rect x="500" y="250" width="340" height="48" rx="16" fill="#3a64a8"/><text x="670" y="283" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">buses · fares</text>
+      <text x="520" y="330">buses UNIQUE(transportadora_id, placa)</text><text x="520" y="360">fares: monto, vigencia</text><text x="520" y="388" fill="#fcbb02">transportadora_id</text>
+
+      <rect x="500" y="430" width="340" height="110" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/>
+      <text x="670" y="470" text-anchor="middle" fill="#fff" font-size="21" font-weight="700">stops · routes</text><text x="670" y="505" text-anchor="middle">datos compartidos de ciudad</text>
+
+      <rect x="960" y="20" width="340" height="190" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
+      <rect x="960" y="20" width="340" height="48" rx="16" fill="#fcbb02"/><text x="1130" y="53" text-anchor="middle" fill="#241807" font-size="22" font-weight="700">wallets</text>
+      <text x="980" y="100">1 por usuario</text><text x="980" y="130">balance_centavos BIGINT ≥ 0</text><text x="980" y="160">version (lock optimista)</text><text x="980" y="190" fill="#fcbb02">proyección del ledger</text>
+
+      <rect x="1000" y="250" width="640" height="170" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
+      <rect x="1000" y="250" width="640" height="48" rx="16" fill="#fcbb02"/><text x="1320" y="283" text-anchor="middle" fill="#241807" font-size="22" font-weight="700">wallet_transactions · LEDGER append-only</text>
+      <text x="1020" y="330">credit · debit · ajuste · monto_centavos · balance_after</text><text x="1020" y="360">reference UNIQUE → idempotencia</text><text x="1020" y="390" fill="#fcbb02">sin UPDATE ni DELETE: el modelo lanza excepción</text>
+
+      <rect x="1000" y="450" width="640" height="95" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
+      <text x="1020" y="487" fill="#fff" font-weight="700">qr_payment_tokens</text><text x="1020" y="520">token_hash SHA-256 · monto_snapshot · expires_at · used_at</text>
+    </g>
+    <g stroke="#fcbb02" stroke-width="2.5" fill="none" marker-end="url(#g)">
+      <path d="M380 240 C440 200 450 130 498 120"/><path d="M380 300 H498"/><path d="M840 110 H958"/><path d="M1130 210 V248"/><path d="M1320 420 V448"/>
+    </g>
+    <text x="406" y="170" fill="#93a8c9" font-size="16">1 ─ N</text><text x="882" y="98" fill="#93a8c9" font-size="16">1 ─ 1</text><text x="1140" y="236" fill="#93a8c9" font-size="16">1 ─ N</text>
+  </svg>
+  </div>
+</section>
+
+<!-- 9 · SECUENCIA QR (FIGURA 3) -->
+<section class="slide" data-quien="Marcos · 4:40–5:30" data-notas="Figura 3. El servidor nunca guarda el selector en claro, solo su hash. Al cobrar recalcula el HMAC, comprueba vigencia y que no se haya usado, y en una sola transacción marca usado, debita al pasajero y acredita a la transportadora. Si algo falla, nada se mueve.">
+  <p class="kicker entra">Figura 3 · Diagrama de secuencia del pago con QR</p>
+  <h2 class="entra" style="font-size:56px">Un QR que se usa una sola vez.</h2>
+  <div class="figura entra">
+  <svg viewBox="0 0 1680 640" role="img" aria-label="Diagrama de secuencia del pago QR">
+    <defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fcbb02"/></marker><marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3fd08a"/></marker></defs>
+    <g font-size="22" font-weight="700" fill="#fff" text-anchor="middle">
+      <rect x="40" y="10" width="300" height="56" rx="14" fill="#0d4088" stroke="#fcbb02" stroke-width="2"/><text x="190" y="46">Pasajero · app</text>
+      <rect x="470" y="10" width="300" height="56" rx="14" fill="#0b2a5c" stroke="#3a64a8"/><text x="620" y="46">Servidor Laravel</text>
+      <rect x="900" y="10" width="300" height="56" rx="14" fill="#0b2a5c" stroke="#3a64a8"/><text x="1050" y="46">MySQL · ledger</text>
+      <rect x="1330" y="10" width="300" height="56" rx="14" fill="#0d4088" stroke="#fcbb02" stroke-width="2"/><text x="1480" y="46">Conductor · mPOS</text>
+    </g>
+    <g stroke="#5b76a3" stroke-width="2" stroke-dasharray="6 7"><path d="M190 66V630"/><path d="M620 66V630"/><path d="M1050 66V630"/><path d="M1480 66V630"/></g>
+    <g font-size="19" fill="#dbe6f7">
+      <g stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#h)">
+        <path d="M190 118 H618"/><path d="M620 190 H1048"/><path d="M620 262 H192" /><path d="M1480 366 H622"/><path d="M620 484 H1048"/>
+      </g>
+      <g stroke="#3fd08a" stroke-width="3" fill="none" marker-end="url(#h2)"><path d="M620 560 H1482"/></g>
+      <text x="404" y="106" text-anchor="middle">① Solicita QR de pago</text>
+      <text x="835" y="178" text-anchor="middle">② Guarda hash(selector), monto, expira +60 s</text>
+      <text x="404" y="250" text-anchor="middle">③ Devuelve  selector.HMAC</text>
+      <rect x="40" y="290" width="300" height="52" rx="12" fill="rgba(252,187,2,.14)" stroke="#fcbb02"/><text x="190" y="323" text-anchor="middle" fill="#ffd24d" font-weight="600">④ Muestra el QR (rota)</text>
+      <path d="M342 316 H1330" stroke="#5b76a3" stroke-width="2" stroke-dasharray="3 7" fill="none"/>
+      <text x="1050" y="354" text-anchor="middle">⑤ Escanea y envía el código</text>
+      <rect x="360" y="384" width="520" height="52" rx="12" fill="rgba(252,187,2,.14)" stroke="#fcbb02"/><text x="620" y="418" text-anchor="middle" fill="#ffd24d" font-weight="600">⑥ Verifica firma · vigencia · no usado</text>
+      <text x="835" y="470" text-anchor="middle" font-size="19" fill="#dbe6f7">⑦ TX atómica:</text>
+      <text x="835" y="520" text-anchor="middle">marca usado · débito pasajero · crédito empresa</text>
+      <text x="1050" y="546" text-anchor="middle" fill="#3fd08a" font-weight="600">⑧ Éxito: pantalla verde con el monto  ·  si falla → 422, no se mueve nada</text>
+    </g>
+  </svg>
+  </div>
+</section>
+
+<!-- 10 · APP -->
+<section class="slide" data-quien="Jaime · 5:30–6:15" data-notas="Demo en vivo si hay red: mapa con buses, elegir parada, seguir el bus, wallet y QR. La app descarga su marca del servidor, por eso el login muestra el logo de BucaraTransit.">
+  <p class="kicker entra">App móvil · Kotlin Multiplatform</p>
+  <h2 class="entra" style="font-size:56px">Lo que ve el pasajero.</h2>
+  <div class="fila-tel entra">
+    <figure><div class="tel"><img src="../landing/img/app-login.webp" alt=""></div><figcaption>Marca dinámica</figcaption></figure>
+    <figure><div class="tel"><img src="../landing/img/app-parada.webp" alt=""></div><figcaption>Elige tu parada</figcaption></figure>
+    <figure><div class="tel"><img src="../landing/img/app-siguiendo-bus.webp" alt=""></div><figcaption>Siguiendo el bus</figcaption></figure>
+    <figure><div class="tel"><img src="../landing/img/app-wallet.webp" alt=""></div><figcaption>Wallet y QR</figcaption></figure>
+    <figure><div class="tel"><img src="../landing/img/app-conductor.webp" alt=""></div><figcaption>Modo conductor</figcaption></figure>
+  </div>
+</section>
+
+<!-- 11 · PANELES -->
+<section class="slide clara" data-quien="Jaime · 6:15–6:50" data-notas="Dos paneles: /empresa para una transportadora (solo ve su flota) y /admin para el equipo de plataforma. A la izquierda el escritorio y el mapa de la empresa; a la derecha el super admin con varias transportadoras.">
+  <p class="kicker entra">Paneles de administración</p>
+  <h2 class="entra" style="font-size:56px">Cada empresa ve solo lo suyo.</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:34px" class="entra">
+    <div><div class="nav-win"><div class="barra"><i></i><i></i><i></i></div><img src="../landing/img/panel-empresa-mapa.webp" alt=""></div><p style="margin-top:18px;font-size:25px"><b style="color:var(--tinta)">/empresa</b> · mapa filtrado a su propia flota</p></div>
+    <div><div class="nav-win"><div class="barra"><i></i><i></i><i></i></div><img src="../landing/img/panel-admin-transportadoras.webp" alt=""></div><p style="margin-top:18px;font-size:25px"><b style="color:var(--tinta)">/admin</b> · varias transportadoras, plan y kill-switch</p></div>
+  </div>
+</section>
+
+<!-- 12 · CHAOS (TABLA) -->
+<section class="slide" data-quien="Marcos · 6:50–7:40" data-notas="Tabla de resultados de Chaos Engineering. Se apaga un componente a propósito y se observa. Cinco de seis fallas se absorben con un patrón; Nginx es un punto único de falla reconocido, cuya mitigación es un balanceador con varias instancias.">
+  <p class="kicker entra">Tabla 1 · Resultados de Chaos Engineering</p>
+  <h2 class="entra" style="font-size:56px">Apagamos cosas a propósito.</h2>
+  <table class="entra">
+    <thead><tr><th>Falla inyectada</th><th>Patrón evaluado</th><th>Comportamiento observado</th><th>Resultado</th></tr></thead>
+    <tbody>
+      <tr><td>GPS externo caído</td><td>Degradación elegante</td><td>El endpoint responde 503 con mensaje claro; no hay excepción sin manejar</td><td><span class="ok">Resiste</span></td></tr>
+      <tr><td>Google OAuth caído</td><td>Fallback</td><td>El inicio de sesión con correo y contraseña toma el relevo</td><td><span class="ok">Resiste</span></td></tr>
+      <tr><td>MySQL o Redis caídos</td><td>Bulkhead · cache-aside</td><td>Contenedores aislados: la caída de uno no tumba a Nginx; sin Redis la app degrada</td><td><span class="ok">Resiste</span></td></tr>
+      <tr><td>Worker de colas caído</td><td>Proceso asíncrono</td><td>La API sigue respondiendo; las notificaciones se encolan</td><td><span class="ok">Resiste</span></td></tr>
+      <tr><td>20 intentos seguidos de login</td><td>Rate limiting</td><td>Desde la petición 11 el servidor responde HTTP 429</td><td><span class="ok">Resiste</span></td></tr>
+      <tr><td>Nginx caído</td><td>—</td><td>Sin proxy la app es inaccesible: punto único de falla</td><td><span class="mal">Mitigar: balanceador</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 13 · VERIFICACIÓN -->
+<section class="slide" data-quien="Jaime · 7:40–8:10" data-notas="Cifras medidas en la última corrida local: 304 pruebas pasando y 3 omitidas, 1253 aserciones. En el cierre del pivote eran 88 pruebas y 257 aserciones; el crecimiento viene de branding, QR endurecido, idempotencia y límites de tasa.">
+  <p class="kicker entra">Verificación</p>
+  <h2 class="entra">Lo que decimos, lo probamos.</h2>
+  <div class="cifras entra">
+    <div><div class="grande">304</div><div class="etiqueta">pruebas automatizadas pasando</div></div>
+    <div><div class="grande">1253</div><div class="etiqueta">aserciones</div></div>
+    <div><div class="grande">60 s</div><div class="etiqueta">vida de cada QR, un solo uso</div></div>
+    <div><div class="grande">0</div><div class="etiqueta">fugas entre tenants en las pruebas de aislamiento</div></div>
+  </div>
+  <p class="sub entra" style="margin-top:70px">Suites clave: <code>TenantIsolationTest</code> · <code>WalletServiceTest</code> · <code>QrHardeningTest</code> · <code>QrIdempotencyTest</code> · <code>RateLimitingTest</code>. Al cierre del pivote eran 88 pruebas y 257 aserciones.</p>
+</section>
+
+<!-- 14 · LIMITACIONES -->
+<section class="slide clara" data-quien="José · 8:10–8:50" data-notas="Ser honestos con lo que falta: la recarga es simulada, la VM es única, hay deuda con secretos en el historial de git, y aún no probamos iOS ni pruebas de UI de pantallas. Cada limitación tiene un siguiente paso concreto.">
+  <p class="kicker entra">Limitaciones y desafíos</p>
+  <h2 class="entra" style="font-size:56px">Lo que todavía no está resuelto.</h2>
+  <table class="entra" style="color:#3a4a66">
+    <thead><tr><th style="color:#7a879d">Limitación</th><th style="color:#7a879d">Impacto</th><th style="color:#7a879d">Siguiente paso</th></tr></thead>
+    <tbody>
+      <tr><td style="color:var(--tinta);border-color:#e3d9c4">Recarga simulada</td><td style="border-color:#e3d9c4">No entra dinero real al wallet</td><td style="border-color:#e3d9c4">Proveedor de pagos con webhooks idempotentes (F4)</td></tr>
+      <tr><td style="color:var(--tinta);border-color:#e3d9c4">Una sola VM</td><td style="border-color:#e3d9c4">Punto único de falla (Nginx, host)</td><td style="border-color:#e3d9c4">Balanceador y varias instancias</td></tr>
+      <tr><td style="color:var(--tinta);border-color:#e3d9c4">Secretos en el historial</td><td style="border-color:#e3d9c4">Claves antiguas en commits previos</td><td style="border-color:#e3d9c4">Rotar claves y evaluar limpiar el historial</td></tr>
+      <tr><td style="color:var(--tinta);border-color:#e3d9c4">iOS y UI sin probar</td><td style="border-color:#e3d9c4">Cobertura solo de lógica y API</td><td style="border-color:#e3d9c4">Pruebas de pantallas y simulador iOS</td></tr>
+      <tr><td style="color:var(--tinta);border-color:#e3d9c4">Cobro solo por QR</td><td style="border-color:#e3d9c4">Exige cámara y datos en el bus</td><td style="border-color:#e3d9c4">NFC y modo sin conexión con conciliación</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 15 · ROADMAP -->
+<section class="slide" data-quien="Jaime · 8:50–9:20" data-notas="F0 a F3 están hechas y verificadas. F4 son pagos reales; F5 es el salto a NFC y al motor de enrutamiento.">
+  <p class="kicker entra">Trabajo futuro</p>
+  <h2 class="entra" style="font-size:56px">De prototipo verificado a servicio de ciudad.</h2>
+  <div class="tres entra" style="grid-template-columns:repeat(4,1fr);gap:24px">
+    <div class="tarjeta"><div class="n">F0–F3 · HECHO</div><h3>Fundamentos</h3><p>Tenancy, wallets y ledger, QR de pago, paneles y mPOS conductor.</p></div>
+    <div class="tarjeta"><div class="n">F4 · SIGUIENTE</div><h3>Pagos reales</h3><p>Proveedor de pagos, webhooks idempotentes y conciliación.</p></div>
+    <div class="tarjeta"><div class="n">F5 · FUTURO</div><h3>NFC y rutas</h3><p>Pago por NFC y motor de enrutamiento multiempresa.</p></div>
+    <div class="tarjeta"><div class="n">OPERACIÓN</div><h3>Alta disponibilidad</h3><p>Balanceador, réplicas y monitoreo continuo.</p></div>
+  </div>
+</section>
+
+<!-- 16 · REFERENCIAS -->
+<section class="slide clara" data-quien="Todos · referencia" data-notas="Referencias en formato IEEE. Verificar edición, páginas y enlaces antes de entregar el informe.">
+  <p class="kicker entra">Referencias</p>
+  <h2 class="entra" style="font-size:52px">Bibliografía (IEEE).</h2>
+  <ol class="refs entra" style="padding:0">
+    <li><span>[1]</span>C.-P. Bezemer and A. Zaidman, “Multi-tenant SaaS applications: maintenance dream or nightmare?,” in <i>Proc. IWPSE-EVOL</i>, 2010.</li>
+    <li><span>[2]</span>F. Chong and G. Carraro, “Architecture strategies for catching the long tail,” Microsoft Corp., 2006.</li>
+    <li><span>[3]</span>M. Kleppmann, <i>Designing Data-Intensive Applications</i>. O’Reilly Media, 2017.</li>
+    <li><span>[4]</span>M. Fowler, <i>Patterns of Enterprise Application Architecture</i>. Addison-Wesley, 2002.</li>
+    <li><span>[5]</span>H. Krawczyk, M. Bellare and R. Canetti, “HMAC: Keyed-hashing for message authentication,” RFC 2104, IETF, 1997.</li>
+    <li><span>[6]</span>OWASP Foundation, “OWASP API Security Top 10,” 2023.</li>
+    <li><span>[7]</span>NIST, “Secure Hash Standard (SHS),” FIPS PUB 180-4, 2015.</li>
+    <li><span>[8]</span>A. Basiri <i>et al.</i>, “Chaos engineering,” <i>IEEE Software</i>, vol. 33, no. 3, pp. 35–41, 2016.</li>
+    <li><span>[9]</span>C. Rosenthal and N. Jones, <i>Chaos Engineering: System Resiliency in Practice</i>. O’Reilly Media, 2020.</li>
+    <li><span>[10]</span>M. T. Nygard, <i>Release It!</i>, 2nd ed. Pragmatic Bookshelf, 2018.</li>
+    <li><span>[11]</span>R. T. Fielding, “Architectural styles and the design of network-based software architectures,” Ph.D. dissertation, UC Irvine, 2000.</li>
+    <li><span>[12]</span>D. Hardt, “The OAuth 2.0 authorization framework,” RFC 6749, IETF, 2012.</li>
+    <li><span>[13]</span>Congreso de Colombia, “Ley Estatutaria 1581 de 2012: Protección de datos personales,” 2012.</li>
+    <li><span>[14]</span>ISO/IEC, “Systems and software quality requirements and evaluation (SQuaRE): System and software quality models,” ISO/IEC 25010, 2011.</li>
+  </ol>
+</section>
+
+<!-- 17 · CIERRE -->
+<section class="slide cierre" data-quien="Jaime · cierre" data-notas="«Ya está funcionando en producción. Entren a la dirección y pruébenlo. Gracias.»">
+  <img class="leo entra" src="../landing/img/leo-celebrando.webp" alt="">
+  <h2 class="entra">Bucaramanga se mueve mejor cuando todos se mueven juntos.</h2>
+  <div class="url entra">bucaratransit.lat</div>
+  <p class="entra">Paneles en /admin y /empresa · Código en github.com/JaimeMrF/bus_unab</p>
+</section>
+
+<div id="presentador"><div class="reloj">0:00</div><div class="quien"></div><div class="notas"></div><div class="ayuda">← → navegar · N notas · T reiniciar reloj · F pantalla completa</div></div>
+</div>
+
+<script>
+  const slides = [...document.querySelectorAll(".slide")];
+  const escenario = document.getElementById("escenario");
+  const progreso = Object.assign(document.createElement("div"), { id: "progreso" });
+  escenario.appendChild(progreso);
+  slides.forEach((s, i) => {
+    if (i === 0 || s.classList.contains("cierre")) return;
+    const n = document.createElement("div"); n.className = "numero"; n.textContent = String(i + 1).padStart(2, "0"); s.appendChild(n);
+    const m = document.createElement("img"); m.className = "marcaagua"; m.src = "../landing/img/logo.webp"; m.alt = ""; s.appendChild(m);
+  });
+  const panel = document.getElementById("presentador");
+  const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let actual = 0, inicioReloj = null;
+
+  // Las cifras grandes cuentan hasta su valor al entrar en la diapositiva.
+  function contar(slide) {
+    if (reducido) return;
+    slide.querySelectorAll(".grande").forEach((el) => {
+      const original = el.dataset.original ?? (el.dataset.original = el.textContent);
+      const m = original.match(/^(\D*)([\d.,]+)(.*)$/);
+      if (!m) return;
+      const meta = Number(m[2].replace(/\./g, "").replace(",", "."));
+      const t0 = performance.now();
+      const paso = (t) => {
+        const k = Math.min(1, (t - t0) / 900);
+        el.textContent = k >= 1 ? original : m[1] + Math.round(meta * (1 - Math.pow(2, -10 * k))).toLocaleString("es-CO", { useGrouping: false }) + m[3];
+        if (k < 1) requestAnimationFrame(paso);
+      };
+      requestAnimationFrame(paso);
+    });
+  }
+  function go(i) {
+    actual = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, k) => s.classList.toggle("activa", k === actual));
+    contar(slides[actual]);
+    progreso.style.width = `${((actual + 1) / slides.length) * 100}%`;
+    panel.querySelector(".quien").textContent = slides[actual].dataset.quien ?? "";
+    panel.querySelector(".notas").textContent = slides[actual].dataset.notas ?? "";
+    history.replaceState(null, "", "#" + (actual + 1));
+  }
+  function ajustar() {
+    const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+    escenario.style.transform = `translate(-50%, -50%) scale(${k})`;
+  }
+  setInterval(() => {
+    if (!inicioReloj) return;
+    const s = Math.floor((Date.now() - inicioReloj) / 1000);
+    const r = panel.querySelector(".reloj");
+    r.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    r.classList.toggle("alerta", s >= 540 && s < 590);
+    r.classList.toggle("fuera", s >= 590);
+  }, 250);
+  addEventListener("resize", ajustar);
+  addEventListener("keydown", (ev) => {
+    if (["ArrowRight", " ", "PageDown"].includes(ev.key)) { ev.preventDefault(); inicioReloj ??= Date.now(); go(actual + 1); }
+    if (["ArrowLeft", "PageUp"].includes(ev.key)) go(actual - 1);
+    if (ev.key === "n" || ev.key === "N") panel.classList.toggle("visible");
+    if (ev.key === "t" || ev.key === "T") inicioReloj = Date.now();
+    if (ev.key === "f" || ev.key === "F") document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  });
+  addEventListener("click", (ev) => {
+    if (ev.target.closest("#presentador")) return;
+    inicioReloj ??= Date.now();
+    go(actual + (ev.clientX > innerWidth / 3 ? 1 : -1));
+  });
+  window.deck = { count: slides.length, go };
+  ajustar();
+  go((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>

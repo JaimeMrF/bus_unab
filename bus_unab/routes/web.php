@@ -3,7 +3,8 @@
 use App\Http\Controllers\Admin\BusMapController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect('/admin'));
+// Landing pública de BUCARATRANSIT (el panel sigue en /admin y /empresa).
+Route::get('/', fn () => view('landing'))->name('landing');
 
 /*
 |--------------------------------------------------------------------------

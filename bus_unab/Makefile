@@ -2,7 +2,7 @@ ENV_FILE := .env.production
 DC       := docker compose --env-file $(ENV_FILE)
 
 # Dominio para SSL (sobreescribir: make ssl-init DOMAIN=bus.unab.edu.co EMAIL=admin@unab.edu.co)
-DOMAIN   ?= bucaratransit.duckdns.org
+DOMAIN   ?= bucaratransit.lat
 EMAIL    ?= jtellez312@unab.edu.co
 
 .DEFAULT_GOAL := help

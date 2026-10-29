@@ -38,7 +38,7 @@ App móvil ──GET /api/v1/branding/{slug}──► Backend Laravel (caché + 
 
 ## 4. Infraestructura y repo
 
-- **Producción:** el backend está publicado en **https://bucaratransit.duckdns.org** (VM Azure `157.56.9.42`, Docker Compose con nginx + Laravel + MySQL + Redis + worker + scheduler, HTTPS de Let's Encrypt con renovación por cron y respaldo diario de la base). El build de la app apunta ahí por defecto. Detalle del despliegue y hallazgos en [PLAN_REVISION.md](PLAN_REVISION.md).
+- **Producción:** el backend está publicado en **https://bucaratransit.lat** (VM Azure `64.236.143.172`, Docker Compose con nginx + Laravel + MySQL + Redis + worker + scheduler, HTTPS de Let's Encrypt con renovación por cron y respaldo diario de la base). El build de la app apunta ahí por defecto. Detalle del despliegue y hallazgos en [PLAN_REVISION.md](PLAN_REVISION.md).
 - **`scripts/dev-up.ps1` / `.sh`**: un comando levanta el servidor accesible desde otros dispositivos de la red, carga datos demo, detecta la IP, abre el firewall e imprime URL, credenciales y comando de instalación. `-Fresh`, `-Simulate`, `-Queue`, `-Port`, `-Stop`. Probado en Windows; la versión `.sh` solo con `bash -n`.
 - **CI** (`.github/workflows`): backend (formato + tests PHP 8.2/8.3), frontend (build debug Android), escaneo de secretos semanal (gitleaks) y Dependabot. Aún sin ejecutar en GitHub.
 - **Hardening**: cabeceras de seguridad y límite de peticiones en nginx, Dockerfile reproducible, `.env.example` genérico sin secretos, `.gitignore` ampliado, archivos de caché y configuración local sacados del control de versiones.

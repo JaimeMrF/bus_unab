@@ -20,7 +20,7 @@ El QR rotativo firmado (HMAC, un solo uso, 60 s) + cobro bajo supervisión del c
 
 ## Operating Context
 
-App móvil Compose Multiplatform (Kotlin), usada en la calle (Android, en autobús, luz variable). Algunos modos requieren datos en vivo: mapa de buses, ETA, QR de abordaje, cobro con cámara. El backend Laravel corre en nginx/MySQL/Redis (VM Azure bucaratransit.duckdns.org).
+App móvil Compose Multiplatform (Kotlin), usada en la calle (Android, en autobús, luz variable). Algunos modos requieren datos en vivo: mapa de buses, ETA, QR de abordaje, cobro con cámara. El backend Laravel corre en nginx/MySQL/Redis (VM Azure bucaratransit.lat).
 
 ## Capabilities and Constraints
 

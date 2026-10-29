@@ -4,7 +4,7 @@
 
 Plataforma compuesta por un **backend Laravel (API REST + paneles Filament `/admin` y `/empresa`)** y una **app móvil Kotlin Multiplatform (Android/iOS)**: rutas y buses en vivo, wallet prepago, QR dinámico de pago y cobro a bordo (modo conductor). La app es *white-label*: logo, mascota, colores y textos de cada organización se descargan de la API.
 
-- **Producción:** https://bucaratransit.duckdns.org (paneles en `/admin` y `/empresa`).
+- **Producción:** https://bucaratransit.lat (paneles en `/admin` y `/empresa`).
 - **Guion de la demo:** [docs/GUION_DEMO.md](docs/GUION_DEMO.md) — ciclos a mostrar, checklist previo y qué no enseñar.
 - **Estado y hallazgos:** [docs/PLAN_REVISION.md](docs/PLAN_REVISION.md).
 

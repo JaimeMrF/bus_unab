@@ -17,13 +17,13 @@
 - **Quedarse en Google Maps** con el bus top-down (este cambio). Cero riesgo, sin dependencias nuevas.
 - Si más adelante se quiere **3D real** (bus tridimensional viendo hacia dónde va): es **Mapbox** (ModelLayer con `.glb`). Hacer un **spike/PoC** de una pantalla antes de migrar todo el mapa. No cambiar de proveedor a mitad de release.
 
-## 3. 🖥️ Backend — deploy en la VM (bucaratransit.duckdns.org)
+## 3. 🖥️ Backend — deploy en la VM (bucaratransit.lat)
 
-**Estado:** Docker (nginx + Laravel + MySQL + Redis + worker + scheduler) en la VM Azure `157.56.9.42` — la única IP del proyecto hoy (`bucaratransit.duckdns.org` apunta ahí; los scripts `deploy.sh` / `push_to_vps.ps1` ya se actualizaron). Faltaba montar/migrar el stack ahí y abrir los puertos:
+**Estado:** Docker (nginx + Laravel + MySQL + Redis + worker + scheduler) en la VM Azure `64.236.143.172` — la única IP del proyecto hoy (`bucaratransit.lat` apunta ahí; los scripts `deploy.sh` / `push_to_vps.ps1` ya se actualizaron). Faltaba montar/migrar el stack ahí y abrir los puertos:
 
 **PENDIENTE (bloqueado por el usuario):**
 1. **Abrir puertos 80 y 443** en el Network Security Group de Azure (hoy solo 22). Portal: VM → Networking → NSG → Inbound rules → agregar 80 y 443.
-2. Al abrirlos: emitir cert Let's Encrypt (webroot, dominio `bucaratransit.duckdns.org`, email `jtellez312@unab.edu.co`), activar el bloque HTTPS de `docker/nginx/default.conf` (ya listo), verificar de punta a punta. La app ya apunta a `https://bucaratransit.duckdns.org/api/v1` (build.gradle.kts).
+2. Al abrirlos: emitir cert Let's Encrypt (webroot, dominio `bucaratransit.lat`, email `jtellez312@unab.edu.co`), activar el bloque HTTPS de `docker/nginx/default.conf` (ya listo), verificar de punta a punta. La app ya apunta a `https://bucaratransit.lat/api/v1` (build.gradle.kts).
 
 **Secretos a llenar en `.env.production` del servidor (hoy vacíos):**
 - `GOOGLE_MAPS_API_KEY` (mapas).

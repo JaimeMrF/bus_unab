@@ -148,7 +148,7 @@ android {
         versionName = "1.0.0"
 
         // Backend por build: ./gradlew assembleRelease -PapiBaseUrl=https://api.tu-dominio.com/api/v1
-        val apiBaseUrl = (project.findProperty("apiBaseUrl") as String?) ?: "https://bucaratransit.duckdns.org/api/v1"
+        val apiBaseUrl = (project.findProperty("apiBaseUrl") as String?) ?: "https://bucaratransit.lat/api/v1"
         buildConfigField("String", "BASE_URL_ANDROID", "\"$apiBaseUrl\"")
         buildConfigField("String", "BASE_URL_IOS", "\"$apiBaseUrl\"")
         // Slug de la organización por defecto de este build; vacío = pedir el código al primer arranque.
