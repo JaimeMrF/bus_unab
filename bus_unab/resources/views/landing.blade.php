@@ -29,8 +29,9 @@
         <a href="#empresas">Empresas</a>
         <a href="#seguridad">Seguridad</a>
         <a href="#equipo">Equipo</a>
+        <a href="#descargar">Descargar</a>
     </nav>
-    <a class="btn btn--sm" href="/empresa">Panel de empresa</a>
+    <a class="btn btn--sm" href="#descargar">Descargar app</a>
 </header>
 
 <main id="contenido">
@@ -58,8 +59,10 @@
                 <h1 class="reveal">Muévete por <em>Bucaramanga</em> sin efectivo ni esperas.</h1>
                 <p class="lead reveal">Todas las transportadoras en una sola app: mira dónde va tu bus, recarga tu wallet y paga con un QR que solo funciona una vez, durante 60 segundos.</p>
                 <div class="hero__cta reveal">
-                    <a class="btn" href="#como">Ver cómo funciona</a>
-                    <a class="btn btn--ghost" href="/presentacion/">Ver la presentación</a>
+                    <a class="btn" href="/descargas/BucaraTransit.apk" download>
+                        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg> Descargar APK
+                    </a>
+                    <a class="btn btn--ghost" href="#como">Ver cómo funciona</a>
                 </div>
                 <ul class="hero__facts reveal" aria-label="Cifras clave">
                     <li><b>60 s</b><span>vida del QR</span></li>
@@ -260,6 +263,32 @@
                 <article class="person reveal"><span class="av">JT</span><h3>José Alejandro Téllez Prada</h3><p>Diseño del pivote, arquitectura multi-tenant y documentación técnica.</p></article>
                 <article class="person reveal"><span class="av">MV</span><h3>Marcos Valera Daza</h3><p>Backend Laravel: wallet y ledger, tokens QR, paneles y pruebas de aislamiento.</p></article>
                 <article class="person reveal"><span class="av">JV</span><h3>Jaime Alejandro Vega Barbosa</h3><p>App móvil Kotlin Multiplatform: pantallas, escáner QR y modo conductor.</p></article>
+            </div>
+        </div>
+    </section>
+
+    {{-- ───────────────────────── DESCARGA ───────────────────────── --}}
+    <section class="sec dl" id="descargar">
+        <div class="wrap dl__in reveal">
+            <div class="dl__copy">
+                <p class="kicker">Descarga</p>
+                <h2>Llévate BucaraTransit en el bolsillo.</h2>
+                <p class="sub">App para Android (versión 1.1.0). Instálala, entra con Google o con tu correo y empieza a seguir los buses de Bucaramanga.</p>
+                <div class="hero__cta">
+                    <a class="btn" href="/descargas/BucaraTransit.apk" download>
+                        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 20h14"/></svg> Descargar APK
+                    </a>
+                </div>
+                <ol class="dl__steps">
+                    <li>Descarga el archivo <code>BucaraTransit.apk</code>.</li>
+                    <li>Ábrelo y, si Android lo pide, permite <b>instalar apps de esta fuente</b>.</li>
+                    <li>Abre la app y entra. Si ya tenías la versión anterior, se actualiza sola.</li>
+                </ol>
+                <p class="dl__note">Es un APK de pruebas fuera de Play Store: Android puede mostrar un aviso de seguridad. Solo para Android 8 o superior.</p>
+            </div>
+            <div class="dl__art">
+                <div class="phone"><img src="{{ asset('landing/img/app-login.webp') }}" alt="Pantalla de bienvenida de la app" width="420" height="933" loading="lazy"></div>
+                <img class="dl__leo" src="{{ asset('landing/img/leo-celular.webp') }}" alt="" width="220" height="220" loading="lazy">
             </div>
         </div>
     </section>

@@ -144,8 +144,8 @@ android {
         applicationId = "com.vibra.bus"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         // Backend por build: ./gradlew assembleRelease -PapiBaseUrl=https://api.tu-dominio.com/api/v1
         val apiBaseUrl = (project.findProperty("apiBaseUrl") as String?) ?: "https://bucaratransit.lat/api/v1"
