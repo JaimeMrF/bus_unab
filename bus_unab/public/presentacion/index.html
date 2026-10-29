@@ -122,17 +122,84 @@
   #presentador .reloj { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; } #presentador .reloj.alerta { color: var(--oro); } #presentador .reloj.fuera { color: #ff6b6b; }
   #presentador .quien { color: var(--oro); font-weight: 600; margin-top: 8px; } #presentador .notas { margin-top: 6px; color: rgba(255,255,255,.88); }
   #presentador .ayuda { margin-top: 10px; font-size: 13px; color: rgba(255,255,255,.5); }
+  /* ═══ dinamismo ═══ */
+  #escenario { background: #02132f; overflow: hidden; }
+  .slide { background: transparent !important; z-index: 1; }
+  .portada { background: radial-gradient(1100px 800px at 82% 40%, rgba(13,64,136,.55), transparent 70%) !important; }
+  .cierre { background: radial-gradient(900px 700px at 50% 40%, rgba(13,64,136,.55), transparent 70%) !important; }
+  #fondo { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: linear-gradient(160deg,#031a3d,#02132f 70%); }
+  #fondo .blob { position: absolute; border-radius: 50%; filter: blur(110px); opacity: .55; will-change: transform; }
+  #fondo .b1 { width: 900px; height: 900px; left: -200px; top: -300px; background: #0d4088; animation: deriva1 22s ease-in-out infinite alternate; }
+  #fondo .b2 { width: 700px; height: 700px; right: -180px; bottom: -260px; background: rgba(252,187,2,.30); animation: deriva2 26s ease-in-out infinite alternate; }
+  #fondo .b3 { width: 600px; height: 600px; left: 45%; top: 30%; background: #0a3a80; opacity: .4; animation: deriva3 30s ease-in-out infinite alternate; }
+  @keyframes deriva1 { to { transform: translate(420px, 260px) scale(1.2); } }
+  @keyframes deriva2 { to { transform: translate(-460px, -200px) scale(1.15); } }
+  @keyframes deriva3 { to { transform: translate(-300px, 220px) scale(.8); } }
+  #fondo .rejilla { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 80px 80px; -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 80%); mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 80%); }
+  #fondo svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .5; }
+  #progreso, .numero, .marcaagua { z-index: 7; }
+
+  /* mascota viajera */
+  #mascota { position: absolute; z-index: 6; left: 1730px; top: 24px; width: 170px; opacity: 0; pointer-events: none;
+    transition: left 1s cubic-bezier(.34,1.45,.5,1), top 1s cubic-bezier(.34,1.45,.5,1), width 1s cubic-bezier(.34,1.45,.5,1), opacity .4s; }
+  #mascota.visible { opacity: 1; }
+  #mascota img { width: 100%; display: block; transform-origin: 50% 100%; animation: idle 4.2s ease-in-out infinite; filter: drop-shadow(0 18px 24px rgba(0,0,0,.45)); }
+  #mascota.salta img { animation: salto .9s cubic-bezier(.3,1.6,.5,1) 1, idle 4.2s ease-in-out .9s infinite; }
+  @keyframes idle { 0%,100% { transform: translateY(0) rotate(-2.5deg) scale(1,1); } 50% { transform: translateY(-16px) rotate(2.5deg) scale(1.01,.99); } }
+  @keyframes salto { 0% { transform: translateY(0) scale(1.12,.86); } 35% { transform: translateY(-70px) scale(.92,1.1) rotate(-6deg); } 65% { transform: translateY(0) scale(1.1,.88) rotate(4deg); } 100% { transform: none; } }
+
+  /* entradas escalonadas */
+  .slide.activa .tres.entra, .slide.activa .cifras.entra, .slide.activa .fila-tel.entra, .slide.activa ul.limpia.entra, .slide.activa .refs.entra, .slide.activa .chips.entra, .slide.activa table.entra { animation: none; }
+  .slide.activa .tres > *, .slide.activa .cifras > *, .slide.activa .fila-tel > *, .slide.activa ul.limpia > li, .slide.activa .refs > li, .slide.activa .chips > span, .slide.activa tbody tr, .slide.activa thead th {
+    animation: pop .7s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(.25s + var(--i, 0) * .11s); }
+  @keyframes pop { from { opacity: 0; transform: translateY(34px) scale(.96); } to { opacity: 1; transform: none; } }
+  .slide:not(.activa) .tres > *, .slide:not(.activa) .cifras > *, .slide:not(.activa) .chips > span { opacity: 0; }
+  .tarjeta { position: relative; overflow: hidden; }
+  .slide.activa .tarjeta::after { content: ""; position: absolute; top: 0; bottom: 0; width: 120px; left: -160px; background: linear-gradient(100deg, transparent, rgba(255,255,255,.14), transparent); animation: brillo 1.4s ease-out both; animation-delay: calc(.9s + var(--i, 0) * .11s); }
+  @keyframes brillo { to { left: 110%; } }
+
+  /* kicker con barra animada y título con degradado */
+  .kicker { display: flex; align-items: center; gap: 16px; }
+  .kicker::before { content: ""; height: 4px; width: 0; border-radius: 4px; background: var(--oro); }
+  .slide.activa .kicker::before { animation: barra .8s .15s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes barra { to { width: 64px; } }
+  .slide.activa h2 { background: linear-gradient(100deg, #fff 55%, var(--oro2) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* chips del resumen */
+  .chips { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 54px; max-width: 1240px; }
+  .chips span { padding: 14px 28px; border-radius: 999px; font-size: 26px; font-weight: 600; color: #fff; background: rgba(252,187,2,.14); border: 2px solid rgba(252,187,2,.55); }
+  .chips span:nth-child(even) { background: rgba(255,255,255,.07); border-color: var(--linea); }
+
+  /* figuras animadas */
+  .p { opacity: 0; }
+  .slide.activa .p { animation: aparece .6s var(--d, .2s) both; }
+  @keyframes aparece { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .l { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .slide.activa .l { animation: dibuja .8s var(--d, .4s) forwards; }
+  @keyframes dibuja { to { stroke-dashoffset: 0; } }
+  .pq { opacity: 0; } .slide.activa .pq { animation: aparece .4s 3.2s both; }
+  .slide.activa .tel { animation: flota 6s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -1.1s); }
+  @keyframes flota { 50% { transform: translateY(-14px); } }
+  .slide.activa .grande { text-shadow: 0 0 40px rgba(252,187,2,.35); }
+  .cierre .url { animation: latido 2.4s ease-in-out infinite; }
+  @keyframes latido { 50% { transform: scale(1.04); box-shadow: 0 0 60px rgba(252,187,2,.45); } }
+  @media (prefers-reduced-motion: reduce) { .p { opacity: 1; animation: none !important; } .l { stroke-dashoffset: 0; animation: none !important; } .pq { display: none; } #mascota, #mascota img, #fondo .blob { transition: none; animation: none !important; } .slide.activa .tres > *, .slide.activa tbody tr, .slide.activa .chips > span { animation: none; } }
+
 </style>
 </head>
 <body>
 <div id="escenario">
+<div id="fondo" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="rejilla"></div>
+<svg viewBox="0 0 1920 1080" preserveAspectRatio="none"><defs><linearGradient id="rf" x1="0" x2="1"><stop offset="0" stop-color="#fcbb02" stop-opacity="0"/><stop offset=".5" stop-color="#fcbb02" stop-opacity=".8"/><stop offset="1" stop-color="#fcbb02" stop-opacity="0"/></linearGradient></defs>
+<path d="M-60 900 C 260 820, 420 520, 760 560 S 1180 900, 1440 640 S 1780 260, 2000 320" fill="none" stroke="url(#rf)" stroke-width="3" stroke-dasharray="3 16" stroke-linecap="round"/>
+<circle r="10" fill="#fcbb02"><animateMotion dur="26s" repeatCount="indefinite" path="M-60 900 C 260 820, 420 520, 760 560 S 1180 900, 1440 640 S 1780 260, 2000 320"/></circle>
+<circle r="22" fill="#fcbb02" opacity=".18"><animateMotion dur="26s" repeatCount="indefinite" path="M-60 900 C 260 820, 420 520, 760 560 S 1180 900, 1440 640 S 1780 260, 2000 320"/></circle></svg></div>
 
 <!-- 1 · PORTADA -->
-<section class="slide portada" data-quien="José · 0:00–0:25" data-notas="«Buenos días. Somos tres estudiantes y les presentamos BUCARATRANSIT: una plataforma que une a las transportadoras de Bucaramanga en una sola app, con wallet y pago por QR.»">
+<section class="slide portada" data-leo="saludo;1010;100;800" data-quien="José · 0:00–0:25" data-notas="«Buenos días. Somos tres estudiantes y les presentamos BUCARATRANSIT: una plataforma que une a las transportadoras de Bucaramanga en una sola app, con wallet y pago por QR.»">
   <img class="logo entra" src="../landing/img/logo.webp" alt="BucaraTransit">
   <h1 class="entra">Muévete por <em>Bucaramanga</em> sin efectivo.</h1>
   <p class="lema entra">Plataforma de movilidad urbana multi-tenant: buses en vivo, wallet prepago y QR dinámico firmado.</p>
-  <img class="leo entra" src="../landing/img/leo-saludo.webp" alt="">
   <div class="equipo">
     <div>José Alejandro Téllez Prada<span>U00060479 · Arquitectura</span></div>
     <div>Marcos Valera Daza<span>U00177223 · Backend</span></div>
@@ -141,26 +208,18 @@
   </div>
 </section>
 
-<!-- 2 · ABSTRACT -->
-<section class="slide" data-quien="José · 0:25–1:00" data-notas="Leer solo la idea fuerza del resumen: un wallet, un ledger, un QR de un solo uso, aislamiento por transportadora y resiliencia validada con Chaos Engineering. El abstract en inglés es parte del informe.">
-  <p class="kicker entra">Resumen · Abstract</p>
-  <h2 class="entra">Qué construimos, en dos idiomas.</h2>
-  <div class="dos entra">
-    <div class="caja">
-      <h3>Resumen</h3>
-      <p>BUCARATRANSIT es una plataforma SaaS multi-tenant de movilidad urbana para Bucaramanga. Unifica a las transportadoras en un único wallet prepago con ledger contable de doble entrada y cobra a bordo con códigos QR dinámicos firmados (HMAC-SHA256, 60 s, un solo uso), donde el teléfono del conductor actúa como terminal de cobro. El aislamiento entre empresas se impone en tres capas y el sistema se verifica con 304 pruebas automatizadas y experimentos de Chaos Engineering.</p>
-      <p class="palabras">Palabras clave: movilidad urbana, multi-tenant, wallet, QR dinámico, resiliencia.</p>
-    </div>
-    <div class="caja en">
-      <h3>Abstract</h3>
-      <p>BUCARATRANSIT is a multi-tenant urban-mobility SaaS platform for Bucaramanga, Colombia. It unifies bus operators under one prepaid wallet backed by a double-entry ledger, and collects fares on board with signed, single-use dynamic QR codes (HMAC-SHA256, 60-second TTL) while the driver's phone acts as a mobile POS. Tenant isolation is enforced in three layers, and the system is verified by 304 automated tests and Chaos Engineering experiments covering graceful degradation, fallback, bulkhead, cache-aside, asynchronous processing and rate limiting.</p>
-      <p class="palabras">Keywords: urban mobility, multi-tenant, wallet, dynamic QR, resilience.</p>
-    </div>
+<!-- 2 · RESUMEN -->
+<section class="slide" data-leo="curioso;1420;540;400" data-quien="José · 0:25–1:00" data-notas="Explicarlo en palabras simples: un solo wallet para todas las empresas, un libro contable que no se puede editar, un QR que sirve una vez, cada empresa aislada de las demás, y un sistema que se probó rompiéndolo a propósito. El abstract en inglés va en el informe escrito, no en la presentación.">
+  <p class="kicker entra">En pocas palabras</p>
+  <h2 class="entra">Pagar el bus con el celular, sin que nadie pierda un peso.</h2>
+  <p class="sub entra" style="max-width:1180px">BUCARATRANSIT une a las transportadoras de Bucaramanga en una sola plataforma. El pasajero recarga un saldo, muestra un QR y el conductor lo cobra con su teléfono. Cada empresa ve solo lo suyo y todo queda registrado de forma auditable.</p>
+  <div class="chips entra">
+    <span>Wallet prepago</span><span>Ledger de doble entrada</span><span>QR firmado · 60 s · un solo uso</span><span>Multi-tenant en 3 capas</span><span>Chaos Engineering</span><span>304 pruebas verdes</span>
   </div>
 </section>
 
 <!-- 3 · PROBLEMA -->
-<section class="slide" data-quien="José · 1:00–1:35" data-notas="El transporte público de la ciudad está fragmentado por empresa, se paga en efectivo y el pasajero no sabe cuándo llega su bus. Esas tres fricciones son el problema; cada una tiene un pilar en nuestra solución.">
+<section class="slide" data-leo="triste_espera;1730;24;170" data-quien="José · 1:00–1:35" data-notas="El transporte público de la ciudad está fragmentado por empresa, se paga en efectivo y el pasajero no sabe cuándo llega su bus. Esas tres fricciones son el problema; cada una tiene un pilar en nuestra solución.">
   <p class="kicker entra">Problema y justificación</p>
   <h2 class="entra">Tres fricciones diarias en el bus de Bucaramanga.</h2>
   <div class="tres entra">
@@ -172,21 +231,21 @@
 </section>
 
 <!-- 4 · REFERENTE TEÓRICO -->
-<section class="slide clara" data-quien="José · 1:35–2:15" data-notas="Cada decisión de diseño tiene respaldo: multi-tenancy de esquema compartido, ledger de doble entrada con idempotencia, firma HMAC, y resiliencia con Chaos Engineering. Las referencias completas están en la última diapositiva.">
+<section class="slide" data-leo="curioso;1730;24;170" data-quien="José · 1:35–2:15" data-notas="Cada decisión de diseño tiene respaldo: multi-tenancy de esquema compartido, ledger de doble entrada con idempotencia, firma HMAC, y resiliencia con Chaos Engineering. Las referencias completas están en la última diapositiva.">
   <p class="kicker entra">Referente teórico</p>
   <h2 class="entra">Cada decisión de diseño tiene una base.</h2>
   <div class="tres entra">
-    <div class="tarjeta"><div class="n" style="color:#b27d00">MULTI-TENANCY</div><h3>Esquema compartido</h3><p>Una base de datos, una discriminación por <code>transportadora_id</code>: menor costo operativo, mayor riesgo de fuga si falla el aislamiento. [1][2]</p></div>
-    <div class="tarjeta"><div class="n" style="color:#b27d00">DINERO COMO INFRAESTRUCTURA</div><h3>Ledger e idempotencia</h3><p>Asientos inmutables de doble entrada, montos enteros y operaciones idempotentes para tolerar reintentos sin duplicar cobros. [3][4]</p></div>
-    <div class="tarjeta"><div class="n" style="color:#b27d00">AUTENTICIDAD</div><h3>HMAC y un solo uso</h3><p>Un código firmado con clave del servidor no se puede falsificar; un TTL corto y consumo atómico impiden la reutilización. [5][6][7]</p></div>
-    <div class="tarjeta"><div class="n" style="color:#b27d00">RESILIENCIA</div><h3>Chaos Engineering</h3><p>Inyectar fallas controladas para validar patrones de degradación elegante, fallback, bulkhead y cache-aside. [8][9][10]</p></div>
-    <div class="tarjeta"><div class="n" style="color:#b27d00">IDENTIDAD Y API</div><h3>REST + tokens</h3><p>API REST sin estado con tokens personales (Sanctum) y OAuth 2.0 para el ingreso con Google. [11][12]</p></div>
-    <div class="tarjeta"><div class="n" style="color:#b27d00">MARCO NORMATIVO</div><h3>Datos y calidad</h3><p>Tratamiento de datos personales (Ley 1581 de 2012) y atributos de calidad de software (ISO/IEC 25010). [13][14]</p></div>
+    <div class="tarjeta"><div class="n">MULTI-TENANCY</div><h3>Esquema compartido</h3><p>Una base de datos, una discriminación por <code>transportadora_id</code>: menor costo operativo, mayor riesgo de fuga si falla el aislamiento. [1][2]</p></div>
+    <div class="tarjeta"><div class="n">DINERO COMO INFRAESTRUCTURA</div><h3>Ledger e idempotencia</h3><p>Asientos inmutables de doble entrada, montos enteros y operaciones idempotentes para tolerar reintentos sin duplicar cobros. [3][4]</p></div>
+    <div class="tarjeta"><div class="n">AUTENTICIDAD</div><h3>HMAC y un solo uso</h3><p>Un código firmado con clave del servidor no se puede falsificar; un TTL corto y consumo atómico impiden la reutilización. [5][6][7]</p></div>
+    <div class="tarjeta"><div class="n">RESILIENCIA</div><h3>Chaos Engineering</h3><p>Inyectar fallas controladas para validar patrones de degradación elegante, fallback, bulkhead y cache-aside. [8][9][10]</p></div>
+    <div class="tarjeta"><div class="n">IDENTIDAD Y API</div><h3>REST + tokens</h3><p>API REST sin estado con tokens personales (Sanctum) y OAuth 2.0 para el ingreso con Google. [11][12]</p></div>
+    <div class="tarjeta"><div class="n">MARCO NORMATIVO</div><h3>Datos y calidad</h3><p>Tratamiento de datos personales (Ley 1581 de 2012) y atributos de calidad de software (ISO/IEC 25010). [13][14]</p></div>
   </div>
 </section>
 
 <!-- 5 · SOLUCIÓN -->
-<section class="slide" data-quien="Marcos · 2:15–2:50" data-notas="Tres pilares, tres actores: el pasajero ve y paga, el conductor cobra con su teléfono, la transportadora administra su flota. Todo en una sola plataforma.">
+<section class="slide" data-leo="celular;1130;230;680" data-quien="Marcos · 2:15–2:50" data-notas="Tres pilares, tres actores: el pasajero ve y paga, el conductor cobra con su teléfono, la transportadora administra su flota. Todo en una sola plataforma.">
   <div class="split">
     <div class="texto">
       <p class="kicker entra">La solución</p>
@@ -198,12 +257,12 @@
         <li><b>Plataforma.</b> Super admin con vista global y kill-switch.</li>
       </ul>
     </div>
-    <div style="display:flex;justify-content:center;gap:30px;align-items:flex-end"><img class="entra" src="../landing/img/leo-celular.webp" style="width:360px" alt=""><img class="entra" src="../landing/img/leo-conductor.webp" style="width:360px;border-radius:30px" alt=""></div>
+    <div></div>
   </div>
 </section>
 
 <!-- 6 · ARQUITECTURA (FIGURA 1) -->
-<section class="slide" data-quien="Marcos · 2:50–3:35" data-notas="Figura 1. De izquierda a derecha: clientes (app y dos paneles Filament) entran por Nginx con TLS y rate limiting; Laravel concentra las reglas de negocio; MySQL guarda la verdad, Redis cachea, el worker procesa notificaciones. Servicios externos opcionales por abajo.">
+<section class="slide" data-leo="mapa;1730;18;170" data-quien="Marcos · 2:50–3:35" data-notas="Figura 1. De izquierda a derecha: clientes (app y dos paneles Filament) entran por Nginx con TLS y rate limiting; Laravel concentra las reglas de negocio; MySQL guarda la verdad, Redis cachea, el worker procesa notificaciones. Servicios externos opcionales por abajo.">
   <p class="kicker entra">Figura 1 · Arquitectura general</p>
   <h2 class="entra" style="font-size:56px">Seis contenedores, una sola entrada.</h2>
   <div class="figura entra">
@@ -247,105 +306,94 @@
       <rect x="840" y="524" width="380" height="76" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/><text x="1030" y="570">Firebase FCM</text>
       <rect x="1250" y="524" width="410" height="76" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/><text x="1455" y="570">Teselas OpenFreeMap</text>
     </g>
-    <g stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#f)">
+    <g class="ls" stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#f)">
       <path d="M290 107 H378"/><path d="M290 245 H378"/><path d="M290 383 H378"/><path d="M610 245 H698"/>
       <path d="M1150 75 H1248"/><path d="M1150 205 H1248"/><path d="M1150 335 H1248"/>
     </g>
     <g stroke="#5b76a3" stroke-width="2" stroke-dasharray="6 6" fill="none"><path d="M925 460 V520"/><path d="M830 460 V520"/><path d="M1030 460 V520"/></g>
+    <g class="pq"><circle r="7" fill="#fff"><animateMotion dur="1.8s" begin="1.80s" repeatCount="indefinite" path="M290 107 H378"/></circle><circle r="7" fill="#fff"><animateMotion dur="1.8s" begin="2.15s" repeatCount="indefinite" path="M290 245 H378"/></circle><circle r="7" fill="#fff"><animateMotion dur="1.8s" begin="2.50s" repeatCount="indefinite" path="M290 383 H378"/></circle><circle r="7" fill="#fff"><animateMotion dur="1.8s" begin="2.85s" repeatCount="indefinite" path="M610 245 H698"/></circle><circle r="7" fill="#fff"><animateMotion dur="1.8s" begin="3.20s" repeatCount="indefinite" path="M1150 75 H1248"/></circle><circle r="7" fill="#fff"><animateMotion dur="1.8s" begin="3.55s" repeatCount="indefinite" path="M1150 205 H1248"/></circle><circle r="7" fill="#fff"><animateMotion dur="1.8s" begin="3.90s" repeatCount="indefinite" path="M1150 335 H1248"/></circle></g>
   </svg>
   </div>
 </section>
 
 <!-- 7 · AISLAMIENTO -->
-<section class="slide clara" data-quien="Marcos · 3:35–4:05" data-notas="Tres capas: GlobalScope de Eloquent filtra por tenant; el middleware valida el recurso de la ruta; y el 404 silencioso evita revelar la existencia de datos ajenos. Todo probado en TenantIsolationTest.">
+<section class="slide" data-leo="ok;1730;24;170" data-quien="Marcos · 3:35–4:05" data-notas="Tres capas: GlobalScope de Eloquent filtra por tenant; el middleware valida el recurso de la ruta; y el 404 silencioso evita revelar la existencia de datos ajenos. Todo probado en TenantIsolationTest.">
   <p class="kicker entra">Aislamiento multi-tenant</p>
   <h2 class="entra">Tres capas para que una empresa nunca vea a otra.</h2>
   <div class="tres entra">
-    <div class="tarjeta"><div class="n" style="color:#b27d00">CAPA 1 · DATOS</div><h3>GlobalScope</h3><p>El trait <code>BelongsToTenant</code> filtra automáticamente toda consulta por <code>transportadora_id</code> cuando hay un tenant en contexto.</p></div>
-    <div class="tarjeta"><div class="n" style="color:#b27d00">CAPA 2 · API</div><h3>Middleware</h3><p><code>EnsureTenantScope</code> verifica que el recurso de la ruta pertenezca al tenant y activa el contexto durante toda la petición.</p></div>
-    <div class="tarjeta"><div class="n" style="color:#b27d00">CAPA 3 · RESPUESTA</div><h3>404 silencioso</h3><p>Pedir un recurso ajeno devuelve <code>404</code>, nunca <code>403</code>: ni siquiera se revela que existe.</p></div>
+    <div class="tarjeta"><div class="n">CAPA 1 · DATOS</div><h3>GlobalScope</h3><p>El trait <code>BelongsToTenant</code> filtra automáticamente toda consulta por <code>transportadora_id</code> cuando hay un tenant en contexto.</p></div>
+    <div class="tarjeta"><div class="n">CAPA 2 · API</div><h3>Middleware</h3><p><code>EnsureTenantScope</code> verifica que el recurso de la ruta pertenezca al tenant y activa el contexto durante toda la petición.</p></div>
+    <div class="tarjeta"><div class="n">CAPA 3 · RESPUESTA</div><h3>404 silencioso</h3><p>Pedir un recurso ajeno devuelve <code>404</code>, nunca <code>403</code>: ni siquiera se revela que existe.</p></div>
   </div>
   <p class="sub entra" style="margin-top:50px">Verificado en <code>TenantIsolationTest</code>: el usuario del tenant A recibe 404 en recursos del tenant B.</p>
 </section>
 
 <!-- 8 · MODELO DE DATOS (FIGURA 2) -->
-<section class="slide" data-quien="Marcos · 4:05–4:40" data-notas="Figura 2. La transportadora es la raíz del tenant. El wallet es una proyección del ledger append-only: nadie edita ni borra asientos. Los montos son BIGINT en centavos, jamás flotantes.">
+<section class="slide" data-leo="curioso;1730;18;170" data-quien="Marcos · 4:05–4:40" data-notas="Figura 2. La transportadora es la raíz del tenant. El wallet es una proyección del ledger append-only: nadie edita ni borra asientos. Los montos son BIGINT en centavos, jamás flotantes.">
   <p class="kicker entra">Figura 2 · Modelo de datos esencial</p>
   <h2 class="entra" style="font-size:56px">El dinero vive en un libro que no se edita.</h2>
   <div class="figura entra">
   <svg viewBox="0 0 1680 560" role="img" aria-label="Modelo entidad-relación simplificado">
     <defs><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fcbb02"/></marker></defs>
     <g font-size="19" fill="#dbe6f7">
-      <rect x="20" y="180" width="360" height="220" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
+      <g class="p" style="--d:.3s"><rect x="20" y="180" width="360" height="220" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
       <rect x="20" y="180" width="360" height="52" rx="16" fill="#fcbb02"/><text x="200" y="215" text-anchor="middle" fill="#241807" font-size="23" font-weight="700">transportadoras</text>
-      <text x="40" y="266">id · slug UNIQUE</text><text x="40" y="296">nombre · nit · plan</text><text x="40" y="326">activo (kill-switch)</text><text x="40" y="356">branding · versión</text><text x="40" y="386" fill="#fcbb02">raíz del tenant</text>
-
-      <rect x="500" y="20" width="340" height="190" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
+      <text x="40" y="266">id · slug UNIQUE</text><text x="40" y="296">nombre · nit · plan</text><text x="40" y="326">activo (kill-switch)</text><text x="40" y="356">branding · versión</text><text x="40" y="386" fill="#fcbb02">raíz del tenant</text></g>
+      <g class="p" style="--d:.9s"><rect x="500" y="20" width="340" height="190" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
       <rect x="500" y="20" width="340" height="48" rx="16" fill="#3a64a8"/><text x="670" y="53" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">users</text>
-      <text x="520" y="100">role: super_admin · tenant_admin</text><text x="520" y="130">driver · pasajero</text><text x="520" y="160" fill="#fcbb02">transportadora_id (nulo = ciudad)</text><text x="520" y="190">email · google_id</text>
-
-      <rect x="500" y="250" width="340" height="150" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
+      <text x="520" y="100">role: super_admin · tenant_admin</text><text x="520" y="130">driver · pasajero</text><text x="520" y="160" fill="#fcbb02">transportadora_id (nulo = ciudad)</text><text x="520" y="190">email · google_id</text></g>
+      <g class="p" style="--d:1.1s"><rect x="500" y="250" width="340" height="150" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
       <rect x="500" y="250" width="340" height="48" rx="16" fill="#3a64a8"/><text x="670" y="283" text-anchor="middle" fill="#fff" font-size="22" font-weight="700">buses · fares</text>
-      <text x="520" y="330">buses UNIQUE(transportadora_id, placa)</text><text x="520" y="360">fares: monto, vigencia</text><text x="520" y="388" fill="#fcbb02">transportadora_id</text>
-
-      <rect x="500" y="430" width="340" height="110" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/>
-      <text x="670" y="470" text-anchor="middle" fill="#fff" font-size="21" font-weight="700">stops · routes</text><text x="670" y="505" text-anchor="middle">datos compartidos de ciudad</text>
-
-      <rect x="960" y="20" width="340" height="190" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
+      <text x="520" y="330">buses UNIQUE(transportadora_id, placa)</text><text x="520" y="360">fares: monto, vigencia</text><text x="520" y="388" fill="#fcbb02">transportadora_id</text></g>
+      <g class="p" style="--d:1.3s"><rect x="500" y="430" width="340" height="110" rx="16" fill="none" stroke="#5b76a3" stroke-dasharray="7 6"/>
+      <text x="670" y="470" text-anchor="middle" fill="#fff" font-size="21" font-weight="700">stops · routes</text><text x="670" y="505" text-anchor="middle">datos compartidos de ciudad</text></g>
+      <g class="p" style="--d:1.7s"><rect x="960" y="20" width="340" height="190" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
       <rect x="960" y="20" width="340" height="48" rx="16" fill="#fcbb02"/><text x="1130" y="53" text-anchor="middle" fill="#241807" font-size="22" font-weight="700">wallets</text>
-      <text x="980" y="100">1 por usuario</text><text x="980" y="130">balance_centavos BIGINT ≥ 0</text><text x="980" y="160">version (lock optimista)</text><text x="980" y="190" fill="#fcbb02">proyección del ledger</text>
-
-      <rect x="1000" y="250" width="640" height="170" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
+      <text x="980" y="100">1 por usuario</text><text x="980" y="130">balance_centavos BIGINT ≥ 0</text><text x="980" y="160">version (lock optimista)</text><text x="980" y="190" fill="#fcbb02">proyección del ledger</text></g>
+      <g class="p" style="--d:2.1s"><rect x="1000" y="250" width="640" height="170" rx="16" fill="#0d4088" stroke="#fcbb02" stroke-width="2.5"/>
       <rect x="1000" y="250" width="640" height="48" rx="16" fill="#fcbb02"/><text x="1320" y="283" text-anchor="middle" fill="#241807" font-size="22" font-weight="700">wallet_transactions · LEDGER append-only</text>
-      <text x="1020" y="330">credit · debit · ajuste · monto_centavos · balance_after</text><text x="1020" y="360">reference UNIQUE → idempotencia</text><text x="1020" y="390" fill="#fcbb02">sin UPDATE ni DELETE: el modelo lanza excepción</text>
-
-      <rect x="1000" y="450" width="640" height="95" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
-      <text x="1020" y="487" fill="#fff" font-weight="700">qr_payment_tokens</text><text x="1020" y="520">token_hash SHA-256 · monto_snapshot · expires_at · used_at</text>
+      <text x="1020" y="330">credit · debit · ajuste · monto_centavos · balance_after</text><text x="1020" y="360">reference UNIQUE → idempotencia</text><text x="1020" y="390" fill="#fcbb02">sin UPDATE ni DELETE: el modelo lanza excepción</text></g>
+      <g class="p" style="--d:2.5s"><rect x="1000" y="450" width="640" height="95" rx="16" fill="#0b2a5c" stroke="#3a64a8"/>
+      <text x="1020" y="487" fill="#fff" font-weight="700">qr_payment_tokens</text><text x="1020" y="520">token_hash SHA-256 · monto_snapshot · expires_at · used_at</text></g>
     </g>
     <g stroke="#fcbb02" stroke-width="2.5" fill="none" marker-end="url(#g)">
-      <path d="M380 240 C440 200 450 130 498 120"/><path d="M380 300 H498"/><path d="M840 110 H958"/><path d="M1130 210 V248"/><path d="M1320 420 V448"/>
+      <path class="l" style="--d:.7s" d="M380 240 C440 200 450 130 498 120"/><path class="l" style="--d:.9s" d="M380 300 H498"/><path class="l" style="--d:1.5s" d="M840 110 H958"/><path class="l" style="--d:1.9s" d="M1130 210 V248"/><path class="l" style="--d:2.4s" d="M1320 420 V448"/>
     </g>
-    <text x="406" y="170" fill="#93a8c9" font-size="16">1 ─ N</text><text x="882" y="98" fill="#93a8c9" font-size="16">1 ─ 1</text><text x="1140" y="236" fill="#93a8c9" font-size="16">1 ─ N</text>
+    <g class="p" style="--d:1.2s" fill="#93a8c9" font-size="16"><text x="406" y="170">1 ─ N</text><text x="882" y="98">1 ─ 1</text><text x="1140" y="236">1 ─ N</text></g>
   </svg>
   </div>
 </section>
 
 <!-- 9 · SECUENCIA QR (FIGURA 3) -->
-<section class="slide" data-quien="Marcos · 4:40–5:30" data-notas="Figura 3. El servidor nunca guarda el selector en claro, solo su hash. Al cobrar recalcula el HMAC, comprueba vigencia y que no se haya usado, y en una sola transacción marca usado, debita al pasajero y acredita a la transportadora. Si algo falla, nada se mueve.">
+<section class="slide" data-leo="celular;1730;18;170" data-quien="Marcos · 4:40–5:30" data-notas="Figura 3. El servidor nunca guarda el selector en claro, solo su hash. Al cobrar recalcula el HMAC, comprueba vigencia y que no se haya usado, y en una sola transacción marca usado, debita al pasajero y acredita a la transportadora. Si algo falla, nada se mueve.">
   <p class="kicker entra">Figura 3 · Diagrama de secuencia del pago con QR</p>
   <h2 class="entra" style="font-size:56px">Un QR que se usa una sola vez.</h2>
   <div class="figura entra">
   <svg viewBox="0 0 1680 640" role="img" aria-label="Diagrama de secuencia del pago QR">
     <defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fcbb02"/></marker><marker id="h2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0 0L10 5L0 10z" fill="#3fd08a"/></marker></defs>
-    <g font-size="22" font-weight="700" fill="#fff" text-anchor="middle">
+    <g class="p" style="--d:.1s" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">
       <rect x="40" y="10" width="300" height="56" rx="14" fill="#0d4088" stroke="#fcbb02" stroke-width="2"/><text x="190" y="46">Pasajero · app</text>
       <rect x="470" y="10" width="300" height="56" rx="14" fill="#0b2a5c" stroke="#3a64a8"/><text x="620" y="46">Servidor Laravel</text>
       <rect x="900" y="10" width="300" height="56" rx="14" fill="#0b2a5c" stroke="#3a64a8"/><text x="1050" y="46">MySQL · ledger</text>
       <rect x="1330" y="10" width="300" height="56" rx="14" fill="#0d4088" stroke="#fcbb02" stroke-width="2"/><text x="1480" y="46">Conductor · mPOS</text>
     </g>
-    <g stroke="#5b76a3" stroke-width="2" stroke-dasharray="6 7"><path d="M190 66V630"/><path d="M620 66V630"/><path d="M1050 66V630"/><path d="M1480 66V630"/></g>
-    <g font-size="19" fill="#dbe6f7">
-      <g stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#h)">
-        <path d="M190 118 H618"/><path d="M620 190 H1048"/><path d="M620 262 H192" /><path d="M1480 366 H622"/><path d="M620 484 H1048"/>
-      </g>
-      <g stroke="#3fd08a" stroke-width="3" fill="none" marker-end="url(#h2)"><path d="M620 560 H1482"/></g>
-      <text x="404" y="106" text-anchor="middle">① Solicita QR de pago</text>
-      <text x="835" y="178" text-anchor="middle">② Guarda hash(selector), monto, expira +60 s</text>
-      <text x="404" y="250" text-anchor="middle">③ Devuelve  selector.HMAC</text>
-      <rect x="40" y="290" width="300" height="52" rx="12" fill="rgba(252,187,2,.14)" stroke="#fcbb02"/><text x="190" y="323" text-anchor="middle" fill="#ffd24d" font-weight="600">④ Muestra el QR (rota)</text>
-      <path d="M342 316 H1330" stroke="#5b76a3" stroke-width="2" stroke-dasharray="3 7" fill="none"/>
-      <text x="1050" y="354" text-anchor="middle">⑤ Escanea y envía el código</text>
-      <rect x="360" y="384" width="520" height="52" rx="12" fill="rgba(252,187,2,.14)" stroke="#fcbb02"/><text x="620" y="418" text-anchor="middle" fill="#ffd24d" font-weight="600">⑥ Verifica firma · vigencia · no usado</text>
-      <text x="835" y="470" text-anchor="middle" font-size="19" fill="#dbe6f7">⑦ TX atómica:</text>
-      <text x="835" y="520" text-anchor="middle">marca usado · débito pasajero · crédito empresa</text>
-      <text x="1050" y="546" text-anchor="middle" fill="#3fd08a" font-weight="600">⑧ Éxito: pantalla verde con el monto  ·  si falla → 422, no se mueve nada</text>
+    <g stroke="#5b76a3" stroke-width="2" fill="none"><path class="l" style="--d:.3s" d="M190 66V630"/><path class="l" style="--d:.3s" d="M620 66V630"/><path class="l" style="--d:.3s" d="M1050 66V630"/><path class="l" style="--d:.3s" d="M1480 66V630"/></g>
+    <g font-size="19" fill="#dbe6f7" text-anchor="middle">
+      <g class="p" style="--d:1s"><path class="l" style="--d:1s" stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#h)" d="M190 118 H618"/><text x="404" y="106">① Solicita QR de pago</text></g>
+      <g class="p" style="--d:2s"><path class="l" style="--d:2s" stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#h)" d="M620 190 H1048"/><text x="835" y="178">② Guarda hash(selector), monto, expira +60 s</text></g>
+      <g class="p" style="--d:3s"><path class="l" style="--d:3s" stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#h)" d="M620 262 H192"/><text x="404" y="250">③ Devuelve  selector.HMAC</text></g>
+      <g class="p" style="--d:4s"><rect x="40" y="290" width="300" height="52" rx="12" fill="rgba(252,187,2,.14)" stroke="#fcbb02"/><text x="190" y="323" fill="#ffd24d" font-weight="600">④ Muestra el QR (rota)</text></g>
+      <g class="p" style="--d:5s"><path class="l" style="--d:5s" stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#h)" d="M1480 366 H622"/><text x="1050" y="354">⑤ Escanea y envía el código</text></g>
+      <g class="p" style="--d:6s"><rect x="360" y="384" width="520" height="52" rx="12" fill="rgba(252,187,2,.14)" stroke="#fcbb02"/><text x="620" y="418" fill="#ffd24d" font-weight="600">⑥ Verifica firma · vigencia · no usado</text></g>
+      <g class="p" style="--d:7s"><path class="l" style="--d:7s" stroke="#fcbb02" stroke-width="3" fill="none" marker-end="url(#h)" d="M620 484 H1048"/><text x="835" y="470">⑦ TX atómica:</text><text x="835" y="520">marca usado · débito pasajero · crédito empresa</text></g>
+      <g class="p" style="--d:8s"><path class="l" style="--d:8s" stroke="#3fd08a" stroke-width="3" fill="none" marker-end="url(#h2)" d="M620 580 H1482"/><text x="1050" y="566" fill="#3fd08a" font-weight="600">⑧ Éxito: pantalla verde con el monto  ·  si falla → 422, no se mueve nada</text></g>
     </g>
   </svg>
   </div>
 </section>
 
 <!-- 10 · APP -->
-<section class="slide" data-quien="Jaime · 5:30–6:15" data-notas="Demo en vivo si hay red: mapa con buses, elegir parada, seguir el bus, wallet y QR. La app descarga su marca del servidor, por eso el login muestra el logo de BucaraTransit.">
+<section class="slide" data-leo="mapa;1730;18;170" data-quien="Jaime · 5:30–6:15" data-notas="Demo en vivo si hay red: mapa con buses, elegir parada, seguir el bus, wallet y QR. La app descarga su marca del servidor, por eso el login muestra el logo de BucaraTransit.">
   <p class="kicker entra">App móvil · Kotlin Multiplatform</p>
   <h2 class="entra" style="font-size:56px">Lo que ve el pasajero.</h2>
   <div class="fila-tel entra">
@@ -358,17 +406,17 @@
 </section>
 
 <!-- 11 · PANELES -->
-<section class="slide clara" data-quien="Jaime · 6:15–6:50" data-notas="Dos paneles: /empresa para una transportadora (solo ve su flota) y /admin para el equipo de plataforma. A la izquierda el escritorio y el mapa de la empresa; a la derecha el super admin con varias transportadoras.">
+<section class="slide" data-leo="conductor;1730;18;170" data-quien="Jaime · 6:15–6:50" data-notas="Dos paneles: /empresa para una transportadora (solo ve su flota) y /admin para el equipo de plataforma. A la izquierda el escritorio y el mapa de la empresa; a la derecha el super admin con varias transportadoras.">
   <p class="kicker entra">Paneles de administración</p>
   <h2 class="entra" style="font-size:56px">Cada empresa ve solo lo suyo.</h2>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:34px" class="entra">
-    <div><div class="nav-win"><div class="barra"><i></i><i></i><i></i></div><img src="../landing/img/panel-empresa-mapa.webp" alt=""></div><p style="margin-top:18px;font-size:25px"><b style="color:var(--tinta)">/empresa</b> · mapa filtrado a su propia flota</p></div>
-    <div><div class="nav-win"><div class="barra"><i></i><i></i><i></i></div><img src="../landing/img/panel-admin-transportadoras.webp" alt=""></div><p style="margin-top:18px;font-size:25px"><b style="color:var(--tinta)">/admin</b> · varias transportadoras, plan y kill-switch</p></div>
+    <div><div class="nav-win"><div class="barra"><i></i><i></i><i></i></div><img src="../landing/img/panel-empresa-mapa.webp" alt=""></div><p style="margin-top:18px;font-size:25px"><b style="color:#fff">/empresa</b> · mapa filtrado a su propia flota</p></div>
+    <div><div class="nav-win"><div class="barra"><i></i><i></i><i></i></div><img src="../landing/img/panel-admin-transportadoras.webp" alt=""></div><p style="margin-top:18px;font-size:25px"><b style="color:#fff">/admin</b> · varias transportadoras, plan y kill-switch</p></div>
   </div>
 </section>
 
 <!-- 12 · CHAOS (TABLA) -->
-<section class="slide" data-quien="Marcos · 6:50–7:40" data-notas="Tabla de resultados de Chaos Engineering. Se apaga un componente a propósito y se observa. Cinco de seis fallas se absorben con un patrón; Nginx es un punto único de falla reconocido, cuya mitigación es un balanceador con varias instancias.">
+<section class="slide" data-leo="triste_espera;1730;18;170" data-quien="Marcos · 6:50–7:40" data-notas="Tabla de resultados de Chaos Engineering. Se apaga un componente a propósito y se observa. Cinco de seis fallas se absorben con un patrón; Nginx es un punto único de falla reconocido, cuya mitigación es un balanceador con varias instancias.">
   <p class="kicker entra">Tabla 1 · Resultados de Chaos Engineering</p>
   <h2 class="entra" style="font-size:56px">Apagamos cosas a propósito.</h2>
   <table class="entra">
@@ -385,7 +433,7 @@
 </section>
 
 <!-- 13 · VERIFICACIÓN -->
-<section class="slide" data-quien="Jaime · 7:40–8:10" data-notas="Cifras medidas en la última corrida local: 304 pruebas pasando y 3 omitidas, 1253 aserciones. En el cierre del pivote eran 88 pruebas y 257 aserciones; el crecimiento viene de branding, QR endurecido, idempotencia y límites de tasa.">
+<section class="slide" data-leo="celebrando;1730;18;170" data-quien="Jaime · 7:40–8:10" data-notas="Cifras medidas en la última corrida local: 304 pruebas pasando y 3 omitidas, 1253 aserciones. En el cierre del pivote eran 88 pruebas y 257 aserciones; el crecimiento viene de branding, QR endurecido, idempotencia y límites de tasa.">
   <p class="kicker entra">Verificación</p>
   <h2 class="entra">Lo que decimos, lo probamos.</h2>
   <div class="cifras entra">
@@ -398,23 +446,23 @@
 </section>
 
 <!-- 14 · LIMITACIONES -->
-<section class="slide clara" data-quien="José · 8:10–8:50" data-notas="Ser honestos con lo que falta: la recarga es simulada, la VM es única, hay deuda con secretos en el historial de git, y aún no probamos iOS ni pruebas de UI de pantallas. Cada limitación tiene un siguiente paso concreto.">
+<section class="slide" data-leo="triste_espera;1730;18;170" data-quien="José · 8:10–8:50" data-notas="Ser honestos con lo que falta: la recarga es simulada, la VM es única, hay deuda con secretos en el historial de git, y aún no probamos iOS ni pruebas de UI de pantallas. Cada limitación tiene un siguiente paso concreto.">
   <p class="kicker entra">Limitaciones y desafíos</p>
   <h2 class="entra" style="font-size:56px">Lo que todavía no está resuelto.</h2>
-  <table class="entra" style="color:#3a4a66">
-    <thead><tr><th style="color:#7a879d">Limitación</th><th style="color:#7a879d">Impacto</th><th style="color:#7a879d">Siguiente paso</th></tr></thead>
+  <table class="entra">
+    <thead><tr><th>Limitación</th><th>Impacto</th><th>Siguiente paso</th></tr></thead>
     <tbody>
-      <tr><td style="color:var(--tinta);border-color:#e3d9c4">Recarga simulada</td><td style="border-color:#e3d9c4">No entra dinero real al wallet</td><td style="border-color:#e3d9c4">Proveedor de pagos con webhooks idempotentes (F4)</td></tr>
-      <tr><td style="color:var(--tinta);border-color:#e3d9c4">Una sola VM</td><td style="border-color:#e3d9c4">Punto único de falla (Nginx, host)</td><td style="border-color:#e3d9c4">Balanceador y varias instancias</td></tr>
-      <tr><td style="color:var(--tinta);border-color:#e3d9c4">Secretos en el historial</td><td style="border-color:#e3d9c4">Claves antiguas en commits previos</td><td style="border-color:#e3d9c4">Rotar claves y evaluar limpiar el historial</td></tr>
-      <tr><td style="color:var(--tinta);border-color:#e3d9c4">iOS y UI sin probar</td><td style="border-color:#e3d9c4">Cobertura solo de lógica y API</td><td style="border-color:#e3d9c4">Pruebas de pantallas y simulador iOS</td></tr>
-      <tr><td style="color:var(--tinta);border-color:#e3d9c4">Cobro solo por QR</td><td style="border-color:#e3d9c4">Exige cámara y datos en el bus</td><td style="border-color:#e3d9c4">NFC y modo sin conexión con conciliación</td></tr>
+      <tr><td>Recarga simulada</td><td>No entra dinero real al wallet</td><td>Proveedor de pagos con webhooks idempotentes (F4)</td></tr>
+      <tr><td>Una sola VM</td><td>Punto único de falla (Nginx, host)</td><td>Balanceador y varias instancias</td></tr>
+      <tr><td>Secretos en el historial</td><td>Claves antiguas en commits previos</td><td>Rotar claves y evaluar limpiar el historial</td></tr>
+      <tr><td>iOS y UI sin probar</td><td>Cobertura solo de lógica y API</td><td>Pruebas de pantallas y simulador iOS</td></tr>
+      <tr><td>Cobro solo por QR</td><td>Exige cámara y datos en el bus</td><td>NFC y modo sin conexión con conciliación</td></tr>
     </tbody>
   </table>
 </section>
 
 <!-- 15 · ROADMAP -->
-<section class="slide" data-quien="Jaime · 8:50–9:20" data-notas="F0 a F3 están hechas y verificadas. F4 son pagos reales; F5 es el salto a NFC y al motor de enrutamiento.">
+<section class="slide" data-leo="mapa;1730;18;170" data-quien="Jaime · 8:50–9:20" data-notas="F0 a F3 están hechas y verificadas. F4 son pagos reales; F5 es el salto a NFC y al motor de enrutamiento.">
   <p class="kicker entra">Trabajo futuro</p>
   <h2 class="entra" style="font-size:56px">De prototipo verificado a servicio de ciudad.</h2>
   <div class="tres entra" style="grid-template-columns:repeat(4,1fr);gap:24px">
@@ -426,7 +474,7 @@
 </section>
 
 <!-- 16 · REFERENCIAS -->
-<section class="slide clara" data-quien="Todos · referencia" data-notas="Referencias en formato IEEE. Verificar edición, páginas y enlaces antes de entregar el informe.">
+<section class="slide" data-leo="curioso;1730;18;170" data-quien="Todos · referencia" data-notas="Referencias en formato IEEE. Verificar edición, páginas y enlaces antes de entregar el informe.">
   <p class="kicker entra">Referencias</p>
   <h2 class="entra" style="font-size:52px">Bibliografía (IEEE).</h2>
   <ol class="refs entra" style="padding:0">
@@ -448,13 +496,14 @@
 </section>
 
 <!-- 17 · CIERRE -->
-<section class="slide cierre" data-quien="Jaime · cierre" data-notas="«Ya está funcionando en producción. Entren a la dirección y pruébenlo. Gracias.»">
-  <img class="leo entra" src="../landing/img/leo-celebrando.webp" alt="">
+<section class="slide cierre" data-leo="celebrando;810;60;300" data-quien="Jaime · cierre" data-notas="«Ya está funcionando en producción. Entren a la dirección y pruébenlo. Gracias.»">
+  <div style="height:330px"></div>
   <h2 class="entra">Bucaramanga se mueve mejor cuando todos se mueven juntos.</h2>
   <div class="url entra">bucaratransit.lat</div>
   <p class="entra">Paneles en /admin y /empresa · Código en github.com/JaimeMrF/bus_unab</p>
 </section>
 
+<div id="mascota"><img alt="" src="../landing/img/leo-saludo.webp"></div>
 <div id="presentador"><div class="reloj">0:00</div><div class="quien"></div><div class="notas"></div><div class="ayuda">← → navegar · N notas · T reiniciar reloj · F pantalla completa</div></div>
 </div>
 
@@ -469,6 +518,28 @@
     const m = document.createElement("img"); m.className = "marcaagua"; m.src = "../landing/img/logo.webp"; m.alt = ""; s.appendChild(m);
   });
   const panel = document.getElementById("presentador");
+  const mascota = document.getElementById("mascota"), mimg = mascota.querySelector("img");
+  ["saludo", "celular", "mapa", "conductor", "ok", "celebrando", "curioso", "triste_espera"].forEach((n) => { new Image().src = `../landing/img/leo-${n}.webp`; });
+  document.querySelectorAll(".ls").forEach((g) => [...g.children].forEach((p, i) => { p.classList.add("l"); p.style.setProperty("--d", (0.5 + i * 0.18) + "s"); }));
+  document.querySelectorAll(".l").forEach((p) => p.setAttribute("pathLength", 1));
+  slides.forEach((s) => {
+    s.querySelectorAll(".tres, .cifras, .fila-tel, ul.limpia, .refs, .chips").forEach((c) => [...c.children].forEach((k, i) => k.style.setProperty("--i", i)));
+    s.querySelectorAll("table").forEach((t) => {
+      t.querySelectorAll("thead th").forEach((k, i) => k.style.setProperty("--i", i * 0.4));
+      t.querySelectorAll("tbody tr").forEach((k, i) => k.style.setProperty("--i", i + 1));
+    });
+    s.querySelectorAll(".fila-tel .tel").forEach((t, i) => t.style.setProperty("--i", i));
+  });
+  // La mascota viaja entre diapositivas: cada una declara pose y posición en data-leo="pose;x;y;ancho".
+  function moverMascota(slide) {
+    const cfg = slide.dataset.leo;
+    if (!cfg) { mascota.classList.remove("visible"); return; }
+    const [pose, x, y, w] = cfg.split(";");
+    if (!mimg.src.endsWith(`leo-${pose}.webp`)) mimg.src = `../landing/img/leo-${pose}.webp`;
+    mascota.style.left = x + "px"; mascota.style.top = y + "px"; mascota.style.width = w + "px";
+    mascota.classList.add("visible");
+    mascota.classList.remove("salta"); void mascota.offsetWidth; mascota.classList.add("salta");
+  }
   const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let actual = 0, inicioReloj = null;
 
@@ -493,6 +564,7 @@
     actual = Math.max(0, Math.min(slides.length - 1, i));
     slides.forEach((s, k) => s.classList.toggle("activa", k === actual));
     contar(slides[actual]);
+    moverMascota(slides[actual]);
     progreso.style.width = `${((actual + 1) / slides.length) * 100}%`;
     panel.querySelector(".quien").textContent = slides[actual].dataset.quien ?? "";
     panel.querySelector(".notas").textContent = slides[actual].dataset.notas ?? "";
